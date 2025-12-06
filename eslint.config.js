@@ -12,7 +12,11 @@ export default defineConfig([
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
+<<<<<<< HEAD
       reactHooks.configs['recommended-latest'],
+=======
+      reactHooks.configs.flat.recommended,
+>>>>>>> feat/frontend-ra
       reactRefresh.configs.vite,
     ],
     languageOptions: {
