@@ -4,11 +4,7 @@
     "target": "ES2023",
     "lib": ["ES2023"],
     "module": "ESNext",
-<<<<<<< HEAD
     "types": [],
-=======
-    "types": ["node"],
->>>>>>> feat/frontend-ra
     "skipLibCheck": true,
 
     /* Bundler mode */

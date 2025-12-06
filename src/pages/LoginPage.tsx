@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { Input } from '../components/Input';
+import { Button } from '../components/Button';
 
 // 구글 아이콘 (SVG) - 외부 라이브러리 없이 가볍게 사용
 const GoogleIcon = () => (
@@ -13,7 +13,7 @@ const GoogleIcon = () => (
   </svg>
 )
 
-const LoginPage: React.FC = () => {
+const LoginPage = () => {
   const navigate = useNavigate();
 
   // 1. 입력값 상태 관리 (State)

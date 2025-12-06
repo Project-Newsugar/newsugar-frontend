@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { Input } from '../components/Input';
+import { Button } from '../components/Button';
 
 // 1. 금지어 목록 (실제 서비스에선 더 방대하겠지만 예시로 추가)
 const FORBIDDEN_WORDS = ['admin', 'root', '관리자', '운영자', '바보', '멍청이', 'badword'];

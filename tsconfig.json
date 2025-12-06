@@ -1,19 +1,7 @@
 {
-<<<<<<< HEAD
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
   ]
 }
-=======
-  "compilerOptions": {
-    // 기존 설정 유지 ...
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  },
-  // ...
-}
->>>>>>> feat/frontend-ra
