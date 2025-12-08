@@ -1,0 +1,45 @@
+import { Link } from 'react-router-dom';
+
+export const Navbar = () => {
+  return (
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <nav className="max-w-6xl mx-auto px-8 py-5 flex justify-between items-center">
+        {/* 왼쪽 로고 */}
+        <Link to="/" className="text-2xl font-bold text-blue-600 tracking-tight">
+          NewSugar
+        </Link>
+        
+        {/* 오른쪽 메뉴 */}
+        <ul className="flex gap-10 items-center">
+          <li>
+            <Link to="/" className="text-gray-600 text-sm font-medium hover:text-blue-600 transition-colors">
+              홈
+            </Link>
+          </li>
+          <li className="relative group">
+            <Link to="/categories" className="text-gray-600 text-sm font-medium hover:text-blue-600 transition-colors">
+              카테고리
+            </Link>
+            {/* 드롭다운 메뉴 */}
+            <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              {['정치', '경제', '과학/기술', '스포츠', '문화', '국제'].map((category) => (
+                <Link
+                  key={category}
+                  to={`/category/${category}`}
+                  className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors first:rounded-t-lg last:rounded-b-lg"
+                >
+                  {category}
+                </Link>
+              ))}
+            </div>
+          </li>
+          <li>
+            <button className="text-gray-600 text-sm font-medium hover:text-blue-600 transition-colors">
+              로그인
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </header>
+  );
+}
