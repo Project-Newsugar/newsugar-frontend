@@ -4,6 +4,8 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import OnboardingBasicPage from './pages/OnboardingBasicPage';
 import { MainLayout } from './layout/MainLayout';
+import AlarmListPage from './pages/AlarmListPage';
+import HomePage from './pages/HomePage';
 
 const router = createBrowserRouter([
 {
@@ -22,6 +24,8 @@ const router = createBrowserRouter([
       // { path: '/category/:categoryName', element: <CategoryDetailPage /> },
       // { path: '/news/:newsId', element: <NewsDetailPage /> },
       { path: '/', element: <div>홈페이지 준비중...</div> }
+      { path: '/news', element: <HomePage /> },
+      { path: '/alarm', element: <AlarmListPage /> },
     ],
 },
 {
