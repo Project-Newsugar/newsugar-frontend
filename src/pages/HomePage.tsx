@@ -21,18 +21,10 @@ export default function HomePage() {
 
   const handleCategoryClick = (category: string) => {
     console.log(`${category} 카테고리 클릭`);
-    // TODO: Navigate to category page or show category news
   };
 
   const handleSubmit = async (answer: string) => {
-    // if (!isLoggedIn) {
-    //   alert('로그인을 해주세요!');
-    //   navigate('/login');
-    //   return;
-    // }
-
     if (!quiz) return;
-
     try {
       const result = await submitAnswer.mutateAsync({
         quizId: quiz.id,
@@ -47,68 +39,82 @@ export default function HomePage() {
       }
     } catch (error) {
       console.error("Failed to submit answer:", error);
-      alert("답안 제출에 실패했습니다. 다시 시도해주세요.");
+      alert("답안 제출 실패");
     }
   };
 
   return (
-    <div className="space-y-12">
-      {/* Hero Section */}
-      <div className="py-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+    <div className="max-w-4xl mx-auto px-6 py-14 space-y-16">
+      {/* HERO SECTION */}
+      <section className="text-center space-y-3">
+        <h1 className="text-6xl font-bold text-gray-900">
           오늘의 뉴스, 간결하게
         </h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 text-lg">
           AI가 선별하고 요약한 주요 뉴스를 확인하세요
         </p>
-      </div>
+      </section>
 
-      {/* Search Input */}
-      <div className="mb-12">
+      {/* SEARCH */}
+      <section>
         <input
           type="text"
           placeholder="뉴스 검색"
-          className="w-full px-5 py-3 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 transition-colors"
+          className="w-full px-5 py-3 border border-gray-200 rounded-xl 
+                     focus:outline-none focus:border-gray-400 
+                     shadow-sm transition-colors"
         />
-      </div>
+      </section>
 
-      <NewsSummaryCard
-        summary={newsSummary?.summary || ""}
-        isLoading={isLoading}
-      />
+      {/* SUMMARY */}
+      <section>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">오늘의 주요 뉴스</h2>
+        <NewsSummaryCard
+          summary={newsSummary?.summary || ""}
+          isLoading={isLoading}
+        />
+      </section>
 
-      <QuizCard>
-        {isQuizLoading ? (
-          <div className="flex justify-center items-center h-24">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        ) : quiz ? (
-          <>
-            <QuizQuestion question={quiz.question} />
+      {/* QUIZ */}
+      <section>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">오늘의 퀴즈</h2>
 
-            {!isSolved ? (
-              <QuizForm
-                onSubmit={handleSubmit}
-                isSubmitting={submitAnswer.isPending}
-              />
-            ) : (
-              <QuizResult
-                correctAnswer={quiz.correctAnswer}
-                explanation={quiz.explanation}
-              />
-            )}
-          </>
-        ) : (
-          <p className="text-center text-gray-500">
-            오늘의 퀴즈를 불러오는데 실패했습니다.
-          </p>
-        )}
-      </QuizCard>
+        <QuizCard>
+          {isQuizLoading ? (
+            <div className="flex justify-center items-center h-24">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : quiz ? (
+            <>
+              <QuizQuestion question={quiz.question} />
 
-      <CategoryGrid
-        categories={CATEGORIES}
-        onCategoryClick={handleCategoryClick}
-      />
+              {!isSolved ? (
+                <QuizForm
+                  onSubmit={handleSubmit}
+                  isSubmitting={submitAnswer.isPending}
+                />
+              ) : (
+                <QuizResult
+                  correctAnswer={quiz.correctAnswer}
+                  explanation={quiz.explanation}
+                />
+              )}
+            </>
+          ) : (
+            <p className="text-center text-gray-500">
+              오늘의 퀴즈를 불러오는데 실패했습니다.
+            </p>
+          )}
+        </QuizCard>
+      </section>
+
+      {/* CATEGORY GRID */}
+      <section className="pb-12">
+        <CategoryGrid
+          categories={CATEGORIES}
+          onCategoryClick={handleCategoryClick}
+        />
+      </section>
     </div>
   );
 }
