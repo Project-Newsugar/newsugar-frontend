@@ -49,7 +49,7 @@ const OnboardingBasicPage: React.FC = () => {
 
     console.log('🟢 Zod 검증 통과한 값:', values);
     alert(`환영합니다, ${values.nickname}님! 메인으로 이동합니다.`);
-    navigate('/news');
+    navigate('/');
   };
 
   return (

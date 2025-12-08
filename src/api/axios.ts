@@ -5,5 +5,8 @@ const API_BASE_URL =
 
 export const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 1000, // 1초 후 타임아웃 (빠르게 Mock 데이터로 전환)
+  headers: {
+    "Content-Type": "application/json",
+  },
+  timeout: 5000, // 1초는 너무 짧아 에러가 잦을 수 있으므로 5초로 안전하게 설정
 });

@@ -21,13 +21,6 @@ export default function HomePage() {
   const [isSolved, setIsSolved] = useState(false);
   const navigate = useNavigate();
 
-  console.log("HomePage Debug:", {
-    newsSummary,
-    isLoading,
-    quiz,
-    isQuizLoading,
-  });
-
   const handleCategoryClick = (category: string) => {
     console.log(`${category} 카테고리 클릭`);
   };
@@ -97,10 +90,33 @@ export default function HomePage() {
             <>
               <QuizQuestion question={quiz.question} />
 
-      {/* <CategoryGrid
-        categories={CATEGORIES}
-        onCategoryClick={handleCategoryClick}
-      /> */}
+              {!isSolved ? (
+                <QuizForm
+                  onSubmit={handleSubmit}
+                  isSubmitting={submitAnswer.isPending}
+                />
+              ) : (
+                <QuizResult
+                  correctAnswer={quiz.correctAnswer}
+                  explanation={quiz.explanation}
+                />
+              )}
+            </>
+          ) : (
+            <p className="text-center text-gray-500">
+              오늘의 퀴즈를 불러오는데 실패했습니다.
+            </p>
+          )}
+        </QuizCard>
+      </section>
+
+      {/* CATEGORY GRID */}
+      {/* <section className="pb-12">
+        <CategoryGrid
+          categories={CATEGORIES}
+          onCategoryClick={handleCategoryClick}
+        />
+      </section> */}
     </div>
   );
 }
