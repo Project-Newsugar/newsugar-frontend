@@ -19,12 +19,10 @@ const router = createBrowserRouter([
   {
     element: <MainLayout />,
     children: [
-      // { path: '/', element: <HomePage /> },
       // { path: '/categories', element: <CategoriesPage /> },
       // { path: '/category/:categoryName', element: <CategoryDetailPage /> },
       // { path: '/news/:newsId', element: <NewsDetailPage /> },
-      // { path: "/", element: <div>홈페이지 준비중...</div> },
-      { path: "/news", element: <HomePage /> },
+      { path: "/", element: <HomePage /> },
       { path: "/alarm", element: <AlarmListPage /> },
     ],
   },

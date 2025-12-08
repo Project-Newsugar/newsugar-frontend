@@ -39,7 +39,7 @@ function useForm<T>({initialValue, validate}: userFormProps<T>) {
         setErrors(newErrors); // 오류 메세지 업데이트 
     }, [validate, values]);
 
-    return { values, errors, touched, getInputProps };
+    return { values, errors, touched, getInputProps, handleChange };
 }
 
 export default useForm
