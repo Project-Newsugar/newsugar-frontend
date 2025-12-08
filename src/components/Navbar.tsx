@@ -1,51 +1,105 @@
-import { Link } from 'react-router-dom';
-import { CATEGORIES } from '../constants/CategoryData';
-import { getCategorySlug } from '../utils/getCategorySlug';
+import { Link, useLocation } from "react-router-dom";
+import { CATEGORIES } from "../constants/CategoryData";
+import { getCategorySlug } from "../utils/getCategorySlug";
 
 export const Navbar = () => {
+  const location = useLocation();
+
+  // 현재 탭 체크 함수
+  const isActive = (path: string) => location.pathname === path;
+  const currentCategory = location.pathname.split("/")[2]; 
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <nav className="max-w-6xl mx-auto px-8 py-5 flex justify-between items-center">
-        {/* 1. 왼쪽 로고 */}
-        <Link to="/" className="text-2xl font-bold text-blue-600 tracking-tight">
+    <header className="bg-white/90 backdrop-blur border-b border-gray-200 sticky top-0 z-50">
+      <nav className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
+
+        {/* Logo */}
+        <Link
+          to="/"
+          className="text-2xl font-bold text-blue-600 tracking-tight hover:text-blue-700 transition-colors"
+        >
           NewSugar
         </Link>
-        
-        {/* 2. 오른쪽 메뉴 */}
-        <ul className="flex gap-10 items-center">
-          {/* 홈 메뉴 */}
-          <li>
-            <Link to="/" className="text-gray-600 text-sm font-medium hover:text-blue-600 transition-colors">
+
+        {/* Left Menu - 홈, 카테고리 */}
+        <ul className="flex gap-6 items-center text-lg font-medium text-gray-600 relative">
+
+          {/* ==== 홈 ==== */}
+          <li className="relative">
+            <Link
+              to="/"
+              className={`pb-1 transition-colors ${
+                isActive("/") ? "text-blue-600" : "hover:text-blue-600"
+              }`}
+            >
               홈
             </Link>
+
+            {/* Active Indicator */}
+            {isActive("/") && (
+              <div className="absolute left-0 right-0 -bottom-1 h-[2px] bg-blue-600 rounded-full"></div>
+            )}
           </li>
-          
-          {/* 카테고리 메뉴 (드롭다운) */}
+
+          {/* ==== 카테고리 ==== */}
           <li className="relative group">
-            <Link to="/categories" className="text-gray-600 text-sm font-medium hover:text-blue-600 transition-colors">
-              카테고리
-            </Link>
-            {/* 드롭다운 내용 */}
-            <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-            {CATEGORIES.map((category) => (
-                <Link
-                key={category}
-                to={`/category/${getCategorySlug(category)}`}
-                className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors first:rounded-t-lg last:rounded-b-lg"
-                >
-                {category}
-                </Link>
-            ))}
+           <Link
+            to="#"
+            className={`pb-1 transition-colors cursor-pointer ${location.pathname.startsWith("/category") ? "text-blue-600" : "hover:text-blue-600"}`}
+            onClick={(e) => e.preventDefault()}
+          >
+            카테고리
+          </Link>
+
+            {/* Active Indicator */}
+            {location.pathname.startsWith("/category") && (
+              <div className="absolute left-0 right-0 -bottom-1 h-[2px] bg-blue-600 rounded-full"></div>
+            )}
+
+            {/* Dropdown */}
+            <div
+              className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-xl shadow-md border border-gray-100
+                         opacity-0 invisible group-hover:opacity-100 group-hover:visible
+                         transition-all duration-200 transform group-hover:translate-y-1 px-4 py-3 w-max"
+            >
+              <div className="flex gap-3">
+                {CATEGORIES.map((category) => {
+                  const slug = getCategorySlug(category);
+                  const isActive = slug === currentCategory;
+
+                  return (
+                    <Link
+                      key={category}
+                      to={`/category/${slug}`}
+                      className={`
+                        px-4 py-2 rounded-md text-sm whitespace-nowrap transition
+                        ${isActive 
+                          ? "bg-blue-50 text-blue-600 font-semibold border border-blue-200" 
+                          : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                        }
+                      `}
+                    >
+                      {category}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </li>
-          {/* 로그인 버튼 */}
-          <li>
-            <Link to="/login" className="text-gray-600 text-sm font-medium hover:text-blue-600 transition-colors">
-                로그인
-            </Link>
-          </li>
         </ul>
+
+        {/* Right Menu - 마이페이지 프로필 아이콘 */}
+        <Link
+          to="/myPage"
+          className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all object-cover overflow-hidden ${
+            isActive("/myPage")
+              ? "border-blue-600 bg-blue-50"
+              : "border-gray-300 hover:border-blue-600 bg-gray-100"
+          }`}
+          title="마이페이지"
+        >
+          <img src="src/assets/noProfile.png" alt="noProfile" />
+        </Link>
       </nav>
     </header>
   );
