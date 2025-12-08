@@ -5,23 +5,35 @@ import {
   useSubmitQuizAnswer,
 } from "../hooks/useNewsQuery";
 import NewsSummaryCard from "../components/home/NewsSummaryCard";
-// import CategoryGrid from "../components/home/CategoryGrid";
+import CategoryGrid from "../components/home/CategoryGrid";
 import QuizCard from "../components/quiz/QuizCard";
 import QuizQuestion from "../components/quiz/QuizQuestion";
 import QuizForm from "../components/quiz/QuizForm";
 import QuizResult from "../components/quiz/QuizResult";
-// import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+import { CATEGORIES } from "../constants/CategoryData";
+import { getCategorySlug } from "../utils/getCategorySlug";
 
 export default function HomePage() {
   const { data: newsSummary, isLoading } = useNewsSummary();
   const { data: quiz, isLoading: isQuizLoading } = useTodayQuiz();
   const submitAnswer = useSubmitQuizAnswer();
   const [isSolved, setIsSolved] = useState(false);
-  // const navigate = useNavigate();
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const navigate = useNavigate();
 
-  // const handleCategoryClick = (category: string) => {
-  //   console.log(`${category} 카테고리 클릭`);
-  // };
+  const handleCategoryClick = (category: string) => {
+    const slug = getCategorySlug(category);
+    navigate(`/category/${slug}`);
+  };
+
+  const handleToggleFavorite = (category: string) => {
+    setFavorites((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    );
+  };
 
   const handleSubmit = async (answer: string) => {
     if (!quiz) return;
@@ -60,15 +72,33 @@ export default function HomePage() {
         <input
           type="text"
           placeholder="뉴스 검색"
-          className="w-full px-5 py-3 border border-gray-200 rounded-xl 
-                     focus:outline-none focus:border-gray-400 
+          className="w-full px-5 py-3 border border-gray-200 rounded-xl
+                     focus:outline-none focus:border-gray-400
                      shadow-sm transition-colors"
         />
+
+        {/* 즐겨찾기 카테고리 */}
+        {favorites.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {favorites.map((category) => (
+              <button
+                key={category}
+                onClick={() => handleCategoryClick(category)}
+                className="px-4 py-2 rounded-full border bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all text-sm font-medium flex items-center gap-1.5"
+              >
+                <span className="text-base">⭐</span>
+                <span>{category}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* SUMMARY */}
       <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">오늘의 주요 뉴스</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          오늘의 주요 뉴스
+        </h2>
         <NewsSummaryCard
           summary={newsSummary?.summary || ""}
           isLoading={isLoading}
@@ -109,12 +139,14 @@ export default function HomePage() {
       </section>
 
       {/* CATEGORY GRID */}
-      {/* <section className="pb-12">
+      <section className="pb-12">
         <CategoryGrid
           categories={CATEGORIES}
           onCategoryClick={handleCategoryClick}
+          favorites={favorites}
+          onToggleFavorite={handleToggleFavorite}
         />
-      </section> */}
+      </section>
     </div>
   );
 }

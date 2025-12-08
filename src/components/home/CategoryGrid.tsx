@@ -1,11 +1,15 @@
 interface CategoryGridProps {
   categories: string[];
   onCategoryClick: (category: string) => void;
+  favorites: string[];
+  onToggleFavorite: (category: string) => void;
 }
 
 export default function CategoryGrid({
   categories,
   onCategoryClick,
+  favorites,
+  onToggleFavorite,
 }: CategoryGridProps) {
   return (
     <div>
@@ -16,9 +20,18 @@ export default function CategoryGrid({
           <button
             key={category}
             onClick={() => onCategoryClick(category)}
-            className="px-8 py-4 rounded-full border bg-white text-gray-700 border-gray-200 hover:border-gray-300 transition-all text-lg font-medium"
+            className="px-8 py-4 rounded-full border bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all text-lg font-medium flex items-center justify-center gap-2 relative"
           >
-            {category}
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite(category);
+              }}
+              className="cursor-pointer text-2xl hover:scale-110 transition-transform"
+            >
+              {favorites.includes(category) ? "⭐" : "☆"}
+            </span>
+            <span>{category}</span>
           </button>
         ))}
       </div>
