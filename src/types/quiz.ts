@@ -1,8 +1,3 @@
-export interface NewsSummary {
-  summary: string;
-  date: string;
-}
-
 export interface Quiz {
   id: number;
   question: string;

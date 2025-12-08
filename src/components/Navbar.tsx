@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { CATEGORIES } from '../constants/CategoryData';
+import { getCategorySlug } from '../utils/getCategorySlug';
 
 export const Navbar = () => {
   return (
@@ -22,21 +24,21 @@ export const Navbar = () => {
             </Link>
             {/* 드롭다운 메뉴 */}
             <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-              {['정치', '경제', '과학/기술', '스포츠', '문화', '국제'].map((category) => (
+            {CATEGORIES.map((category) => (
                 <Link
-                  key={category}
-                  to={`/category/${category}`}
-                  className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors first:rounded-t-lg last:rounded-b-lg"
+                key={category}
+                to={`/category/${getCategorySlug(category)}`}
+                className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors first:rounded-t-lg last:rounded-b-lg"
                 >
-                  {category}
+                {category}
                 </Link>
-              ))}
+            ))}
             </div>
           </li>
           <li>
-            <button className="text-gray-600 text-sm font-medium hover:text-blue-600 transition-colors">
-              로그인
-            </button>
+            <Link to="/login" className="text-gray-600 text-sm font-medium hover:text-blue-600 transition-colors">
+                로그인
+            </Link>
           </li>
         </ul>
       </nav>
