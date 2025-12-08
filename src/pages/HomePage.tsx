@@ -10,6 +10,7 @@ import QuizCard from "../components/quiz/QuizCard";
 import QuizQuestion from "../components/quiz/QuizQuestion";
 import QuizForm from "../components/quiz/QuizForm";
 import QuizResult from "../components/quiz/QuizResult";
+import { useNavigate } from 'react-router-dom';
 
 const CATEGORIES = ["정치", "경제", "스포츠", "연예", "IT", "선행"];
 
@@ -18,6 +19,7 @@ export default function HomePage() {
   const { data: quiz, isLoading: isQuizLoading } = useTodayQuiz();
   const submitAnswer = useSubmitQuizAnswer();
   const [isSolved, setIsSolved] = useState(false);
+  const navigate = useNavigate();
 
   const handleCategoryClick = (category: string) => {
     console.log(`${category} 카테고리 클릭`);

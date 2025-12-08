@@ -36,9 +36,9 @@ export const Navbar = () => {
             </div>
           </li>
           <li>
-            <button className="text-gray-600 text-sm font-medium hover:text-blue-600 transition-colors">
-              로그인
-            </button>
+            <Link to="/login" className="text-gray-600 text-sm font-medium hover:text-blue-600 transition-colors">
+                로그인
+            </Link>
           </li>
         </ul>
       </nav>
