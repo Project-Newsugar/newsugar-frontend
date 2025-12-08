@@ -7,6 +7,7 @@ import { MainLayout } from './layout/MainLayout';
 import AlarmListPage from './pages/AlarmListPage';
 import HomePage from './pages/HomePage';
 import CategoryPage from './pages/CategoryPage';
+import MyPage from './pages/MyPage';
 
 const router = createBrowserRouter([
   {

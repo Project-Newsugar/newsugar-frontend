@@ -3,7 +3,6 @@ import { CATEGORIES } from '../constants/CategoryData';
 import { getCategorySlug } from '../utils/getCategorySlug';
 
 export const Navbar = () => {
-  const navigate = useNavigate();
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
