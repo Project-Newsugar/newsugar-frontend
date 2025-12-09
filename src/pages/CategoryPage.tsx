@@ -27,7 +27,7 @@ const CategoryPage = () => {
 
   return (
     <div>
-      <main className="max-w-4xl mx-auto px-6 py-8 min-h-screen">
+      <main className="max-w-6xl mx-auto px-6 py-8 min-h-screen">
         <section className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             {selectedCategory}

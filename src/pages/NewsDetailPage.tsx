@@ -45,7 +45,7 @@ const NewsDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="max-w-4xl mx-auto px-6 py-8 relative">
+      <main className="max-w-6xl mx-auto px-6 py-8 relative">
         {/* 상단 버튼 영역 */}
         <div className="flex justify-between items-center mb-6">
           <button

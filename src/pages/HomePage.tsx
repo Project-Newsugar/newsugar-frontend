@@ -7,6 +7,7 @@ import {
 import NewsSummaryCard from "../components/home/NewsSummaryCard";
 import CategoryGrid from "../components/home/CategoryGrid";
 import QuizCard from "../components/quiz/QuizCard";
+import NewsCarousel from "../components/home/NewsCarousel";
 import QuizQuestion from "../components/quiz/QuizQuestion";
 import QuizForm from "../components/quiz/QuizForm";
 import QuizResult from "../components/quiz/QuizResult";
@@ -26,7 +27,7 @@ export default function HomePage() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
-    type: 'correct' | 'incorrect' | null;
+    type: "correct" | "incorrect" | null;
   }>({ isOpen: false, type: null });
   const navigate = useNavigate();
   // const [isLoggedIn] = useAtom(isLoggedInAtom);
@@ -54,10 +55,10 @@ export default function HomePage() {
       });
 
       if (result.isCorrect) {
-        setModalState({ isOpen: true, type: 'correct' });
+        setModalState({ isOpen: true, type: "correct" });
         setIsSolved(true);
       } else {
-        setModalState({ isOpen: true, type: 'incorrect' });
+        setModalState({ isOpen: true, type: "incorrect" });
         resetForm();
       }
     } catch (error) {
@@ -71,16 +72,16 @@ export default function HomePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-14 space-y-16">
+    <div className="max-w-6xl mx-auto px-6 py-14 space-y-16">
       {/* 퀴즈 결과 모달 */}
       <Modal
         isOpen={modalState.isOpen}
         onClose={handleCloseModal}
-        title={modalState.type === 'correct' ? '✓ 정답입니다!' : '✗ 틀렸습니다'}
+        title={modalState.type === "correct" ? "✓ 정답입니다!" : "✗ 틀렸습니다"}
         content={
-          modalState.type === 'correct'
-            ? '축하합니다! 정답을 맞히셨습니다.'
-            : '틀렸습니다. 다시 시도해보세요!'
+          modalState.type === "correct"
+            ? "축하합니다! 정답을 맞히셨습니다."
+            : "틀렸습니다. 다시 시도해보세요!"
         }
         type="alert"
       />
@@ -107,6 +108,11 @@ export default function HomePage() {
         <p className="text-gray-600 text-lg">
           AI가 선별하고 요약한 주요 뉴스를 확인하세요
         </p>
+      </section>
+
+      {/* NEWS CAROUSEL */}
+      <section className="mb-8">
+        <NewsCarousel />
       </section>
 
       {/* SEARCH */}

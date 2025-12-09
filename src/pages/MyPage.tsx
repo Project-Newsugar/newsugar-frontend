@@ -117,7 +117,7 @@ const MyPage = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12 min-h-screen pb-24">
+    <div className="max-w-6xl mx-auto px-6 py-12 min-h-screen pb-24">
       {/* 1. 프로필 섹션 */}
       <section className="mb-12">
         <h2 className="text-lg font-bold text-gray-900 mb-4">프로필</h2>
