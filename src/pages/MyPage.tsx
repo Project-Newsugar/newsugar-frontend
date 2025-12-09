@@ -9,7 +9,9 @@ import { FaAward, FaBell, FaLock } from "react-icons/fa";
 import { useState, type ChangeEvent } from "react";
 import clsx from "clsx";
 import { useNavigate } from "react-router-dom"; // 페이지 이동용
-import Modal from "../components/Modal"; // 공
+import Modal from "../components/Modal"; // 공통 모달
+
+
 // 1. 뱃지 마스터 데이터
 const BADGE_MASTER_LIST = [
   { code: "MORNING", name: "갓생러", icon: "☀️", desc: "05~09시 접속" },
