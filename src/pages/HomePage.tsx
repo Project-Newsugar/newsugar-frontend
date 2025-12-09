@@ -13,6 +13,8 @@ import QuizResult from "../components/quiz/QuizResult";
 import { useNavigate } from "react-router-dom";
 import { CATEGORIES } from "../constants/CategoryData";
 import { getCategorySlug } from "../utils/getCategorySlug";
+import { useAtom } from "jotai";
+import { isLoggedInAtom } from "../store/atoms";
 import { FaStar } from "react-icons/fa";
 
 export default function HomePage() {
@@ -22,6 +24,8 @@ export default function HomePage() {
   const [isSolved, setIsSolved] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const navigate = useNavigate();
+  // const [isLoggedIn] = useAtom(isLoggedInAtom);
+  const [isLoggedIn, setIsLoggedIn] = useAtom(isLoggedInAtom);
 
   const handleCategoryClick = (category: string) => {
     const slug = getCategorySlug(category);
@@ -58,6 +62,20 @@ export default function HomePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-14 space-y-16">
+      {/* 임시 로그인 토글 버튼 (개발용) */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          onClick={() => setIsLoggedIn(!isLoggedIn)}
+          className={`px-4 py-2 rounded-lg font-medium shadow-lg transition-colors ${
+            isLoggedIn
+              ? "bg-green-600 text-white hover:bg-green-700"
+              : "bg-gray-600 text-white hover:bg-gray-700"
+          }`}
+        >
+          {isLoggedIn ? "🟢 로그인됨" : "⚪ 로그아웃됨"}
+        </button>
+      </div>
+
       {/* HERO SECTION */}
       <section className="text-center space-y-3">
         <h1 className="text-6xl font-bold text-gray-900">
@@ -106,48 +124,75 @@ export default function HomePage() {
         />
       </section>
 
-      {/* QUIZ */}
-      <section>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">오늘의 퀴즈</h2>
+      {/* QUIZ & CATEGORY - 로그인 필요 영역 */}
+      <div className="relative space-y-16">
+        <div
+          className={
+            isLoggedIn ? "" : "blur-sm pointer-events-none select-none"
+          }
+        >
+          {/* QUIZ */}
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              오늘의 퀴즈
+            </h2>
 
-        <QuizCard>
-          {isQuizLoading ? (
-            <div className="flex justify-center items-center h-24">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : quiz ? (
-            <>
-              <QuizQuestion question={quiz.question} />
+            <QuizCard>
+              {isQuizLoading ? (
+                <div className="flex justify-center items-center h-24">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : quiz ? (
+                <>
+                  <QuizQuestion question={quiz.question} />
 
-              {!isSolved ? (
-                <QuizForm
-                  onSubmit={handleSubmit}
-                  isSubmitting={submitAnswer.isPending}
-                />
+                  {!isSolved ? (
+                    <QuizForm
+                      onSubmit={handleSubmit}
+                      isSubmitting={submitAnswer.isPending}
+                    />
+                  ) : (
+                    <QuizResult
+                      correctAnswer={quiz.correctAnswer}
+                      explanation={quiz.explanation}
+                    />
+                  )}
+                </>
               ) : (
-                <QuizResult
-                  correctAnswer={quiz.correctAnswer}
-                  explanation={quiz.explanation}
-                />
+                <p className="text-center text-gray-500">
+                  오늘의 퀴즈를 불러오는데 실패했습니다.
+                </p>
               )}
-            </>
-          ) : (
-            <p className="text-center text-gray-500">
-              오늘의 퀴즈를 불러오는데 실패했습니다.
-            </p>
-          )}
-        </QuizCard>
-      </section>
+            </QuizCard>
+          </section>
 
-      {/* CATEGORY GRID */}
-      <section className="pb-12">
-        <CategoryGrid
-          categories={CATEGORIES}
-          onCategoryClick={handleCategoryClick}
-          favorites={favorites}
-          onToggleFavorite={handleToggleFavorite}
-        />
-      </section>
+          {/* CATEGORY GRID */}
+          <section className="pb-12">
+            <CategoryGrid
+              categories={CATEGORIES}
+              onCategoryClick={handleCategoryClick}
+              favorites={favorites}
+              onToggleFavorite={handleToggleFavorite}
+            />
+          </section>
+        </div>
+
+        {!isLoggedIn && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-white px-8 py-6 rounded-2xl shadow-lg border border-gray-200 text-center">
+              <p className="text-gray-700 font-semibold mb-3">
+                로그인이 필요한 서비스입니다
+              </p>
+              <button
+                onClick={() => navigate("/login")}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                로그인하기
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
