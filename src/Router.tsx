@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import CategoryPage from './pages/CategoryPage';
 import MyPage from './pages/MyPage';
 import NewsDetailPage from './pages/NewsDetailPage';
+import HelpPage from './pages/HelpPage';
 
 const router = createBrowserRouter([
   {
@@ -25,6 +26,7 @@ const router = createBrowserRouter([
       { path: "/", element: <HomePage /> },
       { path: '/mypage', element: <MyPage /> },
       { path: '/category/:categoryName', element: <CategoryPage /> },
+      { path: '/help', element: <HelpPage /> },
     ],
   },
   {

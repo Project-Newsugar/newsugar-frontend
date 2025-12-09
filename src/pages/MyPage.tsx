@@ -16,7 +16,12 @@ import Modal from "../components/Modal"; // 공통 모달
 const BADGE_MASTER_LIST = [
   { code: "MORNING", name: "갓생러", icon: "☀️", desc: "05~09시 접속" },
   { code: "DIVER", name: "뉴스 다독가", icon: "📚", desc: "3개 카테고리 섭렵" },
-  { code: "PERFECT_SCORE", name: "퀴즈 마스터", icon: "💯", desc: "퀴즈 100점 달성" },
+  {
+    code: "PERFECT_SCORE",
+    name: "퀴즈 마스터",
+    icon: "💯",
+    desc: "퀴즈 100점 달성",
+  },
   { code: "NIGHT_OWL", name: "올빼미", icon: "🦉", desc: "심야 시간 활동" },
 ];
 
@@ -105,11 +110,10 @@ const MyPage = () => {
   const handleConfirmLogout = () => {
     console.log("로그아웃 처리됨");
     // TODO: 토큰 삭제 등 로그아웃 처리 로직 추가
-    
 
     // 모달 닫고 홈페이지로 이동
     setShowLogoutModal(false);
-    navigate("/"); 
+    navigate("/");
   };
 
   return (
@@ -123,7 +127,9 @@ const MyPage = () => {
             <div>
               <div className="space-y-4 mb-6">
                 <div>
-                  <label className="text-xs text-gray-500 mb-2 block">이름</label>
+                  <label className="text-xs text-gray-500 mb-2 block">
+                    이름
+                  </label>
                   <input
                     type="text"
                     name="name"
@@ -133,7 +139,9 @@ const MyPage = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 mb-2 block">닉네임</label>
+                  <label className="text-xs text-gray-500 mb-2 block">
+                    닉네임
+                  </label>
                   <input
                     type="text"
                     name="nickname"
@@ -143,7 +151,9 @@ const MyPage = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 mb-2 block">이메일</label>
+                  <label className="text-xs text-gray-500 mb-2 block">
+                    이메일
+                  </label>
                   <input
                     type="email"
                     name="email"
@@ -153,7 +163,9 @@ const MyPage = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 mb-2 block">휴대전화</label>
+                  <label className="text-xs text-gray-500 mb-2 block">
+                    휴대전화
+                  </label>
                   <input
                     type="tel"
                     name="phone"
@@ -164,10 +176,16 @@ const MyPage = () => {
                 </div>
               </div>
               <div className="flex gap-3">
-                <button onClick={handleSave} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium text-sm">
+                <button
+                  onClick={handleSave}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium text-sm"
+                >
                   <MdCheck size={18} /> 저장
                 </button>
-                <button onClick={handleCancel} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors font-medium text-sm">
+                <button
+                  onClick={handleCancel}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors font-medium text-sm"
+                >
                   <MdClose size={18} /> 취소
                 </button>
               </div>
@@ -177,12 +195,17 @@ const MyPage = () => {
             <div>
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">{user.name}</h3>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    {user.name}
+                  </h3>
                   <p className="text-gray-600 text-xs mt-1">@{user.nickname}</p>
                   <p className="text-gray-500 text-xs mt-1">{user.email}</p>
                   <p className="text-gray-500 text-xs mt-1">{user.phone}</p>
                 </div>
-                <button onClick={handleEditClick} className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors">
+                <button
+                  onClick={handleEditClick}
+                  className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
+                >
                   <MdEdit size={20} />
                 </button>
               </div>
@@ -193,8 +216,14 @@ const MyPage = () => {
                     #{stats.readingStyle}
                   </span>
                   {stats.favoriteCategories.map((cat) => (
-                    <span key={cat.name} className="px-3 py-1 bg-gray-50 text-gray-600 rounded-full text-xs border border-gray-200">
-                      #{cat.name} <span className="text-gray-400 text-[10px] ml-1">({cat.count}회)</span>
+                    <span
+                      key={cat.name}
+                      className="px-3 py-1 bg-gray-50 text-gray-600 rounded-full text-xs border border-gray-200"
+                    >
+                      #{cat.name}{" "}
+                      <span className="text-gray-400 text-[10px] ml-1">
+                        ({cat.count}회)
+                      </span>
                     </span>
                   ))}
                 </div>
@@ -213,21 +242,33 @@ const MyPage = () => {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <MdOutlineTrendingUp className="text-blue-600" size={20} />
-                <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-1 rounded">퀴즈 진행 상황</span>
+                <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-1 rounded">
+                  퀴즈 진행 상황
+                </span>
               </div>
               <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-3xl font-bold text-gray-900">{stats.totalScore}</span>
+                <span className="text-3xl font-bold text-gray-900">
+                  {stats.totalScore}
+                </span>
                 <span className="text-xs text-gray-500">점 (누적)</span>
               </div>
               <p className="text-gray-500 text-xs mt-1">
-                총 해결한 퀴즈: <span className="font-semibold text-gray-900">{stats.solvedCount}개</span>
+                총 해결한 퀴즈:{" "}
+                <span className="font-semibold text-gray-900">
+                  {stats.solvedCount}개
+                </span>
               </p>
             </div>
             <div className="mt-6">
-              <p className="text-gray-400 text-[10px] mb-2 text-right">최근 7일 정답률</p>
+              <p className="text-gray-400 text-[10px] mb-2 text-right">
+                최근 7일 정답률
+              </p>
               <div className="flex justify-between items-end h-24 border-b border-gray-100 pb-1">
                 {weeklyActivity.map((day, idx) => (
-                  <div key={idx} className="flex flex-col items-center gap-1 group w-full mx-1">
+                  <div
+                    key={idx}
+                    className="flex flex-col items-center gap-1 group w-full mx-1"
+                  >
                     <div className="relative w-full bg-gray-100 rounded-t-sm h-full flex items-end overflow-hidden">
                       <div
                         style={{ height: `${day.solved ? day.score : 0}%` }}
@@ -238,7 +279,9 @@ const MyPage = () => {
                         )}
                       />
                     </div>
-                    <span className="text-[10px] text-gray-400 font-medium">{day.day}</span>
+                    <span className="text-[10px] text-gray-400 font-medium">
+                      {day.day}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -257,13 +300,39 @@ const MyPage = () => {
               {BADGE_MASTER_LIST.map((badge) => {
                 const isAcquired = myBadgeCodes.includes(badge.code);
                 return (
-                  <div key={badge.code} className={clsx("flex items-center gap-3 p-3 rounded-xl border transition-all", isAcquired ? "bg-white border-blue-100 shadow-sm" : "bg-gray-50 border-dashed border-gray-200 opacity-60")}>
-                    <div className={clsx("w-10 h-10 flex items-center justify-center rounded-full text-xl shrink-0", isAcquired ? "bg-blue-50" : "bg-gray-100")}>
-                      {isAcquired ? badge.icon : <FaLock size={14} className="text-gray-400" />}
+                  <div
+                    key={badge.code}
+                    className={clsx(
+                      "flex items-center gap-3 p-3 rounded-xl border transition-all",
+                      isAcquired
+                        ? "bg-white border-blue-100 shadow-sm"
+                        : "bg-gray-50 border-dashed border-gray-200 opacity-60"
+                    )}
+                  >
+                    <div
+                      className={clsx(
+                        "w-10 h-10 flex items-center justify-center rounded-full text-xl shrink-0",
+                        isAcquired ? "bg-blue-50" : "bg-gray-100"
+                      )}
+                    >
+                      {isAcquired ? (
+                        badge.icon
+                      ) : (
+                        <FaLock size={14} className="text-gray-400" />
+                      )}
                     </div>
                     <div className="min-w-0">
-                      <p className={clsx("text-sm font-bold truncate", isAcquired ? "text-gray-900" : "text-gray-500")}>{badge.name}</p>
-                      <p className="text-[10px] text-gray-400 leading-tight mt-0.5 truncate">{badge.desc}</p>
+                      <p
+                        className={clsx(
+                          "text-sm font-bold truncate",
+                          isAcquired ? "text-gray-900" : "text-gray-500"
+                        )}
+                      >
+                        {badge.name}
+                      </p>
+                      <p className="text-[10px] text-gray-400 leading-tight mt-0.5 truncate">
+                        {badge.desc}
+                      </p>
                     </div>
                   </div>
                 );
@@ -279,21 +348,37 @@ const MyPage = () => {
         <div className="space-y-3">
           {recentActivity.length > 0 ? (
             recentActivity.map((activity, idx) => (
-              <div key={idx} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:border-blue-400 transition-colors cursor-pointer">
+              <div
+                key={idx}
+                className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:border-blue-400 transition-colors cursor-pointer"
+              >
                 <div>
-                  <h4 className="text-sm font-bold text-gray-900 mb-1">{activity.quiz}</h4>
+                  <h4 className="text-sm font-bold text-gray-900 mb-1">
+                    {activity.quiz}
+                  </h4>
                   <div className="flex gap-2 text-xs text-gray-500">
-                    <span>{activity.date}</span><span>·</span><span>퀴즈 참여</span>
+                    <span>{activity.date}</span>
+                    <span>·</span>
+                    <span>퀴즈 참여</span>
                   </div>
                 </div>
-                <span className={clsx("text-xs font-bold px-3 py-1.5 rounded-full", activity.result === "정답" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
+                <span
+                  className={clsx(
+                    "text-xs font-bold px-3 py-1.5 rounded-full",
+                    activity.result === "정답"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  )}
+                >
                   {activity.result}
                 </span>
               </div>
             ))
           ) : (
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
-              <p className="text-gray-500 text-sm">최근 활동 내역이 없습니다.</p>
+              <p className="text-gray-500 text-sm">
+                최근 활동 내역이 없습니다.
+              </p>
             </div>
           )}
         </div>
@@ -306,8 +391,18 @@ const MyPage = () => {
             <FaBell size={20} className="text-gray-600" />
             <span className="text-gray-900 font-medium">알림 설정</span>
           </div>
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          <svg
+            className="w-5 h-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         </button>
 

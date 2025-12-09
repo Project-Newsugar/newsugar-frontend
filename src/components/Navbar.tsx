@@ -6,12 +6,11 @@ export const Navbar = () => {
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
-  const currentCategory = location.pathname.split("/")[2]; 
+  const currentCategory = location.pathname.split("/")[2];
 
   return (
     <header className="bg-white/90 backdrop-blur border-b border-gray-200 sticky top-0 z-50">
       <nav className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-
         <Link
           to="/"
           className="text-2xl font-bold text-blue-600 tracking-tight hover:text-blue-700 transition-colors"
@@ -20,7 +19,6 @@ export const Navbar = () => {
         </Link>
 
         <ul className="flex gap-6 items-center text-lg font-medium text-gray-600 relative">
-
           <li className="relative">
             <Link
               to="/"
@@ -37,13 +35,17 @@ export const Navbar = () => {
           </li>
 
           <li className="relative group">
-           <Link
-            to="#"
-            className={`pb-1 transition-colors cursor-pointer ${location.pathname.startsWith("/category") ? "text-blue-600" : "hover:text-blue-600"}`}
-            onClick={(e) => e.preventDefault()}
-          >
-            카테고리
-          </Link>
+            <Link
+              to="#"
+              className={`pb-1 transition-colors cursor-pointer ${
+                location.pathname.startsWith("/category")
+                  ? "text-blue-600"
+                  : "hover:text-blue-600"
+              }`}
+              onClick={(e) => e.preventDefault()}
+            >
+              카테고리
+            </Link>
 
             {location.pathname.startsWith("/category") && (
               <div className="absolute left-0 right-0 -bottom-1 h-[2px] bg-blue-600 rounded-full"></div>
@@ -65,9 +67,10 @@ export const Navbar = () => {
                       to={`/category/${slug}`}
                       className={`
                         px-4 py-2 rounded-md text-sm whitespace-nowrap transition
-                        ${isActive 
-                          ? "bg-blue-50 text-blue-600 font-semibold border border-blue-200" 
-                          : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                        ${
+                          isActive
+                            ? "bg-blue-50 text-blue-600 font-semibold border border-blue-200"
+                            : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
                         }
                       `}
                     >
@@ -77,6 +80,21 @@ export const Navbar = () => {
                 })}
               </div>
             </div>
+          </li>
+
+          <li className="relative">
+            <Link
+              to="/help"
+              className={`pb-1 transition-colors ${
+                isActive("/help") ? "text-blue-600" : "hover:text-blue-600"
+              }`}
+            >
+              도움말
+            </Link>
+
+            {isActive("/help") && (
+              <div className="absolute left-0 right-0 -bottom-1 h-[2px] bg-blue-600 rounded-full"></div>
+            )}
           </li>
         </ul>
 
