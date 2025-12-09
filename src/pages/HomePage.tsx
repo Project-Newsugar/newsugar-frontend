@@ -10,6 +10,7 @@ import QuizCard from "../components/quiz/QuizCard";
 import QuizQuestion from "../components/quiz/QuizQuestion";
 import QuizForm from "../components/quiz/QuizForm";
 import QuizResult from "../components/quiz/QuizResult";
+import Modal from "../components/Modal";
 import { useNavigate } from "react-router-dom";
 import { CATEGORIES } from "../constants/CategoryData";
 import { getCategorySlug } from "../utils/getCategorySlug";
@@ -23,6 +24,10 @@ export default function HomePage() {
   const submitAnswer = useSubmitQuizAnswer();
   const [isSolved, setIsSolved] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    type: 'correct' | 'incorrect' | null;
+  }>({ isOpen: false, type: null });
   const navigate = useNavigate();
   // const [isLoggedIn] = useAtom(isLoggedInAtom);
   const [isLoggedIn, setIsLoggedIn] = useAtom(isLoggedInAtom);
@@ -49,10 +54,10 @@ export default function HomePage() {
       });
 
       if (result.isCorrect) {
-        alert("정답입니다!");
+        setModalState({ isOpen: true, type: 'correct' });
         setIsSolved(true);
       } else {
-        alert("틀렸습니다. 다시 시도해보세요!");
+        setModalState({ isOpen: true, type: 'incorrect' });
         resetForm();
       }
     } catch (error) {
@@ -61,8 +66,25 @@ export default function HomePage() {
     }
   };
 
+  const handleCloseModal = () => {
+    setModalState({ isOpen: false, type: null });
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-6 py-14 space-y-16">
+      {/* 퀴즈 결과 모달 */}
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={handleCloseModal}
+        title={modalState.type === 'correct' ? '✓ 정답입니다!' : '✗ 틀렸습니다'}
+        content={
+          modalState.type === 'correct'
+            ? '축하합니다! 정답을 맞히셨습니다.'
+            : '틀렸습니다. 다시 시도해보세요!'
+        }
+        type="alert"
+      />
+
       {/* 임시 로그인 토글 버튼 (개발용) */}
       <div className="fixed top-4 right-4 z-50">
         <button
