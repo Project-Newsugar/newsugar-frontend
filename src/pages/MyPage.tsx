@@ -9,11 +9,8 @@ import { FaAward, FaBell, FaLock } from "react-icons/fa";
 import { useState, type ChangeEvent } from "react";
 import clsx from "clsx";
 import { useNavigate } from "react-router-dom"; // 페이지 이동용
-<<<<<<< HEAD
-import Modal from "../components/Modal"; // 공통 모달 import (경로 확인 필요)
-=======
 import Modal from "../components/Modal"; // 공통 모달
->>>>>>> develop
+
 
 // 1. 뱃지 마스터 데이터
 const BADGE_MASTER_LIST = [
