@@ -225,9 +225,9 @@ export default function HomePage() {
       </section>
 
       {/* AD BANNER */}
-      <div className="-mt-12 mb-2">
+      {/* <div className="-mt-12 mb-2">
         <AdBanner />
-      </div>
+      </div> */}
 
       {/* 뉴스 섹션 */}
       <section>
