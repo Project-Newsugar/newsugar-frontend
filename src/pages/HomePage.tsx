@@ -17,6 +17,7 @@ import { useAtom } from "jotai";
 import { isLoggedInAtom, favoriteCategoriesAtom } from "../store/atoms";
 import { FaStar } from "react-icons/fa";
 import type { NewsItem } from "../types/news";
+import AdBanner from "../components/home/AdBanner";
 
 export default function HomePage() {
   // 현재 시간대 계산 함수 (오전 6시 기준으로 하루가 시작됨)
@@ -222,6 +223,11 @@ export default function HomePage() {
           }
         />
       </section>
+
+      {/* AD BANNER */}
+      <div className="-mt-12 mb-2">
+        <AdBanner />
+      </div>
 
       {/* 뉴스 섹션 */}
       <section>
