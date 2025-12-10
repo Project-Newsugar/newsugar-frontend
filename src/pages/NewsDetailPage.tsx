@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { NEWS_DATA } from '../constants/CategoryData';
-import type { NewsItem } from '../types/news';
-import Modal from '../components/Modal';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { NEWS_DATA } from "../constants/CategoryData";
+import type { NewsItem } from "../types/news";
+import Modal from "../components/Modal";
 
 const NewsDetailPage = () => {
   const { newsId } = useParams<{ newsId: string }>();
@@ -16,13 +16,13 @@ const NewsDetailPage = () => {
 
   useEffect(() => {
     if (showSummaryModal) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
     }
 
     return () => {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
     };
   }, [showSummaryModal]);
 
@@ -31,7 +31,9 @@ const NewsDetailPage = () => {
       <div className="min-h-screen flex items-center justify-center px-6">
         <div className="text-center">
           <div className="text-red-600 text-5xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">뉴스를 찾을 수 없습니다</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            뉴스를 찾을 수 없습니다
+          </h2>
           <button
             onClick={() => navigate(-1)}
             className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition-colors"
@@ -45,7 +47,7 @@ const NewsDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="max-w-4xl mx-auto px-6 py-8 relative">
+      <main className="max-w-6xl mx-auto px-6 py-8 relative">
         {/* 상단 버튼 영역 */}
         <div className="flex justify-between items-center mb-6">
           <button
@@ -90,7 +92,9 @@ const NewsDetailPage = () => {
                 alt={news.title}
                 className="w-full rounded-lg"
               />
-              <p className="text-sm text-gray-500 mt-2 text-center">{news.imageUrl}</p>
+              <p className="text-sm text-gray-500 mt-2 text-center">
+                {news.imageUrl}
+              </p>
             </div>
           )}
 
@@ -120,14 +124,14 @@ const NewsDetailPage = () => {
               </a>
             </div>
           )}
-                </article>
+        </article>
         {/* 요약 모달 */}
         <Modal
-            isOpen={showSummaryModal}
-            onClose={() => setShowSummaryModal(false)}
-            title="뉴스 요약"
-            content={news.summary || '요약 내용이 없습니다.'}
-            type="alert"
+          isOpen={showSummaryModal}
+          onClose={() => setShowSummaryModal(false)}
+          title="뉴스 요약"
+          content={news.summary || "요약 내용이 없습니다."}
+          type="alert"
         />
       </main>
     </div>

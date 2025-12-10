@@ -6,17 +6,17 @@ import {
 } from "../hooks/useNewsQuery";
 import NewsSummaryCard from "../components/home/NewsSummaryCard";
 import CategoryGrid from "../components/home/CategoryGrid";
-import QuizCard from "../components/quiz/QuizCard";
 import QuizQuestion from "../components/quiz/QuizQuestion";
 import QuizForm from "../components/quiz/QuizForm";
 import QuizResult from "../components/quiz/QuizResult";
 import Modal from "../components/Modal";
 import { useNavigate } from "react-router-dom";
-import { CATEGORIES } from "../constants/CategoryData";
+import { CATEGORIES, NEWS_DATA } from "../constants/CategoryData";
 import { getCategorySlug } from "../utils/getCategorySlug";
 import { useAtom } from "jotai";
 import { isLoggedInAtom } from "../store/atoms";
 import { FaStar } from "react-icons/fa";
+import type { NewsItem } from "../types/news";
 
 export default function HomePage() {
   const { data: newsSummary, isLoading } = useNewsSummary();
@@ -26,7 +26,7 @@ export default function HomePage() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
-    type: 'correct' | 'incorrect' | null;
+    type: "correct" | "incorrect" | null;
   }>({ isOpen: false, type: null });
   const navigate = useNavigate();
   // const [isLoggedIn] = useAtom(isLoggedInAtom);
@@ -54,10 +54,10 @@ export default function HomePage() {
       });
 
       if (result.isCorrect) {
-        setModalState({ isOpen: true, type: 'correct' });
+        setModalState({ isOpen: true, type: "correct" });
         setIsSolved(true);
       } else {
-        setModalState({ isOpen: true, type: 'incorrect' });
+        setModalState({ isOpen: true, type: "incorrect" });
         resetForm();
       }
     } catch (error) {
@@ -70,17 +70,29 @@ export default function HomePage() {
     setModalState({ isOpen: false, type: null });
   };
 
+  // 즐겨찾기한 카테고리의 뉴스들 필터링
+  const filteredNews: NewsItem[] =
+    favorites.length > 0
+      ? NEWS_DATA.filter((news) => favorites.includes(news.tags))
+      : [...NEWS_DATA].sort(() => Math.random() - 0.5).slice(0, 5);
+
+  // 즐겨찾기가 2개 이상일 때 뉴스를 랜덤으로 섞기
+  const favoriteNews: NewsItem[] =
+    favorites.length >= 2
+      ? [...filteredNews].sort(() => Math.random() - 0.5)
+      : filteredNews;
+
   return (
-    <div className="max-w-4xl mx-auto px-6 py-14 space-y-16">
+    <div className="max-w-6xl mx-auto px-6 py-14 space-y-16">
       {/* 퀴즈 결과 모달 */}
       <Modal
         isOpen={modalState.isOpen}
         onClose={handleCloseModal}
-        title={modalState.type === 'correct' ? '✓ 정답입니다!' : '✗ 틀렸습니다'}
+        title={modalState.type === "correct" ? "✓ 정답입니다!" : "✗ 틀렸습니다"}
         content={
-          modalState.type === 'correct'
-            ? '축하합니다! 정답을 맞히셨습니다.'
-            : '틀렸습니다. 다시 시도해보세요!'
+          modalState.type === "correct"
+            ? "축하합니다! 정답을 맞히셨습니다."
+            : "틀렸습니다. 다시 시도해보세요!"
         }
         type="alert"
       />
@@ -118,10 +130,57 @@ export default function HomePage() {
                      focus:outline-none focus:border-gray-400
                      shadow-sm transition-colors"
         />
+      </section>
 
-        {/* 즐겨찾기 카테고리 */}
+      {/* SUMMARY & QUIZ */}
+      <section>
+        <NewsSummaryCard
+          summary={newsSummary?.summary || ""}
+          isLoading={isLoading}
+          quizSection={
+            <>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Quiz</h3>
+              {isQuizLoading ? (
+                <div className="flex justify-center items-center h-24">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : quiz ? (
+                <div className="space-y-4">
+                  <QuizQuestion question={quiz.question} />
+
+                  {!isSolved ? (
+                    <QuizForm
+                      onSubmit={handleSubmit}
+                      isSubmitting={submitAnswer.isPending}
+                      isLoggedIn={isLoggedIn}
+                      options={quiz.options}
+                    />
+                  ) : (
+                    <QuizResult
+                      correctAnswer={quiz.correctAnswer}
+                      explanation={quiz.explanation}
+                    />
+                  )}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500">
+                  오늘의 퀴즈를 불러오는데 실패했습니다.
+                </p>
+              )}
+            </>
+          }
+        />
+      </section>
+
+      {/* 뉴스 섹션 */}
+      <section>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          {favorites.length > 0 ? "즐겨찾기 뉴스" : "추천 뉴스"}
+        </h2>
+
+        {/* 즐겨찾기 카테고리 버튼 */}
         {favorites.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mb-6 flex flex-wrap gap-2">
             {favorites.map((category) => (
               <button
                 key={category}
@@ -134,88 +193,48 @@ export default function HomePage() {
             ))}
           </div>
         )}
+
+        {/* 뉴스 리스트 */}
+        <div className="space-y-4">
+          {favoriteNews.length > 0 ? (
+            favoriteNews.map((news) => (
+              <article
+                key={news.id}
+                className="bg-white border border-gray-200 rounded p-6 hover:border-blue-600 hover:shadow-md transition-all cursor-pointer"
+                onClick={() => navigate(`/news/${news.id}`)}
+              >
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                  {news.title}
+                </h4>
+                <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-2">
+                  {news.content}
+                </p>
+                <div className="flex gap-3 text-xs text-gray-500">
+                  <span>{news.date}</span>
+                  <span>·</span>
+                  <span>{news.source}</span>
+                </div>
+              </article>
+            ))
+          ) : (
+            <div className="bg-white border border-gray-200 rounded p-12 text-center">
+              <p className="text-gray-500">
+                뉴스를 불러오는데 실패했습니다.
+              </p>
+            </div>
+          )}
+        </div>
       </section>
 
-      {/* SUMMARY */}
-      <section>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          오늘의 주요 뉴스
-        </h2>
-        <NewsSummaryCard
-          summary={newsSummary?.summary || ""}
-          isLoading={isLoading}
+      {/* CATEGORY GRID */}
+      <section className="mt-12 pb-12">
+        <CategoryGrid
+          categories={CATEGORIES}
+          onCategoryClick={handleCategoryClick}
+          favorites={favorites}
+          onToggleFavorite={handleToggleFavorite}
         />
       </section>
-
-      {/* QUIZ & CATEGORY - 로그인 필요 영역 */}
-      <div className="relative space-y-16">
-        <div
-          className={
-            isLoggedIn ? "" : "blur-sm pointer-events-none select-none"
-          }
-        >
-          {/* QUIZ */}
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              오늘의 퀴즈
-            </h2>
-
-            <QuizCard>
-              {isQuizLoading ? (
-                <div className="flex justify-center items-center h-24">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : quiz ? (
-                <>
-                  <QuizQuestion question={quiz.question} />
-
-                  {!isSolved ? (
-                    <QuizForm
-                      onSubmit={handleSubmit}
-                      isSubmitting={submitAnswer.isPending}
-                    />
-                  ) : (
-                    <QuizResult
-                      correctAnswer={quiz.correctAnswer}
-                      explanation={quiz.explanation}
-                    />
-                  )}
-                </>
-              ) : (
-                <p className="text-center text-gray-500">
-                  오늘의 퀴즈를 불러오는데 실패했습니다.
-                </p>
-              )}
-            </QuizCard>
-          </section>
-
-          {/* CATEGORY GRID */}
-          <section className="mt-12 pb-12">
-            <CategoryGrid
-              categories={CATEGORIES}
-              onCategoryClick={handleCategoryClick}
-              favorites={favorites}
-              onToggleFavorite={handleToggleFavorite}
-            />
-          </section>
-        </div>
-
-        {!isLoggedIn && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-white px-8 py-6 rounded-2xl shadow-lg border border-gray-200 text-center">
-              <p className="text-gray-700 font-semibold mb-3">
-                로그인이 필요한 서비스입니다
-              </p>
-              <button
-                onClick={() => navigate("/login")}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                로그인하기
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

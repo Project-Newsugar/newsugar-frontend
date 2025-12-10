@@ -1,55 +1,77 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 interface QuizFormProps {
   onSubmit: (answer: string, resetForm: () => void) => void;
   isSubmitting?: boolean;
+  isLoggedIn?: boolean;
+  options: string[];
 }
 
-export default function QuizForm({ onSubmit, isSubmitting = false }: QuizFormProps) {
-  const [answer, setAnswer] = useState('');
+export default function QuizForm({
+  onSubmit,
+  isSubmitting = false,
+  isLoggedIn = true,
+  options,
+}: QuizFormProps) {
+  const [selectedAnswer, setSelectedAnswer] = useState("");
 
   const resetForm = () => {
-    setAnswer('');
+    setSelectedAnswer("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(answer.trim(), resetForm);
+    onSubmit(selectedAnswer, resetForm);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div>
-        <label
-          htmlFor="answer"
-          className="block text-sm font-medium text-gray-700 mb-3"
-        >
-          답안 (단답형)
+        <label className="block text-sm font-medium text-gray-400 mb-3">
+          답안 (객관식)
         </label>
-        <input
-          type="text"
-          id="answer"
-          value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          placeholder="정답을 입력하세요"
-          className="w-full px-5 py-4 border border-gray-200 rounded-lg
-                   focus:outline-none focus:border-gray-400
-                   transition-colors"
-          required
-          disabled={isSubmitting}
-        />
+        <div className="space-y-3">
+          {options.map((option, index) => (
+            <label
+              key={index}
+              className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all
+                ${
+                  selectedAnswer === option
+                    ? "border-[#5277F1] bg-blue-50"
+                    : "border-gray-200 hover:border-gray-300"
+                }
+                ${!isLoggedIn || isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <input
+                type="radio"
+                name="answer"
+                value={option}
+                checked={selectedAnswer === option}
+                onChange={(e) => setSelectedAnswer(e.target.value)}
+                disabled={isSubmitting || !isLoggedIn}
+                className="w-4 h-4 text-[#5277F1] focus:ring-[#5277F1]"
+                required
+              />
+              <span className="ml-3 text-gray-900">{option}</span>
+            </label>
+          ))}
+        </div>
       </div>
 
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || !isLoggedIn || !selectedAnswer}
         className="w-full text-white py-3 px-6 rounded-lg
                  disabled:bg-gray-300 disabled:cursor-not-allowed transition-all hover:opacity-90"
         style={{
-          backgroundColor: !isSubmitting ? '#5277F1' : undefined
+          backgroundColor: !isSubmitting && isLoggedIn && selectedAnswer ? "#5277F1" : undefined,
         }}
       >
-        {isSubmitting ? '제출 중...' : '정답 확인'}
+        {!isLoggedIn
+          ? "로그인 시 이용할 수 있습니다"
+          : isSubmitting
+          ? "제출 중..."
+          : "정답 확인"}
       </button>
     </form>
   );

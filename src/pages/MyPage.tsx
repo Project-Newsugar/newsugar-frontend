@@ -11,7 +11,6 @@ import clsx from "clsx";
 import { useNavigate } from "react-router-dom"; // 페이지 이동용
 import Modal from "../components/Modal"; // 공통 모달
 
-
 // 1. 뱃지 마스터 데이터
 const BADGE_MASTER_LIST = [
   { code: "MORNING", name: "갓생러", icon: "☀️", desc: "05~09시 접속" },
@@ -117,7 +116,7 @@ const MyPage = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12 min-h-screen pb-24">
+    <div className="max-w-6xl mx-auto px-6 py-12 min-h-screen pb-24">
       {/* 1. 프로필 섹션 */}
       <section className="mb-12">
         <h2 className="text-lg font-bold text-gray-900 mb-4">프로필</h2>
