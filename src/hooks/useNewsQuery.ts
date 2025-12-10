@@ -2,10 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { newsApi } from '../api/newsApi';
 import type { QuizSubmission } from '../types/news';
 
-export const useNewsSummary = () => {
+export const useNewsSummary = (time?: string) => {
   return useQuery({
-    queryKey: ['newsSummary'],
-    queryFn: newsApi.getNewsSummary,
+    queryKey: ['newsSummary', time],
+    queryFn: () => newsApi.getNewsSummary(time),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
@@ -19,10 +19,10 @@ export const useNewsByCategory = (category: string) => {
   });
 };
 
-export const useTodayQuiz = () => {
+export const useTodayQuiz = (time?: string) => {
   return useQuery({
-    queryKey: ['quiz', 'today'],
-    queryFn: newsApi.getTodayQuiz,
+    queryKey: ['quiz', 'today', time],
+    queryFn: () => newsApi.getTodayQuiz(time),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 };

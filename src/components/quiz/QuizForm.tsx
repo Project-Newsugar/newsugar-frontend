@@ -61,11 +61,10 @@ export default function QuizForm({
       <button
         type="submit"
         disabled={isSubmitting || !isLoggedIn || !selectedAnswer}
-        className="w-full text-white py-3 px-6 rounded-lg
-                 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all hover:opacity-90"
-        style={{
-          backgroundColor: !isSubmitting && isLoggedIn && selectedAnswer ? "#5277F1" : undefined,
-        }}
+        className={`w-full text-white py-3 px-6 rounded-lg transition-all hover:opacity-90
+                 ${!isSubmitting && isLoggedIn && selectedAnswer
+                   ? "bg-blue-500"
+                   : "bg-gray-300 cursor-not-allowed"}`}
       >
         {!isLoggedIn
           ? "로그인 시 이용할 수 있습니다"

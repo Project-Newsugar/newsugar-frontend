@@ -19,8 +19,9 @@ import { FaStar } from "react-icons/fa";
 import type { NewsItem } from "../types/news";
 
 export default function HomePage() {
-  const { data: newsSummary, isLoading } = useNewsSummary();
-  const { data: quiz, isLoading: isQuizLoading } = useTodayQuiz();
+  const [selectedTime, setSelectedTime] = useState<string>("00");
+  const { data: newsSummary, isLoading } = useNewsSummary(selectedTime);
+  const { data: quiz, isLoading: isQuizLoading } = useTodayQuiz(selectedTime);
   const submitAnswer = useSubmitQuizAnswer();
   const [isSolved, setIsSolved] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -32,11 +33,28 @@ export default function HomePage() {
   // const [isLoggedIn] = useAtom(isLoggedInAtom);
   const [isLoggedIn, setIsLoggedIn] = useAtom(isLoggedInAtom);
 
+  /**
+   * 시간대 변경 핸들러
+   * 선택한 시간대의 뉴스와 퀴즈를 불러옴
+   */
+  const handleTimeChange = (time: string) => {
+    setSelectedTime(time);
+    setIsSolved(false); // 시간대 변경 시 퀴즈 풀이 상태 초기화
+  };
+
+  /**
+   * 카테고리 클릭 핸들러
+   * 선택한 카테고리의 상세 페이지로 이동
+   */
   const handleCategoryClick = (category: string) => {
     const slug = getCategorySlug(category);
     navigate(`/category/${slug}`);
   };
 
+  /**
+   * 즐겨찾기 토글 핸들러
+   * 카테고리를 즐겨찾기에 추가하거나 제거
+   */
   const handleToggleFavorite = (category: string) => {
     setFavorites((prev) =>
       prev.includes(category)
@@ -45,6 +63,10 @@ export default function HomePage() {
     );
   };
 
+  /**
+   * 퀴즈 답안 제출 핸들러
+   * 정답 여부에 따라 모달을 표시하고 상태를 업데이트
+   */
   const handleSubmit = async (answer: string, resetForm: () => void) => {
     if (!quiz) return;
     try {
@@ -66,6 +88,10 @@ export default function HomePage() {
     }
   };
 
+  /**
+   * 모달 닫기 핸들러
+   * 퀴즈 결과 모달을 닫음
+   */
   const handleCloseModal = () => {
     setModalState({ isOpen: false, type: null });
   };
@@ -137,6 +163,7 @@ export default function HomePage() {
         <NewsSummaryCard
           summary={newsSummary?.summary || ""}
           isLoading={isLoading}
+          onTimeChange={handleTimeChange}
           quizSection={
             <>
               <h3 className="text-xl font-bold text-gray-900 mb-4">Quiz</h3>
@@ -218,9 +245,7 @@ export default function HomePage() {
             ))
           ) : (
             <div className="bg-white border border-gray-200 rounded p-12 text-center">
-              <p className="text-gray-500">
-                뉴스를 불러오는데 실패했습니다.
-              </p>
+              <p className="text-gray-500">뉴스를 불러오는데 실패했습니다.</p>
             </div>
           )}
         </div>
