@@ -10,7 +10,11 @@ import { useState, type ChangeEvent } from "react";
 import clsx from "clsx";
 import { useNavigate } from "react-router-dom"; // 페이지 이동용
 import Modal from "../components/Modal"; // 공통 모달
-
+import CategoryGrid from "../components/home/CategoryGrid";
+import { CATEGORIES } from "../constants/CategoryData";
+import { getCategorySlug } from "../utils/getCategorySlug";
+import { useAtom } from "jotai";
+import { favoriteCategoriesAtom } from "../store/atoms";
 
 // 1. 뱃지 마스터 데이터
 const BADGE_MASTER_LIST = [
@@ -44,6 +48,9 @@ const MyPage = () => {
 
   // 모달 상태 (로그아웃 확인용)
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // 즐겨찾기 전역 상태
+  const [favorites, setFavorites] = useAtom(favoriteCategoriesAtom);
 
   // 통계 데이터
   const stats = {
@@ -116,8 +123,23 @@ const MyPage = () => {
     navigate("/");
   };
 
+  // 카테고리 클릭 핸들러
+  const handleCategoryClick = (category: string) => {
+    const slug = getCategorySlug(category);
+    navigate(`/category/${slug}`);
+  };
+
+  // 즐겨찾기 토글 핸들러
+  const handleToggleFavorite = (category: string) => {
+    setFavorites((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    );
+  };
+
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12 min-h-screen pb-24">
+    <div className="max-w-6xl mx-auto px-6 py-12 min-h-screen pb-24">
       {/* 1. 프로필 섹션 */}
       <section className="mb-12">
         <h2 className="text-lg font-bold text-gray-900 mb-4">프로필</h2>
@@ -342,7 +364,17 @@ const MyPage = () => {
         </div>
       </section>
 
-      {/* 3. 최근 활동 섹션 (기존 유지) */}
+      {/* 3. 즐겨찾기 설정 섹션 */}
+      <section className="mb-12">
+        <CategoryGrid
+          categories={CATEGORIES}
+          onCategoryClick={handleCategoryClick}
+          favorites={favorites}
+          onToggleFavorite={handleToggleFavorite}
+        />
+      </section>
+
+      {/* 4. 최근 활동 섹션 (기존 유지) */}
       <section className="mb-12">
         <h2 className="text-lg font-bold text-gray-900 mb-4">최근 활동</h2>
         <div className="space-y-3">
@@ -384,7 +416,7 @@ const MyPage = () => {
         </div>
       </section>
 
-      {/* 4. 설정 및 로그아웃 */}
+      {/* 5. 설정 및 로그아웃 */}
       <section className="mb-10 space-y-3">
         <button className="w-full flex items-center justify-between px-6 py-4 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">
           <div className="flex items-center gap-3">

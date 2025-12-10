@@ -10,7 +10,7 @@ import {
 
 export default function HelpPage() {
   return (
-    <div className="max-w-5xl mx-auto px-6 py-12 space-y-16">
+    <div className="max-w-7xl mx-auto px-6 py-12 space-y-16">
       {/* 헤더 */}
       <section className="text-center space-y-4">
         <h1 className="text-5xl font-bold text-gray-900">
