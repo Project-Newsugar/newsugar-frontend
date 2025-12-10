@@ -5,26 +5,35 @@ import {
   useSubmitQuizAnswer,
 } from "../hooks/useNewsQuery";
 import NewsSummaryCard from "../components/home/NewsSummaryCard";
-import CategoryGrid from "../components/home/CategoryGrid";
 import QuizQuestion from "../components/quiz/QuizQuestion";
 import QuizForm from "../components/quiz/QuizForm";
 import QuizResult from "../components/quiz/QuizResult";
+import QuizStatic from "../components/quiz/QuizStatic";
 import Modal from "../components/Modal";
 import { useNavigate } from "react-router-dom";
-import { CATEGORIES, NEWS_DATA } from "../constants/CategoryData";
+import { NEWS_DATA } from "../constants/CategoryData";
 import { getCategorySlug } from "../utils/getCategorySlug";
 import { useAtom } from "jotai";
-import { isLoggedInAtom } from "../store/atoms";
+import { isLoggedInAtom, favoriteCategoriesAtom } from "../store/atoms";
 import { FaStar } from "react-icons/fa";
 import type { NewsItem } from "../types/news";
 
 export default function HomePage() {
-  const [selectedTime, setSelectedTime] = useState<string>("00");
+  // 현재 시간대 계산 함수
+  const getCurrentTimeSlot = (): string => {
+    const hour = new Date().getHours();
+    if (hour >= 0 && hour < 6) return "00";
+    if (hour >= 6 && hour < 12) return "06";
+    if (hour >= 12 && hour < 18) return "12";
+    return "18";
+  };
+
+  const [selectedTime, setSelectedTime] = useState<string>("06");
   const { data: newsSummary, isLoading } = useNewsSummary(selectedTime);
   const { data: quiz, isLoading: isQuizLoading } = useTodayQuiz(selectedTime);
   const submitAnswer = useSubmitQuizAnswer();
   const [isSolved, setIsSolved] = useState(false);
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites] = useAtom(favoriteCategoriesAtom);
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     type: "correct" | "incorrect" | null;
@@ -32,6 +41,12 @@ export default function HomePage() {
   const navigate = useNavigate();
   // const [isLoggedIn] = useAtom(isLoggedInAtom);
   const [isLoggedIn, setIsLoggedIn] = useAtom(isLoggedInAtom);
+
+  // 현재 시간대 확인
+  const currentTimeSlot = getCurrentTimeSlot();
+
+  // 선택한 시간대가 현재 시간대인지 확인
+  const isCurrentTimeSlot = selectedTime === currentTimeSlot;
 
   /**
    * 시간대 변경 핸들러
@@ -49,18 +64,6 @@ export default function HomePage() {
   const handleCategoryClick = (category: string) => {
     const slug = getCategorySlug(category);
     navigate(`/category/${slug}`);
-  };
-
-  /**
-   * 즐겨찾기 토글 핸들러
-   * 카테고리를 즐겨찾기에 추가하거나 제거
-   */
-  const handleToggleFavorite = (category: string) => {
-    setFavorites((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    );
   };
 
   /**
@@ -175,7 +178,23 @@ export default function HomePage() {
                 <div className="space-y-4">
                   <QuizQuestion question={quiz.question} />
 
-                  {!isSolved ? (
+                  {/* 현재 시간대가 아닌 경우 정적으로 표시 */}
+                  {!isCurrentTimeSlot ? (
+                    <div className="space-y-4">
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <p className="text-sm text-gray-600 mb-2">
+                          ⏰ 이 시간대의 퀴즈는 이미 지나갔습니다.
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          정답과 해설만 확인할 수 있습니다.
+                        </p>
+                      </div>
+                      <QuizStatic
+                        correctAnswer={quiz.correctAnswer}
+                        explanation={quiz.explanation}
+                      />
+                    </div>
+                  ) : !isSolved ? (
                     <QuizForm
                       onSubmit={handleSubmit}
                       isSubmitting={submitAnswer.isPending}
@@ -251,15 +270,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CATEGORY GRID */}
-      <section className="mt-12 pb-12">
-        <CategoryGrid
-          categories={CATEGORIES}
-          onCategoryClick={handleCategoryClick}
-          favorites={favorites}
-          onToggleFavorite={handleToggleFavorite}
-        />
-      </section>
     </div>
   );
 }

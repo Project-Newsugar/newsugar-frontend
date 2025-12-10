@@ -11,3 +11,5 @@ export interface QuizData {
 export const currentQuizAtom = atom<QuizData | null>(null);
 
 export const quizSolvedAtom = atom<boolean>(false);
+
+export const favoriteCategoriesAtom = atom<string[]>([]);

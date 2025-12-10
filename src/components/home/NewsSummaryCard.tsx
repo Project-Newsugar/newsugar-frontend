@@ -13,16 +13,29 @@ export default function NewsSummaryCard({
   quizSection,
   onTimeChange,
 }: NewsSummaryCardProps) {
-  const [selectedTime, setSelectedTime] = useState<string>("00");
+  const [selectedTime, setSelectedTime] = useState<string>("06");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
-  const timeOptions = ["00", "06", "12", "18"];
+  const timeOptions = ["06", "12", "18", "24"];
 
   // 현재 시간 기준으로 생성 가능한 시간대인지 확인
   const isTimeAvailable = (time: string): boolean => {
     const now = new Date();
     const currentHour = now.getHours();
     const targetHour = parseInt(time);
+
+    // 24시는 자정(0시) 이후 ~ 다음날 오전 6시 전까지 볼 수 있음
+    if (targetHour === 24) {
+      return currentHour >= 0 && currentHour < 6;
+    }
+
+    // 다른 시간대는 해당 시간 이후부터 다음날 오전 6시 전까지 볼 수 있음
+    // 오전 0~5시: 전날 뉴스들을 볼 수 있음
+    if (currentHour < 6) {
+      return true;
+    }
+
+    // 오전 6시 이후: 해당 시간이 지난 뉴스만 볼 수 있음
     return currentHour >= targetHour;
   };
 
