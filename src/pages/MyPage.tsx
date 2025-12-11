@@ -249,17 +249,23 @@ const MyPage = () => {
     try {
       if (existingCategory) {
         // 이미 즐겨찾기에 있으면 삭제
-        await deleteCategoryMutation.mutateAsync(categoryId);
-        setFavorites((prev) => prev.filter((c) => c.name !== category));
+        const response = await deleteCategoryMutation.mutateAsync(categoryId);
+        if (response.success) {
+          setFavorites((prev) => prev.filter((c) => c.name !== category));
+        } else {
+          throw new Error(response.message || "즐겨찾기 삭제에 실패했습니다.");
+        }
       } else {
         // 없으면 추가
         const response = await addCategoryMutation.mutateAsync(categoryId);
-        // response.data는 UserCategory 타입입니다
-        setFavorites((prev) => [...prev, response.data]);
+        if (response.success && response.data) {
+          setFavorites((prev) => [...prev, response.data]);
+        } else {
+          throw new Error(response.message || "즐겨찾기 추가에 실패했습니다.");
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to toggle favorite:", error);
-      alert("즐겨찾기 설정에 실패했습니다.");
     }
   };
 
