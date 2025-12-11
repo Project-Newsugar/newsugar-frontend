@@ -119,5 +119,6 @@ axiosInstance.interceptors.response.use(
         return axiosInstance.request(originalRequest);
       });
     }
+    return Promise.reject(err);
   }
 );
