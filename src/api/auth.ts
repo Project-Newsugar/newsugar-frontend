@@ -1,6 +1,5 @@
-import { axiosInstance } from './axios';
-import type { LoginForm } from '../schema/login.schema';
-
+import { axiosInstance } from "./axios";
+import type { LoginForm } from "../schema/login.schema";
 
 // 1. 백엔드 공통 응답 타입 정의 (API 명세 기준)
 export interface ApiResponse<T> {
@@ -32,7 +31,7 @@ export interface SignupRequest {
 
 export const registerUser = async (userData: SignupRequest) => {
   const { data } = await axiosInstance.post<ApiResponse<SignupResponseData>>(
-    "/v1/users/signup", 
+    "/v1/users/signup",
     userData
   );
   return data;
@@ -49,12 +48,6 @@ export const checkNickname = async (nickname: string) => {
   const { data } = await axiosInstance.get(
     `/users/check-nickname?nickname=${nickname}`
   );
-  return data;
-};
-
-// 닉네임 중복 체크 (기존 유지)
-export const checkNickname = async (nickname: string) => {
-  const { data } = await axiosInstance.get(`/users/check-nickname?nickname=${nickname}`);
   return data;
 };
 
