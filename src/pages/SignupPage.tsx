@@ -10,34 +10,22 @@ import { registerUser, type SignupRequest } from "../api/auth";
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null); // 서버 에러 메시지 상태
-  const { values, errors, touched, getInputProps, handleChange } =
-    useForm<SignupForm>({
-      // 1. 초기값에 nickname 추가
-      initialValue: {
-        name: "",
-        nickname: "",
-        phone: "",
-        email: "",
-        password: "",
-        passwordCheck: "",
-      },
+  const { values, errors, touched, getInputProps, handleChange } = useForm<SignupForm>({
+    // 1. 초기값에 nickname 추가
+    initialValue: {
+      name: "",
+      nickname: "",
+      phone: "",
+      email: "",
+      password: "",
+      passwordCheck: "",
+    },
 
-      validate: (values) => {
-        const result = signupSchema.safeParse(values);
+    validate: (values) => {
+      const result = signupSchema.safeParse(values);
 
-        if (result.success) {
-          return {
-            email: "",
-            name: "",
-            phone: "",
-            nickname: "",
-            password: "",
-            passwordCheck: "",
-          };
-        }
-
-        // any를 사용하여 타입 에러 방지 (엄격한 타입이 필요하면 Record<...> 사용)
-        const newErrors: any = {
+      if (result.success) {
+        return {
           email: "",
           name: "",
           phone: "",
@@ -45,14 +33,18 @@ const SignupPage: React.FC = () => {
           password: "",
           passwordCheck: "",
         };
+      }
 
-        result.error.issues.forEach((err) => {
-          // path[0]가 항상 존재한다고 가정
-          newErrors[err.path[0]] = err.message;
-        });
-        return newErrors;
-      },
-    });
+      // any를 사용하여 타입 에러 방지 (엄격한 타입이 필요하면 Record<...> 사용)
+      const newErrors: any = { email: "", name: "", phone: "", nickname: "", password: "", passwordCheck: "" };
+      
+      result.error.issues.forEach((err) => {
+        // path[0]가 항상 존재한다고 가정
+        newErrors[err.path[0]] = err.message;
+      });
+      return newErrors;
+    },
+  });
   // 휴대전화 자동 하이픈 핸들러
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "");
@@ -60,10 +52,7 @@ const SignupPage: React.FC = () => {
     if (value.length > 3 && value.length <= 7) {
       formatted = `${value.slice(0, 3)}-${value.slice(3)}`;
     } else if (value.length > 7) {
-      formatted = `${value.slice(0, 3)}-${value.slice(3, 7)}-${value.slice(
-        7,
-        11
-      )}`;
+      formatted = `${value.slice(0, 3)}-${value.slice(3, 7)}-${value.slice(7, 11)}`;
     }
     // useForm의 handleChange를 직접 호출하여 상태 업데이트
     handleChange("phone", formatted);
@@ -89,7 +78,7 @@ const SignupPage: React.FC = () => {
         // 빈 문자열("")이 오면 null로 변환
         phone: values.phone ? values.phone : null,
       };
-
+      
       console.log("📤 서버로 전송:", payload);
 
       // 2. API 호출
@@ -97,16 +86,15 @@ const SignupPage: React.FC = () => {
 
       // 3. 성공/실패 분기
       if (response.success) {
-        alert(
-          `환영합니다, ${response.data.name}님! 회원가입이 완료되었습니다.`
-        );
+        alert(`환영합니다, ${response.data.name}님! 회원가입이 완료되었습니다.`);
         navigate("/login");
       } else {
         throw new Error(response.message || "회원가입에 실패했습니다.");
       }
+
     } catch (error: any) {
       console.error("❌ 회원가입 실패:", error);
-
+      
       let message = "서버와 통신할 수 없습니다.";
 
       if (isAxiosError(error) && error.response) {
@@ -138,6 +126,7 @@ const SignupPage: React.FC = () => {
       </div>
 
       <form className="space-y-5" onSubmit={handleSubmit}>
+        
         {/* 서버 에러 메시지 표시 영역 */}
         {serverError && (
           <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center font-medium">
@@ -147,9 +136,7 @@ const SignupPage: React.FC = () => {
 
         {/* 이름 */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            이름
-          </label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">이름</label>
           <input
             {...getInputProps("name")}
             placeholder="홍길동"
@@ -162,9 +149,7 @@ const SignupPage: React.FC = () => {
 
         {/* 닉네임 */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            닉네임
-          </label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">닉네임</label>
           <input
             {...getInputProps("nickname")}
             placeholder="멋쟁이사자"
@@ -177,9 +162,7 @@ const SignupPage: React.FC = () => {
 
         {/* 휴대전화 */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            휴대전화 번호 (선택)
-          </label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">휴대전화 번호 (선택)</label>
           <input
             {...getInputProps("phone")}
             onChange={handlePhoneChange}
@@ -194,9 +177,7 @@ const SignupPage: React.FC = () => {
 
         {/* 이메일 */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            이메일
-          </label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">이메일</label>
           <input
             {...getInputProps("email")}
             placeholder="you@example.com"
@@ -210,9 +191,7 @@ const SignupPage: React.FC = () => {
 
         {/* 비밀번호 */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            비밀번호
-          </label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">비밀번호</label>
           <input
             {...getInputProps("password")}
             placeholder="8자 이상 입력해주세요"
@@ -226,16 +205,12 @@ const SignupPage: React.FC = () => {
 
         {/* 비밀번호 확인 */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            비밀번호 확인
-          </label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">비밀번호 확인</label>
           <input
             {...getInputProps("passwordCheck")}
             placeholder="비밀번호를 다시 입력해주세요"
             type="password"
-            className={inputClass(
-              !!(touched.passwordCheck && errors.passwordCheck)
-            )}
+            className={inputClass(!!(touched.passwordCheck && errors.passwordCheck))}
           />
           {touched.passwordCheck && errors.passwordCheck && (
             <p className="text-red-500 text-xs mt-1">{errors.passwordCheck}</p>
@@ -251,14 +226,11 @@ const SignupPage: React.FC = () => {
 
         <div className="mt-6 text-center text-sm text-slate-500">
           이미 계정이 있으신가요?{" "}
-          <Link
-            to="/login"
-            className="text-blue-600 font-semibold hover:underline"
-          >
+          <Link to="/login" className="text-blue-600 font-semibold hover:underline">
             로그인
           </Link>
         </div>
-
+        
         <div className="mt-8 text-center">
           <Link
             to="/"
