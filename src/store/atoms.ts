@@ -1,4 +1,5 @@
 import { atom } from 'jotai';
+import type { UserCategory } from '../types/category';
 
 export const isLoggedInAtom = atom<boolean>(false);
 
@@ -12,4 +13,4 @@ export const currentQuizAtom = atom<QuizData | null>(null);
 
 export const quizSolvedAtom = atom<boolean>(false);
 
-export const favoriteCategoriesAtom = atom<string[]>([]);
+export const favoriteCategoriesAtom = atom<UserCategory[]>([]);

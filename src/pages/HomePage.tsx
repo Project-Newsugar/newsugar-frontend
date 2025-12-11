@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
-  useNewsSummary,
-  useTodayQuiz,
+  useAllNews,
+  useQuizById,
   useSubmitQuizAnswer,
 } from "../hooks/useNewsQuery";
 import NewsSummaryCard from "../components/home/NewsSummaryCard";
@@ -11,12 +11,11 @@ import QuizResult from "../components/quiz/QuizResult";
 import QuizStatic from "../components/quiz/QuizStatic";
 import Modal from "../components/Modal";
 import { useNavigate } from "react-router-dom";
-import { NEWS_DATA } from "../constants/CategoryData";
 import { getCategorySlug } from "../utils/getCategorySlug";
 import { useAtom } from "jotai";
 import { isLoggedInAtom, favoriteCategoriesAtom } from "../store/atoms";
 import { FaStar } from "react-icons/fa";
-import type { NewsItem } from "../types/news";
+import type { News } from "../types/news";
 import AdBanner from "../components/home/AdBanner";
 
 export default function HomePage() {
@@ -34,8 +33,37 @@ export default function HomePage() {
   const [selectedTime, setSelectedTime] = useState<string>(
     getCurrentTimeSlot()
   );
-  const { data: newsSummary, isLoading } = useNewsSummary(selectedTime);
-  const { data: quiz, isLoading: isQuizLoading } = useTodayQuiz(selectedTime);
+
+  // 새로운 API 사용: 뉴스 목록을 가져와서 summary로 변환
+  const { data: newsListData, isLoading } = useAllNews(0, 20);
+
+  // 뉴스 목록을 summary 형태로 가공
+  const newsSummary = useMemo(() => {
+    if (!newsListData?.content) return null;
+
+    // 각 뉴스의 summary를 합쳐서 전체 summary로 만들기
+    const summaryText = newsListData.content
+      .map((news, index) => `${index + 1}. ${news.title}\n${news.summary}`)
+      .join('\n\n');
+
+    return {
+      summary: summaryText || "뉴스를 불러오는 중입니다...",
+      date: new Date().toISOString(),
+    };
+  }, [newsListData]);
+
+  // 시간대를 기반으로 퀴즈 ID 계산 (임시: 시간대별로 다른 퀴즈 ID)
+  const quizId = useMemo(() => {
+    const timeToId: { [key: string]: number } = {
+      "06": 1,
+      "12": 2,
+      "18": 3,
+      "24": 4,
+    };
+    return timeToId[selectedTime] || 1;
+  }, [selectedTime]);
+
+  const { data: quiz, isLoading: isQuizLoading } = useQuizById(quizId);
   const submitAnswer = useSubmitQuizAnswer();
   const [isSolved, setIsSolved] = useState(false);
   const [favorites] = useAtom(favoriteCategoriesAtom);
@@ -78,12 +106,15 @@ export default function HomePage() {
   const handleSubmit = async (answer: string, resetForm: () => void) => {
     if (!quiz) return;
     try {
+      // 새 API 형식에 맞게 변환
       const result = await submitAnswer.mutateAsync({
-        quizId: quiz.id,
-        userAnswer: answer,
+        quiz_id: quiz.data.id,
+        user_id: 1, // TODO: 실제 로그인 사용자 ID 사용
+        user_answer: parseInt(answer), // string을 number로 변환
       });
 
-      if (result.isCorrect) {
+      // SubmitQuizAnswerResponse의 is_correct 확인
+      if (result.data.is_correct) {
         setModalState({ isOpen: true, type: "correct" });
         setIsSolved(true);
       } else {
@@ -104,17 +135,29 @@ export default function HomePage() {
     setModalState({ isOpen: false, type: null });
   };
 
-  // 즐겨찾기한 카테고리의 뉴스들 필터링
-  const filteredNews: NewsItem[] =
-    favorites.length > 0
-      ? NEWS_DATA.filter((news) => favorites.includes(news.tags))
-      : [...NEWS_DATA].sort(() => Math.random() - 0.5).slice(0, 5);
+  // 즐겨찾기한 카테고리의 뉴스들 필터링 (실제 API 데이터 사용)
+  const filteredNews: News[] = useMemo(() => {
+    if (!newsListData?.content) return [];
+
+    if (favorites.length > 0) {
+      // UserCategory 객체 배열에서 name 필드를 추출하여 비교
+      const favoriteCategoryNames = favorites.map((fav) => fav.name);
+      return newsListData.content.filter((news) =>
+        favoriteCategoryNames.includes(news.category)
+      );
+    }
+
+    // 즐겨찾기가 없으면 최신 뉴스 5개 표시
+    return newsListData.content.slice(0, 5);
+  }, [newsListData, favorites]);
 
   // 즐겨찾기가 2개 이상일 때 뉴스를 랜덤으로 섞기
-  const favoriteNews: NewsItem[] =
-    favorites.length >= 2
-      ? [...filteredNews].sort(() => Math.random() - 0.5)
-      : filteredNews;
+  const favoriteNews: News[] = useMemo(() => {
+    if (favorites.length >= 2) {
+      return [...filteredNews].sort(() => Math.random() - 0.5);
+    }
+    return filteredNews;
+  }, [filteredNews, favorites]);
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-14 space-y-16">
@@ -180,9 +223,9 @@ export default function HomePage() {
                 <div className="flex justify-center items-center h-24">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
-              ) : quiz ? (
+              ) : quiz?.data ? (
                 <div className="space-y-4">
-                  <QuizQuestion question={quiz.question} />
+                  <QuizQuestion question={quiz.data.question} />
 
                   {/* 현재 시간대가 아닌 경우 정적으로 표시 */}
                   {!isCurrentTimeSlot ? (
@@ -196,8 +239,8 @@ export default function HomePage() {
                         </p>
                       </div>
                       <QuizStatic
-                        correctAnswer={quiz.correctAnswer}
-                        explanation={quiz.explanation}
+                        correctAnswer={quiz.data.correct_answer}
+                        isRevealed={quiz.data.is_revealed}
                       />
                     </div>
                   ) : !isSolved ? (
@@ -205,12 +248,11 @@ export default function HomePage() {
                       onSubmit={handleSubmit}
                       isSubmitting={submitAnswer.isPending}
                       isLoggedIn={isLoggedIn}
-                      options={quiz.options}
                     />
                   ) : (
                     <QuizResult
-                      correctAnswer={quiz.correctAnswer}
-                      explanation={quiz.explanation}
+                      correctAnswer={quiz.data.correct_answer}
+                      isRevealed={quiz.data.is_revealed}
                     />
                   )}
                 </div>
@@ -240,12 +282,12 @@ export default function HomePage() {
           <div className="mb-6 flex flex-wrap gap-2">
             {favorites.map((category) => (
               <button
-                key={category}
-                onClick={() => handleCategoryClick(category)}
+                key={category.id}
+                onClick={() => handleCategoryClick(category.name)}
                 className="px-4 py-2 rounded-full border bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all font-medium flex items-center gap-1.5"
               >
                 <FaStar className="text-yellow-400" />
-                <span>{category}</span>
+                <span>{category.name}</span>
               </button>
             ))}
           </div>
@@ -264,12 +306,12 @@ export default function HomePage() {
                   {news.title}
                 </h4>
                 <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-2">
-                  {news.content}
+                  {news.summary}
                 </p>
                 <div className="flex gap-3 text-xs text-gray-500">
-                  <span>{news.date}</span>
+                  <span>{new Date(news.publishedAt).toLocaleDateString()}</span>
                   <span>·</span>
-                  <span>{news.source}</span>
+                  <span>{news.category}</span>
                 </div>
               </article>
             ))

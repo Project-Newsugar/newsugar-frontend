@@ -1,9 +1,10 @@
 import { FaRegStar, FaStar } from "react-icons/fa";
+import type { UserCategory } from "../../types/category";
 
 interface CategoryGridProps {
   categories: string[];
   onCategoryClick: (category: string) => void;
-  favorites: string[];
+  favorites: UserCategory[];
   onToggleFavorite: (category: string) => void;
 }
 
@@ -31,7 +32,7 @@ export default function CategoryGrid({
               }}
               className="cursor-pointer text-xl hover:scale-110 transition-transform text-yellow-400"
             >
-              {favorites.includes(category) ? <FaStar /> : <FaRegStar />}
+              {favorites.some(fav => fav.name === category) ? <FaStar /> : <FaRegStar />}
             </span>
             <span>{category}</span>
           </button>

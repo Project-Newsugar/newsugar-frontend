@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { CATEGORY_SUMMARIES, NEWS_DATA } from "../constants/CategoryData";
-import type { CategoryType, NewsItem } from "../types/news";
+import type { LocalNewsItem } from "../types/news";
 import { useNavigate, useParams } from "react-router-dom";
 import { getCategoryName } from "../utils/getCategorySlug";
 
@@ -8,22 +8,20 @@ const CategoryPage = () => {
   const { categoryName: categorySlug } = useParams<{ categoryName: string }>();
   const navigate = useNavigate();
 
-  const initialCategory = getCategoryName(
-    categorySlug || "economy"
-  ) as CategoryType;
+  const initialCategory = getCategoryName(categorySlug || "economy");
 
-  const [selectedCategory, setSelectedCategory] = useState<CategoryType>(
+  const [selectedCategory, setSelectedCategory] = useState<string>(
     initialCategory || "경제"
   );
 
   useEffect(() => {
     if (categorySlug) {
-      const converted = getCategoryName(categorySlug) as CategoryType;
+      const converted = getCategoryName(categorySlug);
       if (converted) setSelectedCategory(converted);
     }
   }, [categorySlug]);
 
-  const currentNews: NewsItem[] = NEWS_DATA.filter(
+  const currentNews: LocalNewsItem[] = NEWS_DATA.filter(
     (news) => news.tags === selectedCategory
   );
 
@@ -50,7 +48,7 @@ const CategoryPage = () => {
           <h3 className="text-xl font-bold text-gray-900 mb-4">관련 뉴스</h3>
           <div className="space-y-4">
             {currentNews.length > 0 ? (
-              currentNews.map((news: NewsItem) => (
+              currentNews.map((news: LocalNewsItem) => (
                 <article
                   key={news.id}
                   className="bg-white border border-gray-200 rounded p-6 hover:border-blue-600 hover:shadow-md transition-all cursor-pointer"

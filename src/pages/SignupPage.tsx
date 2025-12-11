@@ -232,8 +232,8 @@ const SignupPage: React.FC = () => {
         </div>
         
         <div className="mt-8 text-center">
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="text-xs text-slate-400 hover:text-slate-600 transition-colors border-b border-transparent hover:border-slate-400 pb-0.5"
           >
             홈으로 돌아가기

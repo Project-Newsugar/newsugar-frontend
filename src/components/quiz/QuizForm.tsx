@@ -4,16 +4,17 @@ interface QuizFormProps {
   onSubmit: (answer: string, resetForm: () => void) => void;
   isSubmitting?: boolean;
   isLoggedIn?: boolean;
-  options: string[];
 }
 
 export default function QuizForm({
   onSubmit,
   isSubmitting = false,
   isLoggedIn = true,
-  options,
 }: QuizFormProps) {
   const [selectedAnswer, setSelectedAnswer] = useState("");
+
+  // 고정된 선택지 (1~4번)
+  const options = ["1", "2", "3", "4"];
 
   const resetForm = () => {
     setSelectedAnswer("");
@@ -52,7 +53,7 @@ export default function QuizForm({
                 className="w-4 h-4 text-[#5277F1] focus:ring-[#5277F1]"
                 required
               />
-              <span className="ml-3 text-gray-900">{option}</span>
+              <span className="ml-3 text-gray-900">{option}번</span>
             </label>
           ))}
         </div>

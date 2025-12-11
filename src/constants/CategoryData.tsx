@@ -1,8 +1,8 @@
-import type { CategoryType, NewsItem } from '../types/news';
+import type { LocalNewsItem } from '../types/news';
 
-export const CATEGORIES: CategoryType[] = ['정치', '경제', '과학/기술', '스포츠', '문화', '국제'];
+export const CATEGORIES = ['정치', '경제', '과학/기술', '스포츠', '문화', '국제'] as const;
 
-export const CATEGORY_SUMMARIES: Record<CategoryType, string> = {
+export const CATEGORY_SUMMARIES: Record<string, string> = {
   '경제': '경제 분야 주요 소식입니다. 글로벌 경제가 예상을 뛰어넘는 회복세를 보이고 있으며, 소비자 신뢰지수가 크게 상승했습니다. 기업들의 투자도 증가세를 보이며 올해 경제 성장률이 당초 전망치를 상회할 것으로 예측됩니다.',
   '과학/기술': '과학/기술 분야의 혁신이 계속되고 있습니다. 국내 연구진이 개발한 차세대 AI 알고리즘이 기존 대비 획기적인 성능 개선을 이루며 업계의 주목을 받고 있습니다. 에너지 효율성 개선으로 실용화 가능성도 크게 높아졌습니다.',
   '스포츠': '스포츠 분야에서 흥미진진한 경기들이 펼쳐지고 있습니다. 프리미어리그에서는 극적인 역전승이 나오며 우승 경쟁이 더욱 치열해지고 있으며, 국내외 주요 리그에서도 예측 불가능한 명승부가 이어지고 있습니다.',
@@ -11,7 +11,7 @@ export const CATEGORY_SUMMARIES: Record<CategoryType, string> = {
   '국제': '국제 무대의 주요 소식입니다. 주요국들 간의 외교 회담이 진행되며 국제 협력 강화 방안이 논의되고 있습니다.'
 };
 
-export const NEWS_DATA: NewsItem[] = [
+export const NEWS_DATA: LocalNewsItem[] = [
   {
     id: 1,
     title: '국회 예산안 처리 막바지 협상',

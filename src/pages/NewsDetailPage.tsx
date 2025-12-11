@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { NEWS_DATA } from "../constants/CategoryData";
-import type { NewsItem } from "../types/news";
+import type { LocalNewsItem } from "../types/news";
 import Modal from "../components/Modal";
 
 const NewsDetailPage = () => {
   const { newsId } = useParams<{ newsId: string }>();
   const navigate = useNavigate();
 
-  const news: NewsItem | undefined = NEWS_DATA.find(
+  const news: LocalNewsItem | undefined = NEWS_DATA.find(
     (item) => item.id === Number(newsId)
   );
 

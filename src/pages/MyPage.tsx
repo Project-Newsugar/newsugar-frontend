@@ -5,8 +5,8 @@ import {
   MdClose,
   MdCheck,
 } from "react-icons/md";
-import { FaAward, FaBell, FaLock } from "react-icons/fa";
-import { useState, type ChangeEvent } from "react";
+import { FaBell, FaLock } from "react-icons/fa";
+import { useState, type ChangeEvent, useEffect } from "react";
 import clsx from "clsx";
 import { useNavigate } from "react-router-dom"; // 페이지 이동용
 import Modal from "../components/Modal"; // 공통 모달
@@ -15,6 +15,8 @@ import { CATEGORIES } from "../constants/CategoryData";
 import { getCategorySlug } from "../utils/getCategorySlug";
 import { useAtom } from "jotai";
 import { favoriteCategoriesAtom } from "../store/atoms";
+import { useAddCategory, useDeleteCategory } from "../hooks/useCategoryQuery";
+import { updateUserProfile, getMyProfile } from "../api/auth";
 
 // 1. 뱃지 마스터 데이터
 const BADGE_MASTER_LIST = [
@@ -31,6 +33,18 @@ const BADGE_MASTER_LIST = [
 
 type BadgeCode = (typeof BADGE_MASTER_LIST)[number]["code"];
 
+// 카테고리 한글명 -> ID 매핑 (백엔드 DB 기준)
+// ⚠️ 주의: 이 ID는 백엔드 DB의 실제 카테고리 ID와 일치해야 합니다
+// 백엔드 API 응답을 확인하여 정확한 ID를 설정하세요
+const CATEGORY_ID_MAP: Record<string, number> = {
+  "정치": 1,
+  "경제": 2,
+  "과학/기술": 3,
+  "스포츠": 4,
+  "문화": 5,
+  "국제": 6,
+};
+
 const MyPage = () => {
   const navigate = useNavigate();
 
@@ -39,18 +53,51 @@ const MyPage = () => {
     name: "홍길동",
     nickname: "멋쟁이사자",
     email: "test@example.com",
-    phone: "010-1234-5678",
+    phone: "010-1234-5678" as string | null,
   });
+
+  // 유저 정보 불러오기
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const response = await getMyProfile();
+        if (response.success) {
+          setUser({
+            name: response.data.name,
+            nickname: response.data.nickname,
+            email: response.data.email,
+            phone: response.data.phone,
+          });
+        }
+      } catch (error: any) {
+        console.error("유저 정보 불러오기 실패:", error);
+        // 에러 처리 - 인증 오류 시 로그인 페이지로 리다이렉트
+        if (error.response?.status === 401) {
+          alert("로그인이 필요합니다.");
+          navigate("/login");
+        }
+      }
+    };
+
+    fetchUserInfo();
+  }, [navigate]);
 
   // 편집 모드 상태
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState(user);
+  const [editForm, setEditForm] = useState({
+    ...user,
+    password: "", // 비밀번호 변경용 필드
+  });
 
   // 모달 상태 (로그아웃 확인용)
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // 즐겨찾기 전역 상태
   const [favorites, setFavorites] = useAtom(favoriteCategoriesAtom);
+
+  // 카테고리 API 훅
+  const addCategoryMutation = useAddCategory();
+  const deleteCategoryMutation = useDeleteCategory();
 
   // 통계 데이터
   const stats = {
@@ -86,18 +133,58 @@ const MyPage = () => {
 
   const handleEditClick = () => {
     setIsEditing(true);
-    setEditForm(user);
+    setEditForm({
+      ...user,
+      password: "", // 편집 모드 진입 시 비밀번호 필드 초기화
+    });
   };
 
-  const handleSave = () => {
-    // TODO: 백엔드 PATCH API 호출
-    setUser(editForm);
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      // API 호출 데이터 준비
+      const updateData: any = {
+        name: editForm.name,
+        nickname: editForm.nickname,
+        phone: editForm.phone || "",
+      };
+
+      // 비밀번호가 입력된 경우에만 추가
+      if (editForm.password) {
+        updateData.password = editForm.password;
+      }
+
+      // API 호출
+      const response = await updateUserProfile(updateData);
+
+      if (response.success) {
+        // 성공 시 사용자 정보 업데이트 (password 제외)
+        setUser({
+          name: response.data.name,
+          nickname: response.data.nickname,
+          email: response.data.email,
+          phone: response.data.phone,
+        });
+        setIsEditing(false);
+        alert("프로필이 성공적으로 수정되었습니다.");
+      }
+    } catch (error: any) {
+      console.error("프로필 수정 실패:", error);
+
+      // 에러 메시지 처리
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        alert("프로필 수정에 실패했습니다. 다시 시도해주세요.");
+      }
+    }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    setEditForm(user);
+    setEditForm({
+      ...user,
+      password: "",
+    });
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -105,6 +192,24 @@ const MyPage = () => {
     setEditForm((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  // 전화번호 자동 포맷팅 핸들러
+  const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, "");
+    let formatted = value;
+    if (value.length > 3 && value.length <= 7) {
+      formatted = `${value.slice(0, 3)}-${value.slice(3)}`;
+    } else if (value.length > 7) {
+      formatted = `${value.slice(0, 3)}-${value.slice(3, 7)}-${value.slice(
+        7,
+        11
+      )}`;
+    }
+    setEditForm((prev) => ({
+      ...prev,
+      phone: formatted,
     }));
   };
 
@@ -130,12 +235,32 @@ const MyPage = () => {
   };
 
   // 즐겨찾기 토글 핸들러
-  const handleToggleFavorite = (category: string) => {
-    setFavorites((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    );
+  const handleToggleFavorite = async (category: string) => {
+    const categoryId = CATEGORY_ID_MAP[category];
+
+    if (!categoryId) {
+      console.error("Invalid category:", category);
+      return;
+    }
+
+    // 현재 즐겨찾기에 있는지 확인
+    const existingCategory = favorites.find((fav) => fav.name === category);
+
+    try {
+      if (existingCategory) {
+        // 이미 즐겨찾기에 있으면 삭제
+        await deleteCategoryMutation.mutateAsync(categoryId);
+        setFavorites((prev) => prev.filter((c) => c.name !== category));
+      } else {
+        // 없으면 추가
+        const response = await addCategoryMutation.mutateAsync(categoryId);
+        // response.data는 UserCategory 타입입니다
+        setFavorites((prev) => [...prev, response.data]);
+      }
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+      alert("즐겨찾기 설정에 실패했습니다.");
+    }
   };
 
   return (
@@ -181,8 +306,28 @@ const MyPage = () => {
                     name="email"
                     value={editForm.email}
                     onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600 bg-gray-50"
+                    disabled
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    * 이메일은 변경할 수 없습니다
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-2 block">
+                    비밀번호
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={editForm.password}
+                    onChange={handleChange}
+                    placeholder="변경하지 않으려면 비워두세요"
                     className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600"
                   />
+                  <p className="text-xs text-gray-400 mt-1">
+                    * 비밀번호를 변경하지 않으려면 입력하지 마세요
+                  </p>
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-2 block">
@@ -191,8 +336,10 @@ const MyPage = () => {
                   <input
                     type="tel"
                     name="phone"
-                    value={editForm.phone}
-                    onChange={handleChange}
+                    value={editForm.phone || ""}
+                    onChange={handlePhoneChange}
+                    placeholder="010-1234-5678"
+                    maxLength={13}
                     className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600"
                   />
                 </div>
@@ -367,7 +514,7 @@ const MyPage = () => {
       {/* 3. 즐겨찾기 설정 섹션 */}
       <section className="mb-12">
         <CategoryGrid
-          categories={CATEGORIES}
+          categories={[...CATEGORIES]}
           onCategoryClick={handleCategoryClick}
           favorites={favorites}
           onToggleFavorite={handleToggleFavorite}
