@@ -55,21 +55,21 @@ export interface SubmitQuizAnswerResponse {
 }
 
 // ========== 기존 타입 (하위 호환용) ==========
-// export interface Quiz {
-//   id: number;
-//   question: string;
-//   options: string[];
-//   correctAnswer: string;
-//   explanation: string;
-// }
+export interface Quiz {
+  id: number;
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  explanation: string;
+}
 
-// export interface QuizSubmission {
-//   quizId: number;
-//   userAnswer: string;
-// }
+export interface QuizSubmission {
+  quizId: number;
+  userAnswer: string;
+}
 
-// export interface QuizResult {
-//   isCorrect: boolean;
-//   correctAnswer: string;
-//   explanation: string;
-// }
+export interface QuizResult {
+  isCorrect: boolean;
+  correctAnswer: string;
+  explanation: string;
+}

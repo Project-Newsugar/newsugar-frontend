@@ -1,5 +1,5 @@
 import type { NewsListResponse } from "../types/news";
-import type { GetQuizResponse } from "../types/quiz";
+import type { Quiz } from "../types/quiz";
 
 // 백엔드 API 형식에 맞춘 Mock 뉴스 데이터
 export const MOCK_NEWS_LIST: NewsListResponse = {
@@ -34,57 +34,11 @@ export const MOCK_NEWS_LIST: NewsListResponse = {
   totalElements: 3,
 };
 
-// API 응답 형식에 맞춘 Mock 퀴즈 데이터
-export const MOCK_QUIZ: GetQuizResponse = {
-  code: 200,
-  message: "퀴즈 조회 성공",
-  data: {
-    id: 1,
-    question: "오늘의 주요 뉴스를 요약한 서비스의 이름은 무엇일까요?",
-    correct_answer: "1",
-    created_at: new Date().toISOString(),
-    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    is_revealed: true,
-  },
-};
-
-// 여러 퀴즈 ID를 위한 Mock 데이터
-export const MOCK_QUIZZES: Record<number, GetQuizResponse> = {
-  1: MOCK_QUIZ,
-  2: {
-    code: 200,
-    message: "퀴즈 조회 성공",
-    data: {
-      id: 2,
-      question: "경제 뉴스에서 소비자 신뢰지수가 상승한다는 것은 무엇을 의미할까요?",
-      correct_answer: "2",
-      created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      is_revealed: true,
-    },
-  },
-  3: {
-    code: 200,
-    message: "퀴즈 조회 성공",
-    data: {
-      id: 3,
-      question: "AI 알고리즘 개발은 어느 분야의 뉴스일까요?",
-      correct_answer: "3",
-      created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      is_revealed: true,
-    },
-  },
-  4: {
-    code: 200,
-    message: "퀴즈 조회 성공",
-    data: {
-      id: 4,
-      question: "뉴스를 정기적으로 확인하는 것의 장점은 무엇일까요?",
-      correct_answer: "2",
-      created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      is_revealed: true,
-    },
-  },
+export const MOCK_QUIZ: Quiz = {
+  id: 1,
+  question: "오늘의 주요 뉴스를 요약한 서비스의 이름은 무엇일까요?",
+  options: ["뉴슈가", "뉴스톡", "데일리뉴스", "뉴스요약"],
+  correctAnswer: "뉴슈가",
+  explanation:
+    '뉴슈가(NewSugar)는 "당신의 뉴스를 더 달콤하게"라는 슬로건으로 주요 뉴스를 간결하게 요약하여 제공하는 서비스입니다. 바쁜 현대인들이 핵심 뉴스를 빠르게 파악할 수 있도록 돕습니다.',
 };

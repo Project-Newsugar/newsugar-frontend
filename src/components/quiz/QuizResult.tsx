@@ -2,10 +2,10 @@ import { useNavigate } from "react-router-dom";
 
 interface QuizResultProps {
   correctAnswer: string;
-  isRevealed: boolean;
+  explanation: string;
 }
 
-export default function QuizResult({ correctAnswer, isRevealed }: QuizResultProps) {
+export default function QuizResult({ explanation }: QuizResultProps) {
   const navigate = useNavigate();
 
   const handleNavigateToMyPage = () => {
@@ -16,9 +16,7 @@ export default function QuizResult({ correctAnswer, isRevealed }: QuizResultProp
     <div className="space-y-6">
       <div className="p-5 rounded-lg border bg-green-50 border-green-200">
         <p className="mb-2 font-medium text-green-900">✓ 정답입니다!</p>
-        {isRevealed && (
-          <p className="text-sm text-gray-700">정답: {correctAnswer}번</p>
-        )}
+        <p className="text-sm text-gray-700 leading-relaxed">{explanation}</p>
       </div>
 
       <button

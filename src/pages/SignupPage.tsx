@@ -1,15 +1,12 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import clsx from "clsx";
 import useForm from "../hooks/useForm";
 import { signupSchema, type SignupForm } from "../schema/signup.schema";
-import { isAxiosError } from "axios";
-import { registerUser, type SignupRequest } from "../api/auth";
-// 타입을 명시적으로 가져옴
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
-  const [serverError, setServerError] = useState<string | null>(null); // 서버 에러 메시지 상태
+
   const { values, errors, touched, getInputProps, handleChange } =
     useForm<SignupForm>({
       // 1. 초기값에 nickname 추가
@@ -36,8 +33,7 @@ const SignupPage: React.FC = () => {
           };
         }
 
-        // any를 사용하여 타입 에러 방지 (엄격한 타입이 필요하면 Record<...> 사용)
-        const newErrors: any = {
+        const newErrors: Record<keyof SignupForm, string> = {
           email: "",
           name: "",
           phone: "",
@@ -47,9 +43,10 @@ const SignupPage: React.FC = () => {
         };
 
         result.error.issues.forEach((err) => {
-          // path[0]가 항상 존재한다고 가정
-          newErrors[err.path[0]] = err.message;
+          const key = err.path[0] as keyof SignupForm;
+          newErrors[key] = err.message;
         });
+
         return newErrors;
       },
     });
@@ -69,56 +66,17 @@ const SignupPage: React.FC = () => {
     handleChange("phone", formatted);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setServerError(null); // 에러 초기화
 
     // 에러 체크 (하나라도 있으면 중단)
     if (Object.values(errors).some((msg) => msg)) return;
 
-    try {
-      // 1. 데이터 정제: passwordCheck 제외
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { passwordCheck, ...submitData } = values;
+    console.log("🟢 회원가입 시도:", values);
+    // TODO: 백엔드 API 연동 (values에 nickname 포함됨)
 
-      const payload: SignupRequest = {
-        name: values.name,
-        email: values.email,
-        password: values.password,
-        nickname: values.nickname,
-        // 빈 문자열("")이 오면 null로 변환
-        phone: values.phone ? values.phone : null,
-      };
-
-      console.log("📤 서버로 전송:", payload);
-
-      // 2. API 호출
-      const response = await registerUser(payload);
-
-      // 3. 성공/실패 분기
-      if (response.success) {
-        alert(
-          `환영합니다, ${response.data.name}님! 회원가입이 완료되었습니다.`
-        );
-        navigate("/login");
-      } else {
-        throw new Error(response.message || "회원가입에 실패했습니다.");
-      }
-    } catch (error: any) {
-      console.error("❌ 회원가입 실패:", error);
-
-      let message = "서버와 통신할 수 없습니다.";
-
-      if (isAxiosError(error) && error.response) {
-        // 백엔드에서 보낸 에러 메시지 (예: "이미 사용중인 이메일입니다.")
-        message = error.response.data?.message || "오류가 발생했습니다.";
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
-
-      setServerError(message); // UI 표시
-      alert(message); // 팝업 표시
-    }
+    alert(`환영합니다, ${values.nickname}님! 회원가입이 완료되었습니다.`);
+    navigate("/login");
   };
 
   // 스타일 헬퍼
@@ -138,13 +96,6 @@ const SignupPage: React.FC = () => {
       </div>
 
       <form className="space-y-5" onSubmit={handleSubmit}>
-        {/* 서버 에러 메시지 표시 영역 */}
-        {serverError && (
-          <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center font-medium">
-            ⚠️ {serverError}
-          </div>
-        )}
-
         {/* 이름 */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -175,14 +126,14 @@ const SignupPage: React.FC = () => {
           )}
         </div>
 
-        {/* 휴대전화 */}
+        {/* 휴대전화 (신규 추가) */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
             휴대전화 번호 (선택)
           </label>
           <input
             {...getInputProps("phone")}
-            onChange={handlePhoneChange}
+            onChange={handlePhoneChange} // 덮어쓰기
             placeholder="010-1234-5678"
             maxLength={13}
             className={inputClass(!!(touched.phone && errors.phone))}
@@ -258,10 +209,9 @@ const SignupPage: React.FC = () => {
             로그인
           </Link>
         </div>
-
         <div className="mt-8 text-center">
-          <Link
-            to="/"
+          <Link 
+            to="/" 
             className="text-xs text-slate-400 hover:text-slate-600 transition-colors border-b border-transparent hover:border-slate-400 pb-0.5"
           >
             홈으로 돌아가기

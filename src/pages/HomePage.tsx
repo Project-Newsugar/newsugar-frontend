@@ -39,7 +39,7 @@ export default function HomePage() {
 
   // 뉴스 목록을 summary 형태로 가공
   const newsSummary = useMemo(() => {
-    if (!newsListData?.content) return null;
+    if (!newsListData) return null;
 
     // 각 뉴스의 summary를 합쳐서 전체 summary로 만들기
     const summaryText = newsListData.content
@@ -108,7 +108,7 @@ export default function HomePage() {
     try {
       // 새 API 형식에 맞게 변환
       const result = await submitAnswer.mutateAsync({
-        quiz_id: quiz.data.id,
+        quiz_id: quiz.id,
         user_id: 1, // TODO: 실제 로그인 사용자 ID 사용
         user_answer: parseInt(answer), // string을 number로 변환
       });
@@ -223,9 +223,9 @@ export default function HomePage() {
                 <div className="flex justify-center items-center h-24">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
-              ) : quiz?.data ? (
+              ) : quiz ? (
                 <div className="space-y-4">
-                  <QuizQuestion question={quiz.data.question} />
+                  <QuizQuestion question={quiz.question} />
 
                   {/* 현재 시간대가 아닌 경우 정적으로 표시 */}
                   {!isCurrentTimeSlot ? (
@@ -239,8 +239,8 @@ export default function HomePage() {
                         </p>
                       </div>
                       <QuizStatic
-                        correctAnswer={quiz.data.correct_answer}
-                        isRevealed={quiz.data.is_revealed}
+                        correctAnswer={quiz.correctAnswer}
+                        explanation={quiz.explanation}
                       />
                     </div>
                   ) : !isSolved ? (
@@ -248,11 +248,12 @@ export default function HomePage() {
                       onSubmit={handleSubmit}
                       isSubmitting={submitAnswer.isPending}
                       isLoggedIn={isLoggedIn}
+                      options={quiz.options}
                     />
                   ) : (
                     <QuizResult
-                      correctAnswer={quiz.data.correct_answer}
-                      isRevealed={quiz.data.is_revealed}
+                      correctAnswer={quiz.correctAnswer}
+                      explanation={quiz.explanation}
                     />
                   )}
                 </div>

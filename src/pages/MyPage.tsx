@@ -5,8 +5,8 @@ import {
   MdClose,
   MdCheck,
 } from "react-icons/md";
-import { FaBell, FaLock } from "react-icons/fa";
-import { useState, type ChangeEvent, useEffect } from "react";
+import { FaAward, FaBell, FaLock } from "react-icons/fa";
+import { useState, type ChangeEvent } from "react";
 import clsx from "clsx";
 import { useNavigate } from "react-router-dom"; // 페이지 이동용
 import Modal from "../components/Modal"; // 공통 모달
@@ -16,7 +16,6 @@ import { getCategorySlug } from "../utils/getCategorySlug";
 import { useAtom } from "jotai";
 import { favoriteCategoriesAtom } from "../store/atoms";
 import { useAddCategory, useDeleteCategory } from "../hooks/useCategoryQuery";
-import { updateUserProfile, getMyProfile } from "../api/auth";
 
 // 1. 뱃지 마스터 데이터
 const BADGE_MASTER_LIST = [
@@ -53,41 +52,12 @@ const MyPage = () => {
     name: "홍길동",
     nickname: "멋쟁이사자",
     email: "test@example.com",
-    phone: "010-1234-5678" as string | null,
+    phone: "010-1234-5678",
   });
-
-  // 유저 정보 불러오기
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const response = await getMyProfile();
-        if (response.success) {
-          setUser({
-            name: response.data.name,
-            nickname: response.data.nickname,
-            email: response.data.email,
-            phone: response.data.phone,
-          });
-        }
-      } catch (error: any) {
-        console.error("유저 정보 불러오기 실패:", error);
-        // 에러 처리 - 인증 오류 시 로그인 페이지로 리다이렉트
-        if (error.response?.status === 401) {
-          alert("로그인이 필요합니다.");
-          navigate("/login");
-        }
-      }
-    };
-
-    fetchUserInfo();
-  }, [navigate]);
 
   // 편집 모드 상태
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({
-    ...user,
-    password: "", // 비밀번호 변경용 필드
-  });
+  const [editForm, setEditForm] = useState(user);
 
   // 모달 상태 (로그아웃 확인용)
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -133,58 +103,18 @@ const MyPage = () => {
 
   const handleEditClick = () => {
     setIsEditing(true);
-    setEditForm({
-      ...user,
-      password: "", // 편집 모드 진입 시 비밀번호 필드 초기화
-    });
+    setEditForm(user);
   };
 
-  const handleSave = async () => {
-    try {
-      // API 호출 데이터 준비
-      const updateData: any = {
-        name: editForm.name,
-        nickname: editForm.nickname,
-        phone: editForm.phone || "",
-      };
-
-      // 비밀번호가 입력된 경우에만 추가
-      if (editForm.password) {
-        updateData.password = editForm.password;
-      }
-
-      // API 호출
-      const response = await updateUserProfile(updateData);
-
-      if (response.success) {
-        // 성공 시 사용자 정보 업데이트 (password 제외)
-        setUser({
-          name: response.data.name,
-          nickname: response.data.nickname,
-          email: response.data.email,
-          phone: response.data.phone,
-        });
-        setIsEditing(false);
-        alert("프로필이 성공적으로 수정되었습니다.");
-      }
-    } catch (error: any) {
-      console.error("프로필 수정 실패:", error);
-
-      // 에러 메시지 처리
-      if (error.response?.data?.message) {
-        alert(error.response.data.message);
-      } else {
-        alert("프로필 수정에 실패했습니다. 다시 시도해주세요.");
-      }
-    }
+  const handleSave = () => {
+    // TODO: 백엔드 PATCH API 호출
+    setUser(editForm);
+    setIsEditing(false);
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    setEditForm({
-      ...user,
-      password: "",
-    });
+    setEditForm(user);
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -192,24 +122,6 @@ const MyPage = () => {
     setEditForm((prev) => ({
       ...prev,
       [name]: value,
-    }));
-  };
-
-  // 전화번호 자동 포맷팅 핸들러
-  const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9]/g, "");
-    let formatted = value;
-    if (value.length > 3 && value.length <= 7) {
-      formatted = `${value.slice(0, 3)}-${value.slice(3)}`;
-    } else if (value.length > 7) {
-      formatted = `${value.slice(0, 3)}-${value.slice(3, 7)}-${value.slice(
-        7,
-        11
-      )}`;
-    }
-    setEditForm((prev) => ({
-      ...prev,
-      phone: formatted,
     }));
   };
 
@@ -306,28 +218,8 @@ const MyPage = () => {
                     name="email"
                     value={editForm.email}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600 bg-gray-50"
-                    disabled
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    * 이메일은 변경할 수 없습니다
-                  </p>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-2 block">
-                    비밀번호
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={editForm.password}
-                    onChange={handleChange}
-                    placeholder="변경하지 않으려면 비워두세요"
                     className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600"
                   />
-                  <p className="text-xs text-gray-400 mt-1">
-                    * 비밀번호를 변경하지 않으려면 입력하지 마세요
-                  </p>
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-2 block">
@@ -336,10 +228,8 @@ const MyPage = () => {
                   <input
                     type="tel"
                     name="phone"
-                    value={editForm.phone || ""}
-                    onChange={handlePhoneChange}
-                    placeholder="010-1234-5678"
-                    maxLength={13}
+                    value={editForm.phone}
+                    onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600"
                   />
                 </div>
