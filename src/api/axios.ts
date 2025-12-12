@@ -44,7 +44,7 @@ axiosInstance.interceptors.response.use(
       !originalRequest._retry
     ) {
       console.log("401 !!!!!");
-      if (originalRequest.url === "/v1/auth/refresh") {
+      if (originalRequest.url === "/api/v1/auth/refresh") {
         const { removeItem: removeAccessToken } = getLocalStorage(
           LOCAL_STORAGE_KEY.accessToken
         );
@@ -59,33 +59,41 @@ axiosInstance.interceptors.response.use(
       }
 
       originalRequest._retry = true;
-
+      // 토큰 재발급 로직
       if (!refreshPromise) {
         refreshPromise = (async () => {
           const { getItem: getRefreshToken } = getLocalStorage(
             LOCAL_STORAGE_KEY.refreshToken
           );
-
           const refreshToken = getRefreshToken();
 
+          if (!refreshToken) {
+            throw new Error("리프레시 토큰이 없습니다.");
+          }
+          console.log("토큰 재발급 시도...");
+
           const { data } = await axiosInstance.post("api/v1/users/refresh", {
-            refresh: refreshToken,
+            refreshToken: refreshToken,
           });
 
-          const { setItem: setAccessToken } = getLocalStorage(
-            LOCAL_STORAGE_KEY.accessToken
-          );
+          // 응답 구조: { success: true, data: { accessToken: "...", refreshToken: "..." } }
+          const newAccessToken = data.data.accessToken;
+          const newRefreshToken = data.data.refreshToken;
 
-          const { setItem: setRefreshToken } = getLocalStorage(
-            LOCAL_STORAGE_KEY.refreshToken
-          );
+          // 새 토큰 저장
+          const { setItem: setAccessToken } = getLocalStorage(LOCAL_STORAGE_KEY.accessToken);
+          const { setItem: setRefreshToken } = getLocalStorage(LOCAL_STORAGE_KEY.refreshToken);
+          
+          setAccessToken(newAccessToken);
+          // 리프레시 토큰도 갱신되면 같이 저장 (Rotation)
+          if (newRefreshToken) {
+             setRefreshToken(newRefreshToken);
+          }
 
-          setAccessToken(data.data.accessToken);
-          setRefreshToken(data.data.refreshToken);
-
-          return data.data.accessToken;
+          return newAccessToken;
         })()
           .catch((err) => {
+            console.error("❌ 토큰 재발급 실패:", err);
             const { removeItem: removeAccessToken } = getLocalStorage(
               LOCAL_STORAGE_KEY.accessToken
             );
@@ -97,13 +105,13 @@ axiosInstance.interceptors.response.use(
             removeRefreshToken();
             window.location.replace("/login");
 
-            console.error("accessToken 재발급 중 오류 발생 : ", err);
+            return Promise.reject(err);
           })
           .finally(() => {
             refreshPromise = null;
           });
       }
-
+      // 재발급된 토큰으로 원래 요청 재시도
       return refreshPromise.then((newAccessToken) => {
         if (originalRequest.headers instanceof AxiosHeaders) {
           originalRequest.headers.set(
@@ -119,5 +127,6 @@ axiosInstance.interceptors.response.use(
         return axiosInstance.request(originalRequest);
       });
     }
+    return Promise.reject(err);
   }
 );
