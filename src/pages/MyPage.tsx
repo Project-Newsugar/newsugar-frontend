@@ -1,15 +1,17 @@
 import {
   MdLogout,
   MdEdit,
-  MdOutlineTrendingUp,
   MdClose,
   MdCheck,
 } from "react-icons/md";
 import { FaBell, FaLock } from "react-icons/fa";
-import { useState, type ChangeEvent, useEffect } from "react";
+import { useState, useMemo, type ChangeEvent, useEffect } from "react";
 import clsx from "clsx";
 import { useNavigate } from "react-router-dom"; // 페이지 이동용
 import Modal from "../components/Modal"; // 공통 모달
+// [추가] localStorage 유틸과 키 import
+import { getLocalStorage } from "../utils/getLocalStorage";
+import { LOCAL_STORAGE_KEY } from "../constants/keys";
 import CategoryGrid from "../components/home/CategoryGrid";
 import { CATEGORIES } from "../constants/CategoryData";
 import { getCategorySlug } from "../utils/getCategorySlug";
@@ -17,6 +19,8 @@ import { useAtom } from "jotai";
 import { favoriteCategoriesAtom } from "../store/atoms";
 import { useAddCategory, useDeleteCategory } from "../hooks/useCategoryQuery";
 import { updateUserProfile, getMyProfile } from "../api/auth";
+import { useQuizResult } from "../hooks/useNewsQuery";
+import { useAuth } from "../hooks/useAuth";
 
 // 1. 뱃지 마스터 데이터
 const BADGE_MASTER_LIST = [
@@ -37,16 +41,28 @@ type BadgeCode = (typeof BADGE_MASTER_LIST)[number]["code"];
 // ⚠️ 주의: 이 ID는 백엔드 DB의 실제 카테고리 ID와 일치해야 합니다
 // 백엔드 API 응답을 확인하여 정확한 ID를 설정하세요
 const CATEGORY_ID_MAP: Record<string, number> = {
-  "정치": 1,
-  "경제": 2,
+  정치: 1,
+  경제: 2,
   "과학/기술": 3,
-  "스포츠": 4,
-  "문화": 5,
-  "국제": 6,
+  스포츠: 4,
+  문화: 5,
+  국제: 6,
 };
 
 const MyPage = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  // [추가] 컴포넌트 마운트 시 토큰 확인
+  useEffect(() => {
+    const accessToken = getLocalStorage(
+      LOCAL_STORAGE_KEY.accessToken
+    ).getItem();
+    if (!accessToken) {
+      // alert 제거 - 바로 로그인 페이지로 리다이렉트
+      navigate("/login");
+    }
+  }, [navigate]);
 
   // 사용자 정보 상태
   const [user, setUser] = useState({
@@ -54,6 +70,7 @@ const MyPage = () => {
     nickname: "멋쟁이사자",
     email: "test@example.com",
     phone: "010-1234-5678" as string | null,
+    score: 0,
   });
 
   // 유저 정보 불러오기
@@ -67,13 +84,14 @@ const MyPage = () => {
             nickname: response.data.nickname,
             email: response.data.email,
             phone: response.data.phone,
+            score: response.data.score,
           });
         }
       } catch (error: any) {
         console.error("유저 정보 불러오기 실패:", error);
         // 에러 처리 - 인증 오류 시 로그인 페이지로 리다이렉트
         if (error.response?.status === 401) {
-          alert("로그인이 필요합니다.");
+          // alert 제거 - 바로 로그인 페이지로 리다이렉트
           navigate("/login");
         }
       }
@@ -99,35 +117,89 @@ const MyPage = () => {
   const addCategoryMutation = useAddCategory();
   const deleteCategoryMutation = useDeleteCategory();
 
-  // 통계 데이터
-  const stats = {
-    totalScore: 120,
-    solvedCount: 15,
-    favoriteCategories: [
-      { name: "경제", count: 42 },
-      { name: "IT/과학", count: 28 },
-      { name: "스포츠", count: 15 },
-    ],
-    readingStyle: "새벽형 스캐너",
-  };
+  // 퀴즈 결과 조회 (임의의 quizId 1 사용 - 실제로는 사용자 통계를 반환)
+  const { data: quizResultData } = useQuizResult(1);
 
-  const myBadgeCodes: BadgeCode[] = ["MORNING", "PERFECT_SCORE"];
+  // 통계 데이터 - API에서 가져온 실제 데이터 사용
+  const stats = useMemo(() => {
+    const quizStats = quizResultData?.data;
 
-  const weeklyActivity = [
-    { day: "월", score: 100, solved: true },
-    { day: "화", score: 80, solved: true },
-    { day: "수", score: 0, solved: false },
-    { day: "목", score: 100, solved: true },
-    { day: "금", score: 40, solved: true },
-    { day: "토", score: 0, solved: false },
-    { day: "일", score: 100, solved: true },
-  ];
+    return {
+      totalScore: quizStats?.correct ? quizStats.correct * 100 : 0, // 맞춘 퀴즈당 100점
+      solvedCount: quizStats?.total || 0,
+      correctCount: quizStats?.correct || 0,
+      favoriteCategories: [
+        { name: "경제", count: 42 },
+        { name: "IT/과학", count: 28 },
+        { name: "스포츠", count: 15 },
+      ],
+      readingStyle: "새벽형 스캐너",
+    };
+  }, [quizResultData]);
 
-  const recentActivity = [
-    { date: "2024.12.08", quiz: "경제 뉴스 퀴즈", result: "정답" },
-    { date: "2024.12.07", quiz: "정치 뉴스 퀴즈", result: "정답" },
-    { date: "2024.12.06", quiz: "IT 뉴스 퀴즈", result: "오답" },
-  ];
+  // [임시] 뱃지 계산 - 목업 데이터
+  const myBadgeCodes: BadgeCode[] = useMemo(() => {
+    const badges: BadgeCode[] = ["MORNING", "PERFECT_SCORE"]; // 기본 뱃지
+    return badges;
+  }, []);
+
+
+  // 최근 활동 데이터 (localStorage 기반)
+  const [recentActivity, setRecentActivity] = useState<
+    {
+      date: string;
+      result: "정답" | "오답";
+    }[]
+  >([]);
+
+  // localStorage에서 퀴즈 히스토리 불러오기
+  useEffect(() => {
+    try {
+      const activities: { date: string; result: "정답" | "오답" }[] = [];
+
+      // localStorage의 모든 키를 순회하면서 quiz_state_ 로 시작하는 항목 찾기
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("quiz_state_")) {
+          const stateStr = localStorage.getItem(key);
+          if (stateStr) {
+            try {
+              const state = JSON.parse(stateStr);
+              // isSolved가 true인 퀴즈만 포함
+              if (state.isSolved && state.quizResults) {
+                // 모든 문제를 맞췄는지 확인
+                const allCorrect = state.quizResults.results?.every((r: boolean) => r === true);
+
+                activities.push({
+                  date: new Date().toISOString(), // 실제 날짜는 저장되어 있지 않으므로 현재 시간 사용
+                  result: allCorrect ? "정답" : "오답",
+                });
+              }
+            } catch (e) {
+              // JSON 파싱 실패 시 무시
+              continue;
+            }
+          }
+        }
+      }
+
+      // 날짜 형식 변환
+      const formattedActivity = activities.map((item) => {
+        const dateObj = new Date(item.date);
+        const formattedDate = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, '0')}.${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+
+        return {
+          date: formattedDate,
+          result: item.result,
+        };
+      });
+
+      setRecentActivity(formattedActivity);
+    } catch (error) {
+      console.error("퀴즈 내역 불러오기 실패:", error);
+      setRecentActivity([]);
+    }
+  }, []);
 
   // --- 핸들러 함수들 ---
 
@@ -163,6 +235,7 @@ const MyPage = () => {
           nickname: response.data.nickname,
           email: response.data.email,
           phone: response.data.phone,
+          score: response.data.score,
         });
         setIsEditing(false);
         alert("프로필이 성공적으로 수정되었습니다.");
@@ -220,8 +293,8 @@ const MyPage = () => {
 
   // 2. 모달에서 '예' 클릭 시 실행될 실제 로그아웃 로직
   const handleConfirmLogout = () => {
-    console.log("로그아웃 처리됨");
-    // TODO: 토큰 삭제 등 로그아웃 처리 로직 추가
+    // useAuth의 logout 함수로 토큰 삭제 및 로그인 상태 해제
+    logout();
 
     // 모달 닫고 홈페이지로 이동
     setShowLogoutModal(false);
@@ -412,61 +485,47 @@ const MyPage = () => {
       <section className="mb-12">
         <h2 className="text-lg font-bold text-gray-900 mb-4">학습 리포트</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* 점수 + 그래프 카드 */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 flex flex-col justify-between shadow-sm">
+          {/* 점수 통계 카드 */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <MdOutlineTrendingUp className="text-blue-600" size={20} />
-                <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-1 rounded">
-                  퀴즈 진행 상황
+              <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-100">
+                퀴즈 진행 상황
+              </span>
+            </div>
+            <div className="flex-1 flex flex-col justify-center -mt-2">
+              <div className="flex items-baseline gap-3">
+                <span className="text-5xl font-bold text-gray-900">
+                  {user.score}
                 </span>
+                <span className="text-lg text-gray-500">점</span>
               </div>
-              <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-3xl font-bold text-gray-900">
-                  {stats.totalScore}
+              {/* <p className="text-gray-500 text-sm mt-4">
+                정답 퀴즈:{" "}
+                <span className="font-semibold text-gray-900">
+                  {stats.correctCount}개
                 </span>
-                <span className="text-xs text-gray-500">점 (누적)</span>
-              </div>
-              <p className="text-gray-500 text-xs mt-1">
-                총 해결한 퀴즈:{" "}
+                {" · "}푼 퀴즈:{" "}
                 <span className="font-semibold text-gray-900">
                   {stats.solvedCount}개
                 </span>
-              </p>
-            </div>
-            <div className="mt-6">
-              <p className="text-gray-400 text-[10px] mb-2 text-right">
-                최근 7일 정답률
-              </p>
-              <div className="flex justify-between items-end h-24 border-b border-gray-100 pb-1">
-                {weeklyActivity.map((day, idx) => (
-                  <div
-                    key={idx}
-                    className="flex flex-col items-center gap-1 group w-full mx-1"
-                  >
-                    <div className="relative w-full bg-gray-100 rounded-t-sm h-full flex items-end overflow-hidden">
-                      <div
-                        style={{ height: `${day.solved ? day.score : 0}%` }}
-                        className={clsx(
-                          "w-full transition-all duration-500",
-                          day.score === 100 ? "bg-blue-500" : "bg-blue-300",
-                          !day.solved && "h-0"
-                        )}
-                      />
-                    </div>
-                    <span className="text-[10px] text-gray-400 font-medium">
-                      {day.day}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                {" · "}
+                정답률:{" "}
+                <span className="font-semibold text-gray-900">
+                  {stats.solvedCount > 0
+                    ? Math.round((stats.correctCount / stats.solvedCount) * 100)
+                    : 0}
+                  %
+                </span>
+              </p> */}
             </div>
           </div>
 
           {/* 뱃지 카드 */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-gray-900 font-bold text-sm">보유 뱃지</span>
+              <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-100">
+                보유 뱃지
+              </span>
               <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
                 {myBadgeCodes.length} / {BADGE_MASTER_LIST.length}
               </span>
@@ -527,7 +586,7 @@ const MyPage = () => {
         />
       </section>
 
-      {/* 4. 최근 활동 섹션 (기존 유지) */}
+      {/* 4. 최근 활동 섹션 */}
       <section className="mb-12">
         <h2 className="text-lg font-bold text-gray-900 mb-4">최근 활동</h2>
         <div className="space-y-3">
@@ -535,17 +594,12 @@ const MyPage = () => {
             recentActivity.map((activity, idx) => (
               <div
                 key={idx}
-                className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:border-blue-400 transition-colors cursor-pointer"
+                className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:border-blue-400 transition-colors"
               >
-                <div>
-                  <h4 className="text-sm font-bold text-gray-900 mb-1">
-                    {activity.quiz}
-                  </h4>
-                  <div className="flex gap-2 text-xs text-gray-500">
-                    <span>{activity.date}</span>
-                    <span>·</span>
-                    <span>퀴즈 참여</span>
-                  </div>
+                <div className="flex gap-2 text-sm text-gray-500">
+                  <span>{activity.date}</span>
+                  <span>·</span>
+                  <span>퀴즈 참여</span>
                 </div>
                 <span
                   className={clsx(

@@ -1,9 +1,12 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { CATEGORIES } from "../constants/CategoryData";
 import { getCategorySlug } from "../utils/getCategorySlug";
+import { useAuth } from "../hooks/useAuth";
 
 export const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isLoggedIn } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
   const currentCategory = location.pathname.split("/")[2];
@@ -98,7 +101,8 @@ export const Navbar = () => {
           </li>
         </ul>
 
-        <Link
+        {/* [기존] */}
+        {/* <Link
           to="/myPage"
           className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all object-cover overflow-hidden ${
             isActive("/myPage")
@@ -108,7 +112,22 @@ export const Navbar = () => {
           title="마이페이지"
         >
           <img src="src/assets/noProfile.png" alt="noProfile" />
-        </Link>
+        </Link> */}
+
+        {/* [수정] useAuth 훅을 사용하여 로그인 상태 확인 */}
+        <button
+          onClick={() => {
+            navigate(isLoggedIn ? "/myPage" : "/login");
+          }}
+          className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all object-cover overflow-hidden ${
+            isActive("/myPage")
+              ? "border-blue-600 bg-blue-50"
+              : "border-gray-300 hover:border-blue-600 bg-gray-100"
+          }`}
+          title="마이페이지"
+        >
+          <img src="src/assets/noProfile.png" alt="noProfile" />
+        </button>
       </nav>
     </header>
   );

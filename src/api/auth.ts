@@ -74,11 +74,26 @@ export const getMyProfile = async () => {
   return data;
 };
 
-export const updateUserProfile = async (userData: UpdateProfileRequest) => {
-  // 백엔드 API가 나오면 '/v1/users/me' 경로가 맞는지 확인 필요
-  const { data } = await axiosInstance.patch<ApiResponse<SignupResponseData>>(
-    '/v1/users/me', 
-    userData
-  );
+// 4. 유저 정보 수정 API
+export interface UpdateUserRequest {
+  name: string;
+  password: string;
+  nickname: string;
+  phone: string;
+}
+
+export interface UpdateUserResponseData {
+  id: number;
+  name: string;
+  email: string;
+  nickname: string;
+  phone: string;
+  score: number;
+}
+
+export const updateUserProfile = async (userData: UpdateUserRequest) => {
+  const { data } = await axiosInstance.patch<
+    ApiResponse<UpdateUserResponseData>
+  >("/api/v1/users/modify", userData);
   return data;
 };
