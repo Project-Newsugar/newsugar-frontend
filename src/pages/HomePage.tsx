@@ -3,6 +3,7 @@ import {
   useAllNews,
   useLatestQuiz,
   useSubmitQuizAnswer,
+  useQuizResult,
 } from "../hooks/useNewsQuery";
 import NewsSummaryCard from "../components/home/NewsSummaryCard";
 import QuizQuestion from "../components/quiz/QuizQuestion";
@@ -57,6 +58,10 @@ export default function HomePage() {
   // 퀴즈 ID 추출 (localStorage 키 등에서 사용)
   const quizId = quiz?.data?.id || 0;
   const submitAnswer = useSubmitQuizAnswer();
+
+  // 퀴즈 결과 조회 (DB 기반 완료 여부 확인용)
+  const { data: quizResultData } = useQuizResult(quizId);
+
   const [isSolved, setIsSolved] = useState(false);
   const [favorites] = useAtom(favoriteCategoriesAtom);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -73,11 +78,64 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
 
-  // localStorage 키: 퀴즈 완료 상태 저장 (시간대별로 구분)
+  // localStorage 키: 퀴즈 완료 상태 저장 (시간대별로 구분) - 백업용
   const QUIZ_STATE_KEY = `quiz_state_${quizId}_${selectedTime}`;
 
-  // 퀴즈 상태를 localStorage에서 복구
+  /**
+   * timestamp 기반으로 현재 퀴즈를 풀었는지 확인하는 함수
+   * 퀴즈 결과의 timestamp가 현재 퀴즈의 시작 시간대와 일치하는지 확인
+   */
+  const isQuizCompletedToday = (
+    resultTimestamp: string | undefined,
+    quizStartAt: string | undefined
+  ): boolean => {
+    if (!resultTimestamp || !quizStartAt) return false;
+
+    const resultDate = new Date(resultTimestamp);
+    const quizDate = new Date(quizStartAt);
+
+    // 같은 날짜이고 같은 시간대인지 확인
+    const isSameDate =
+      resultDate.getFullYear() === quizDate.getFullYear() &&
+      resultDate.getMonth() === quizDate.getMonth() &&
+      resultDate.getDate() === quizDate.getDate();
+
+    // 퀴즈 시작 시간 이후에 제출되었는지 확인
+    const isAfterQuizStart = resultDate >= quizDate;
+
+    return isSameDate && isAfterQuizStart;
+  };
+
+  // DB 기반 퀴즈 완료 여부 확인 (API 응답이 있을 때)
   useEffect(() => {
+    if (!quizResultData?.data || !quiz?.data) return;
+
+    const isCompleted = isQuizCompletedToday(
+      quizResultData.timestamp,
+      quiz.data.startAt
+    );
+
+    if (isCompleted && quizResultData.data.results.length > 0) {
+      // DB에서 가져온 결과로 상태 설정
+      setIsSolved(true);
+      setQuizResults({
+        total: quizResultData.data.total,
+        correct: quizResultData.data.correct,
+        results: quizResultData.data.results,
+      });
+    } else {
+      // 아직 풀지 않았으면 초기 상태로 설정
+      setIsSolved(false);
+      setQuizResults(null);
+      setUserAnswers([]);
+      setCurrentQuestionIndex(0);
+    }
+  }, [quizResultData, quiz?.data]);
+
+  // localStorage 백업 상태 복구 (API 실패 시 대체용)
+  useEffect(() => {
+    if (quizResultData) return; // API 데이터가 있으면 localStorage 사용 안 함
+
     const savedState = localStorage.getItem(QUIZ_STATE_KEY);
     if (savedState) {
       try {
@@ -90,7 +148,7 @@ export default function HomePage() {
         console.error("Failed to parse saved quiz state:", error);
       }
     }
-  }, [QUIZ_STATE_KEY]);
+  }, [QUIZ_STATE_KEY, quizResultData]);
 
   // 퀴즈 상태를 localStorage에 저장
   useEffect(() => {
