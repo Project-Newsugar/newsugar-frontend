@@ -1,19 +1,12 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { CATEGORIES } from "../constants/CategoryData";
 import { getCategorySlug } from "../utils/getCategorySlug";
-// [추가] localStorage 유틸과 키 import
-import { getLocalStorage } from "../utils/getLocalStorage";
-import { LOCAL_STORAGE_KEY } from "../constants/keys";
+import { useAuth } from "../hooks/useAuth";
 
 export const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
-  // [추가] 토큰 확인 함수
-  const checkAuth = () => {
-    const accessToken = getLocalStorage(LOCAL_STORAGE_KEY.accessToken).getItem();
-    return !!accessToken;
-  };
+  const { isLoggedIn } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
   const currentCategory = location.pathname.split("/")[2];
@@ -121,15 +114,10 @@ export const Navbar = () => {
           <img src="src/assets/noProfile.png" alt="noProfile" />
         </Link> */}
 
-        {/* [수정] 토큰 확인 후 마이페이지 또는 로그인 페이지로 이동 */}
+        {/* [수정] useAuth 훅을 사용하여 로그인 상태 확인 */}
         <button
           onClick={() => {
-            if (checkAuth()) {
-              navigate("/myPage");
-            } else {
-              // alert 제거 - 바로 로그인 페이지로 이동
-              navigate("/login");
-            }
+            navigate(isLoggedIn ? "/myPage" : "/login");
           }}
           className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all object-cover overflow-hidden ${
             isActive("/myPage")
