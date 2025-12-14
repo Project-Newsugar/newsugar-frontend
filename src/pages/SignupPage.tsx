@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import clsx from "clsx";
 import useForm from "../hooks/useForm";
 import { signupSchema, type SignupForm } from "../schema/signup.schema";
 import { isAxiosError } from "axios";
-import { registerUser, type SignupRequest } from "../api/auth";
+import { registerUser } from "../api/auth";
+import type { SignupRequest } from "../types/user";
 // 타입을 명시적으로 가져옴
 
 const SignupPage: React.FC = () => {
@@ -226,18 +227,17 @@ const SignupPage: React.FC = () => {
 
         <div className="mt-6 text-center text-sm text-slate-500">
           이미 계정이 있으신가요?{" "}
-          <Link to="/login" className="text-blue-600 font-semibold hover:underline">
+          <a href="/login" className="text-blue-600 font-semibold hover:underline">
             로그인
-          </Link>
+          </a>
         </div>
         
         <div className="mt-8 text-center">
-          <Link
-            to="/"
+          <a href="/"
             className="text-xs text-slate-400 hover:text-slate-600 transition-colors border-b border-transparent hover:border-slate-400 pb-0.5"
           >
             홈으로 돌아가기
-          </Link>
+          </a>
         </div>
       </form>
     </div>
