@@ -4,19 +4,16 @@ import NewsSummaryCard from "../components/home/NewsSummaryCard";
 import Modal from "../components/Modal";
 import { useNavigate } from "react-router-dom";
 import { getCategorySlug } from "../utils/getCategorySlug";
-import { useAtom } from "jotai";
-import { favoriteCategoriesAtom } from "../store/atoms";
 import { FaStar } from "react-icons/fa";
-import type {NewsItem } from "../types/news";
 import { useAuth } from "../hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { getMyProfile } from "../api/auth";
 import { useQuizByTimeSlot, useQuizResult, useSubmitQuizAnswer } from '../hooks/useQuizQuery';
-import IndNewsFeed from '../components/news/IndNewsFeed';
 import QuizFeed from '../components/quiz/QuizFeed';
 import type { SubmitQuizAnswerResponse } from '../types/quiz';
 import { CATEGORIES } from '../constants/CategoryData';
 import { useUserCategories } from '../hooks/useUserQuery';
+import IndNewsFeed from '../components/news/IndNewsFeed';
 
 export default function HomePage() {
   // 현재 시간대 계산 함수 (오전 6시 기준으로 하루가 시작됨)
@@ -34,10 +31,6 @@ export default function HomePage() {
     getCurrentTimeSlot()
   );
 
-  // 새로운 API 사용: 뉴스 목록을 가져와서 summary로 변환
-  const { data: newsListData, isLoading } = useNewsByCategory(null);
-
-
   // 선택한 시간대의 퀴즈 조회
   const { data: quiz, isLoading: isQuizLoading } = useQuizByTimeSlot(selectedTime);
 
@@ -54,7 +47,22 @@ export default function HomePage() {
   const [quizResults, setQuizResults] = useState<SubmitQuizAnswerResponse["data"] | null>(null);
   const { data: userCategories } = useUserCategories(isLoggedIn);
   const favorites = userCategories?.categoryIdList ?? [];
-  
+
+  const favoriteCategoryKeys = useMemo(() => {
+    if (favorites.length === 0) return null;
+
+    return favorites
+      .map((id) => {
+        const category = CATEGORIES.find((c) => c.id === Number(id));
+        return category?.key;
+      })
+      .filter(Boolean) as string[];
+  }, [favorites]);
+
+  // 새로운 API 사용: 뉴스 목록을 가져와서 summary로 변환
+  const { data: newsListData, isLoading } =
+  useNewsByCategory(favoriteCategoryKeys);
+
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     type: "correct" | "incorrect" | null;
@@ -304,36 +312,12 @@ export default function HomePage() {
     setModalState({ isOpen: false, type: null });
   };
 
-  // 즐겨찾기한 카테고리의 뉴스들 필터링 (실제 API 데이터 사용)
-  const filteredNews: NewsItem[] = useMemo(() => {
-  if (!newsListData) return [];
-
-  console.log("Filtering news based on favorites:", { favorites, newsListData });
-
-  if (favorites.length > 0) {
-    const favoriteCategoryNames = favorites
-      .map((favId) => {
-        const category = CATEGORIES.find((c) => c.id === Number(favId));
-        return category?.label;
-      })
-      .filter(Boolean) as string[]; // undefined 제거
-
-    return newsListData.filter((news) =>
-      favoriteCategoryNames.includes(news.sections[0])
-    );
-  }
-
-  return newsListData;
-}, [newsListData, favorites]);
+  const favoriteNews = useMemo(
+    () => newsListData ?? [],
+    [newsListData]
+  );
 
   // 즐겨찾기가 2개 이상일 때 뉴스를 랜덤으로 섞기
-  const favoriteNews: NewsItem[] = useMemo(() => {
-    if (favorites.length >= 2) {
-      return [...filteredNews].sort(() => Math.random() - 0.5);
-    }
-    return filteredNews;
-  }, [filteredNews, favorites]);
-
   return (
     <div className="max-w-6xl mx-auto px-6 py-14 space-y-16">
       {/* 퀴즈 결과 모달 */}
@@ -436,7 +420,7 @@ export default function HomePage() {
         <div className="space-y-4">
           {favoriteNews.length > 0 ? (
             favoriteNews.map((news) => (
-              <IndNewsFeed key={news.id} news={news} />
+              <IndNewsFeed key={news.id} news={news} category={news.sections[0]} />
             ))
           ) : (
             <div className="bg-white border border-gray-200 rounded p-12 text-center">
