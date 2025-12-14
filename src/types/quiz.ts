@@ -36,17 +36,17 @@ export interface GetQuizResponse {
 }
 
 // GET /api/v1/quizzes/{id}/result - 퀴즈 결과 조회 Response
-// total: 유저가 푼 전체 퀴즈 개수 (누적)
-// correct: 맞춘 문제 개수 (누적)
-// results: 각 퀴즈별 정답 여부 배열 (total 개수만큼 존재, true 개수 = correct)
+// total: 어차피 1 (해당 시간의 주요 뉴스에 생성된 퀴즈의 총개수)
+// correct: 맞추면 1, 틀리면 0
+// results: 맞추면 true, 틀리면 false
 export interface GetQuizResultResponse {
   success: boolean;
   code: string;
   message: string;
   data: {
-    total: number;          // 유저가 푼 전체 퀴즈 개수 (누적)
-    correct: number;        // 맞춘 문제 개수 (누적)
-    results: boolean[];     // 각 퀴즈별 정답 여부 배열
+    total: number;          // 어차피 1 (해당 시간의 주요 뉴스에 생성된 퀴즈의 총개수)
+    correct: number;        // 맞추면 1, 틀리면 0
+    results: boolean[];     // 맞추면 true, 틀리면 false
     userId: number;
   };
   timestamp: string;
