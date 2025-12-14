@@ -62,7 +62,7 @@ const MyPage = () => {
     if (userCategories?.categoryIdList) {
       setFavorites(userCategories.categoryIdList as CategoryId[]);
     }
-  }, [userCategories]);
+  }, [userCategories, navigate]);
 
 
   // 편집 모드 상태
