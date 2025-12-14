@@ -60,13 +60,13 @@ export const Navbar = () => {
                          transition-all duration-200 transform group-hover:translate-y-1 px-4 py-3 w-max"
             >
               <div className="flex gap-3">
-                {CATEGORIES.map((category) => {
-                  const slug = getCategorySlug(category);
+               {CATEGORIES.map((cat) => {
+                  const slug = getCategorySlug(cat.key); // key 기준으로 slug 생성
                   const isActive = slug === currentCategory;
 
                   return (
                     <Link
-                      key={category}
+                      key={cat.id}
                       to={`/category/${slug}`}
                       className={`
                         px-4 py-2 rounded-md text-sm whitespace-nowrap transition
@@ -77,7 +77,7 @@ export const Navbar = () => {
                         }
                       `}
                     >
-                      {category}
+                      {cat.label} {/* label: 한글 이름 */}
                     </Link>
                   );
                 })}
