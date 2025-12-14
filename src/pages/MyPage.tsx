@@ -20,14 +20,13 @@ import { useAddCategory, useDeleteCategory } from "../hooks/useCategoryQuery";
 import { updateUserProfile } from "../api/auth";
 import { useAuth } from "../hooks/useAuth";
 // 뱃지 관련 컴포넌트 및 로직
-import { 
-  BADGE_META, 
-  BadgeCard, 
-  getEarnedBadges, 
-  toUserStatsFromQuizResult,
-  type BadgeGroup 
+import {
+  BADGE_META,
+  BadgeCard,
+  getEarnedBadges,
+  type BadgeGroup
 } from "../components/badge";
-import { useLatestQuiz, useQuizResult, useQuizStats } from '../hooks/useQuizQuery';
+import { useQuizStats } from '../hooks/useQuizQuery';
 import { useUserProfile } from '../hooks/useUserQuery';
 
 export const CATEGORY_ID_MAP: Record<typeof CATEGORIES[number], number> = {
@@ -84,15 +83,8 @@ const MyPage = () => {
   const deleteCategoryMutation = useDeleteCategory();
 
   // ======= 뱃지 및 통계 데이터 연동 로직
-  // 퀴즈 결과 조회 (임의의 quizId 1 사용 - 실제로는 사용자 통계를 반환)
-  const { data: latestQuizResponse } = useLatestQuiz();
-  // 데이터가 없으면 0으로 fallback하여 훅 호출 규칙 준수
-  const latestQuizId = latestQuizResponse?.data?.id || 0;
-  // 퀴즈 누적 통계 조회 (뱃지용)
-  const { data: quizResultResponse, isLoading: isResultLoading } = useQuizResult(latestQuizId);
-
-  // 퀴즈 통계 조회 (화면 표시용)
-  const { data: quizStatsResponse } = useQuizStats();
+  // 퀴즈 통계 조회 (화면 표시용 + 배지 계산용)
+  const { data: quizStatsResponse, isLoading: isResultLoading } = useQuizStats();
 
   // 통계 데이터 가공 (화면 표시용)
   const stats = useMemo(() => {
@@ -122,13 +114,19 @@ const MyPage = () => {
   // 획득한 뱃지 목록 계산 (Memoization)
   const earnedSet = useMemo(() => {
     const isMember = true; // 로그인 된 상태이므로 true
+    const apiStats = quizStatsResponse?.data;
 
     // API 데이터를 뱃지 로직용 통계로 변환
-    const badgeStats = toUserStatsFromQuizResult(quizResultResponse?.data, { isMember });
-    
+    const badgeStats = {
+      quizCount: apiStats?.totalQuestions || 0,  // 총 문제 수
+      wrongCount: Math.max(0, (apiStats?.totalQuestions || 0) - (apiStats?.totalCorrect || 0)),  // 총 문제 - 정답 = 오답
+      totalScore: apiStats?.totalCorrect || 0,  // 정답 수 = 점수
+      isMember,
+    };
+
     // 로직을 통해 획득 뱃지 ID 목록 생성
     return new Set(getEarnedBadges(badgeStats));
-  }, [quizResultResponse]);
+  }, [quizStatsResponse]);
     // ======= 뱃지 및 통계 데이터 연동 로직 종료
 
   // 최근 활동 데이터 (추후 API 연동 예정)
