@@ -1,9 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
-import type { SubmitQuizAnswerRequest } from "../types/quiz";
 import { getNewsByCategory } from '../api/news';
 import type { NewsItem } from '../types/news';
-import { generateQuiz, getAllQuizzes, getQuizById, getQuizResult, submitQuizAnswer } from '../api/quiz';
 
 
 export const useNewsByCategory = (category: string | null) => {

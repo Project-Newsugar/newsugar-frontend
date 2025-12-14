@@ -1,10 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import {
-  useQuizByTimeSlot,
-  useSubmitQuizAnswer,
-  useQuizResult,
-  useNewsByCategory,
-} from "../hooks/useNewsQuery";
+import { useNewsByCategory } from "../hooks/useNewsQuery";
 import NewsSummaryCard from "../components/home/NewsSummaryCard";
 import QuizQuestion from "../components/quiz/QuizQuestion";
 import QuizForm from "../components/quiz/QuizForm";
@@ -15,10 +10,13 @@ import { useAtom } from "jotai";
 import { favoriteCategoriesAtom } from "../store/atoms";
 import { FaStar } from "react-icons/fa";
 import type {NewsItem } from "../types/news";
-import AdBanner from "../components/home/AdBanner";
 import { useAuth } from "../hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { getMyProfile } from "../api/auth";
+import { useQuizByTimeSlot, useQuizResult, useSubmitQuizAnswer } from '../hooks/useQuizQuery';
+import IndNewsFeed from '../components/news/IndNewsFeed';
+import QuizFeed from '../components/quiz/QuizFeed';
+import type { SubmitQuizAnswerResponse } from '../types/quiz';
 
 export default function HomePage() {
   // 현재 시간대 계산 함수 (오전 6시 기준으로 하루가 시작됨)
@@ -54,11 +52,7 @@ export default function HomePage() {
   const [favorites] = useAtom(favoriteCategoriesAtom);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
-  const [quizResults, setQuizResults] = useState<{
-    total: number;
-    correct: number;
-    results: boolean[];
-  } | null>(null);
+  const [quizResults, setQuizResults] = useState<SubmitQuizAnswerResponse["data"] | null>(null);
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     type: "correct" | "incorrect" | null;
@@ -69,9 +63,8 @@ export default function HomePage() {
   // 사용자 정보 조회 (로그인한 경우에만)
   const { data: userProfile } = useQuery({
     queryKey: ["user", "profile"],
-    queryFn: getMyProfile,
-    enabled: isLoggedIn, // 로그인한 경우에만 실행
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    queryFn: () => getMyProfile(),
+    enabled: isLoggedIn,
   });
 
   // localStorage 키: 퀴즈 완료 상태 저장 (시간대별로 구분) - 백업용
@@ -143,6 +136,7 @@ export default function HomePage() {
         total: quizResultData.data.total,
         correct: quizResultData.data.correct,
         results: quizResultData.data.results,
+        userId: quizResultData.data.userId,
       });
     } else if (isCompleted && quizResultData.data.results.length === 0) {
       // DB에 기록은 있지만 results 배열이 비어있으면 로컬스토리지 확인
@@ -275,7 +269,7 @@ export default function HomePage() {
       const result = await submitAnswer.mutateAsync({
         id: quiz.data.id,
         answerData: {
-          userId: userProfile?.data?.id || 1, // 로그인한 사용자 ID 사용, 없으면 1
+          userId: userProfile?.id || 1, // 로그인한 사용자 ID 사용, 없으면 1
           answers: newAnswers,
         },
       });
@@ -370,132 +364,35 @@ export default function HomePage() {
       </section>
 
       {/* SUMMARY & QUIZ */}
-      <section>
-        <NewsSummaryCard
-          summary={newsSummary?.summary || ""}
-          isLoading={isLoading}
-          onTimeChange={handleTimeChange}
-          selectedTime={selectedTime}
-          quizSection={
-            <>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Quiz</h3>
-              {isQuizLoading ? (
-                <div className="flex justify-center items-center h-24">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : quiz?.data?.questions && quiz.data.questions.length > 0 ? (
-                <div className="space-y-4">
-                  <QuizQuestion
-                    question={
-                      quiz.data.questions[currentQuestionIndex]?.text ||
-                      quiz.data.questions[0].text
-                    }
-                  />
-
-                  {/* 과거 시간대인 경우 정답만 표시 */}
-                  {isPastTimeSlot ? (
-                    <div className="space-y-4">
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <p className="text-sm text-gray-600 mb-2">
-                          ⏰ 이 시간대의 퀴즈는 이미 지나갔습니다.
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          정답과 해설만 확인할 수 있습니다.
-                        </p>
-                      </div>
-                      {/* 모든 문제의 정답 표시 */}
-                      <div className="space-y-3">
-                        {quiz.data.questions.map((question, idx) => (
-                          <div
-                            key={idx}
-                            className="p-4 rounded-lg border bg-blue-50 border-blue-200"
-                          >
-                            <p className="text-sm text-gray-600 mb-1">
-                              문제 {idx + 1} 정답
-                            </p>
-                            <p className="font-medium text-gray-900">
-                              {question.correctIndex + 1}번:{" "}
-                              {question.options[question.correctIndex]}
-                            </p>
-                            <p className="text-sm text-gray-600 mt-2">
-                              {question.explanation}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : !isSolved ? (
-                    <div className="space-y-4">
-                      {/* 옵션 표시 */}
-                      <div className="space-y-2">
-                        {quiz.data.questions[currentQuestionIndex]?.options.map(
-                          (option, idx) => (
-                            <div
-                              key={idx}
-                              className="text-sm text-gray-700 p-3 bg-gray-50 rounded-lg border border-gray-200"
-                            >
-                              {idx + 1}. {option}
-                            </div>
-                          )
-                        )}
-                      </div>
-                      <QuizForm
-                        onSubmit={handleSubmit}
-                        isSubmitting={submitAnswer.isPending}
-                        isLoggedIn={isLoggedIn}
-                      />
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* 퀴즈 결과 표시 */}
-                      <div className="p-5 rounded-lg border bg-blue-50 border-blue-200">
-                        <p className="mb-2 font-medium text-blue-900">
-                          점수: {quizResults?.correct} / {quizResults?.total}
-                        </p>
-                      </div>
-                      {/* 각 문제별 결과 */}
-                      <div className="space-y-3">
-                        {quiz.data.questions.map((question, idx) => (
-                          <div
-                            key={idx}
-                            className={`p-4 rounded-lg border ${
-                              quizResults?.results[idx]
-                                ? "bg-green-50 border-green-200"
-                                : "bg-red-50 border-red-200"
-                            }`}
-                          >
-                            <p className="text-sm text-gray-600 mb-1">
-                              문제 {idx + 1}:{" "}
-                              {quizResults?.results[idx] ? "✓ 정답" : "✗ 오답"}
-                            </p>
-                            <p className="font-medium text-gray-900">
-                              정답: {question.correctIndex + 1}번 -{" "}
-                              {question.options[question.correctIndex]}
-                            </p>
-                            <p className="text-sm text-gray-600 mt-2">
-                              {question.explanation}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => navigate("/mypage")}
-                        className="w-full py-3 px-6 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
-                      >
-                        현재 총점수는? 마이페이지로 이동
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="text-center text-gray-500">
-                  오늘의 퀴즈를 불러오는데 실패했습니다.
-                </p>
-              )}
-            </>
-          }
-        />
-      </section>
+      <NewsSummaryCard
+        summary={newsSummary?.summary || ""}
+        isLoading={isLoading}
+        onTimeChange={handleTimeChange}
+        selectedTime={selectedTime}
+        quizSection={
+          <>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Quiz</h3>
+            {isQuizLoading ? (
+              <div className="flex justify-center items-center h-24">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : quiz?.data ? (
+              <QuizFeed
+                quiz={quiz.data}
+                quizResult={quizResults}
+                submitAnswer={submitAnswer}
+                isSolved={isSolved}
+                setIsSolved={setIsSolved}
+                setQuizResults={setQuizResults}
+                userProfile={userProfile?.id ? userProfile : undefined}
+                isPastTimeSlot={isPastTimeSlot}
+              />
+            ) : (
+              <p className="text-center text-gray-500">오늘의 퀴즈를 불러오는데 실패했습니다.</p>
+            )}
+          </>
+        }
+      />
 
       {/* AD BANNER */}
       {/* <div className="-mt-12 mb-2">
@@ -528,23 +425,7 @@ export default function HomePage() {
         <div className="space-y-4">
           {favoriteNews.length > 0 ? (
             favoriteNews.map((news) => (
-              <article
-                key={news.id}
-                className="bg-white border border-gray-200 rounded p-6 hover:border-blue-600 hover:shadow-md transition-all cursor-pointer"
-                onClick={() => navigate(`/news/${news.id}`)}
-              >
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                  {news.title}
-                </h4>
-                <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-2">
-                  {news.summary}
-                </p>
-                <div className="flex gap-3 text-xs text-gray-500">
-                  <span>{new Date(news.publishedAt).toLocaleDateString()}</span>
-                  <span>·</span>
-                  <span>{news.category}</span>
-                </div>
-              </article>
+              <IndNewsFeed key={news.id} news={news} />
             ))
           ) : (
             <div className="bg-white border border-gray-200 rounded p-12 text-center">

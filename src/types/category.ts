@@ -1,11 +1,5 @@
-// 공통 API Response 타입
-export interface ApiResponse<T> {
-  success: boolean;
-  code: string;
-  message: string | null;
-  data: T;
-  timestamp: string;
-}
+import type { ApiResponse } from './common';
+
 // 뉴스 카테고리 타입
 export type NewsCategory =
   | "politics"
