@@ -14,6 +14,7 @@ import type { SubmitQuizAnswerResponse } from '../types/quiz';
 import { CATEGORIES } from '../constants/CategoryData';
 import { useUserCategories } from '../hooks/useUserQuery';
 import IndNewsFeed from '../components/news/IndNewsFeed';
+import IndNewsFeedSkeleton from '../components/news/IndNewsFeedSkeleton';
 
 export default function HomePage() {
   // 현재 시간대 계산 함수 (오전 6시 기준으로 하루가 시작됨)
@@ -59,8 +60,7 @@ export default function HomePage() {
       .filter(Boolean) as string[];
   }, [favorites]);
 
-  // 새로운 API 사용: 뉴스 목록을 가져와서 summary로 변환
-  const { data: newsListData, isLoading } =
+  const { data: newsListData, isLoading: isLoadingFavoriteNews } =
   useNewsByCategory(favoriteCategoryKeys);
 
   const [modalState, setModalState] = useState<{
@@ -353,13 +353,13 @@ export default function HomePage() {
                      shadow-sm transition-colors"
         />
       </section>
-
+      {/* TODO : 주요 뉴스 요약 및 퀴즈 연동 필요*/}
       {/* SUMMARY & QUIZ */}
       <NewsSummaryCard
         summary={newsSummary?.summary || ""}
-        isLoading={isLoading}
+        isLoading={isLoadingFavoriteNews} // TODO : Loading 변수 수정 필요
         onTimeChange={handleTimeChange}
-        selectedTime={selectedTime}
+        selectedTime={selectedTime} 
         quizSection={
           <>
             <h3 className="text-xl font-bold text-gray-900 mb-4">퀴즈</h3>
@@ -416,9 +416,15 @@ export default function HomePage() {
             })}
           </div>
         )}
-        {/* 뉴스 리스트 */}
         <div className="space-y-4">
-          {favoriteNews.length > 0 ? (
+          {isLoadingFavoriteNews ? (
+            // 로딩 중일 때 스켈레톤 5개 보여주기
+            <>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <IndNewsFeedSkeleton key={index} />
+              ))}
+            </>
+          ) : favoriteNews.length > 0 ? (
             favoriteNews.map((news) => (
               <IndNewsFeed key={news.id} news={news} category={news.sections[0]} />
             ))

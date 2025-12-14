@@ -4,6 +4,8 @@ import { getCategoryName } from "../utils/getCategorySlug";
 import type { NewsItem } from '../types/news';
 import IndNewsFeed from '../components/news/IndNewsFeed';
 import { useCategoryNewsSummary, useNewsByCategory } from '../hooks/useNewsQuery';
+import LoadingSpinner from '../components/LoadingSpanner';
+import IndNewsFeedSkeleton from '../components/news/IndNewsFeedSkeleton';
 
 const CategoryPage = () => {
   const { categoryName: categorySlug } = useParams<{ categoryName: string }>();
@@ -57,9 +59,6 @@ useEffect(() => {
 
 const displayedSummary = useMemo(() => summary || "요약이 준비되는 중입니다...", [summary]);
 
-  if (isLoading) return <div>뉴스 로딩 중...</div>;
-  if (error) return <div>뉴스를 불러올 수 없습니다.</div>;
-
   return (
     <div>
       <main className="max-w-6xl mx-auto px-6 py-8 min-h-screen">
@@ -78,20 +77,29 @@ const displayedSummary = useMemo(() => summary || "요약이 준비되는 중입
                 <span>요약</span>
               </div>
             </div>
-            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
-              {displayedSummary}
-            </p>
+            <div className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
+              {isSummaryFetching ? <LoadingSpinner size={40} /> : <p>{displayedSummary}</p>}
+            </div>
           </div>
         </section>
 
         <section>
           <h3 className="text-xl font-bold text-gray-900 mb-4">관련 뉴스</h3>
           <div className="space-y-4">
-            {currentNews!.length > 0 ? (
-              currentNews!.map((news: NewsItem) => (
+            {isLoading ? (
+              // 뉴스 로딩 중일 때 스켈레톤 5개 렌더링
+              <>
+                {Array.from({ length: 5 }).map((_, idx) => (
+                  <IndNewsFeedSkeleton key={idx} />
+                ))}
+              </>
+            ) : currentNews && currentNews.length > 0 ? (
+              // 뉴스가 있을 때
+              currentNews.map((news: NewsItem) => (
                 <IndNewsFeed key={news.id} news={news} />
               ))
             ) : (
+              // 뉴스가 없을 때
               <div className="bg-white border border-gray-200 rounded p-12 text-center">
                 <p className="text-gray-500">
                   해당 카테고리의 뉴스가 없습니다.
