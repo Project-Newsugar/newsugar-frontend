@@ -77,7 +77,7 @@ export default function NewsSummaryCard({
       )}
 
       <div className={`transition-all duration-200 ${isModalOpen ? "blur-sm" : ""}`}>
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Daily Brief</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">오늘의 요약</h2>
 
         <div className="bg-white border border-gray-200 rounded p-6 shadow-sm">
         <div className="flex gap-2 mb-4">
@@ -97,7 +97,7 @@ export default function NewsSummaryCard({
         </div>
 
         <h3 className="text-xl font-bold text-gray-900 mb-4">
-          The {selectedTime}:00 News
+          {selectedTime}시 주요 뉴스
         </h3>
 
           {isLoading ? (

@@ -55,3 +55,9 @@ export interface GetUserInfoResponseData {
   phone: string | null;
   score: number;
 }
+
+export interface UserCategories {
+  id: number;
+  userId: number;
+  categoryIdList : number[];
+}
