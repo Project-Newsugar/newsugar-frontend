@@ -85,6 +85,20 @@ export interface SubmitQuizAnswerResponse {
   timestamp: string;
 }
 
+// GET /api/v1/quizzes/stats - 퀴즈 통계 조회 Response
+export interface GetQuizStatsResponse {
+  success: boolean;
+  code: string;
+  message: string;
+  data: {
+    totalQuestions: number;    // 총 문제 수
+    totalCorrect: number;      // 총 정답 수
+    submissionCount: number;   // 제출 횟수
+    accuracyPercent: number;   // 정확도 (%)
+  };
+  timestamp: string;
+}
+
 // ========== 기존 타입 (하위 호환용) ==========
 // export interface Quiz {
 //   id: number;

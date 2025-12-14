@@ -3,6 +3,7 @@ import type {
   GetAllQuizzesResponse,
   GetQuizResponse,
   GetQuizResultResponse,
+  GetQuizStatsResponse,
   SubmitQuizAnswerRequest,
   SubmitQuizAnswerResponse,
 } from "../types/quiz";
@@ -50,6 +51,13 @@ export const submitQuizAnswer = async (
 export const generateQuiz = async (summaryId: number): Promise<GenerateQuizResponse> => {
   const { data } = await axiosInstance.post<GenerateQuizResponse>(
     `/api/v1/quizzes/summary/${summaryId}/generate`
+  );
+  return data;
+};
+
+export const getQuizStats = async (): Promise<GetQuizStatsResponse> => {
+  const { data } = await axiosInstance.get<GetQuizStatsResponse>(
+    "/api/v1/quizzes/stats"
   );
   return data;
 };

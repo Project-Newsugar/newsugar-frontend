@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { generateQuiz, getAllQuizzes, getQuizById, getQuizResult, submitQuizAnswer } from '../api/quiz';
+import { generateQuiz, getAllQuizzes, getQuizById, getQuizResult, getQuizStats, submitQuizAnswer } from '../api/quiz';
 import type { SubmitQuizAnswerRequest } from '../types/quiz';
 
 export const useAllQuizzes = () => {
@@ -23,7 +23,8 @@ const formatKST = (date: Date): string => {
 
 // 6-1. 시간대별 퀴즈 조회 (06시, 12시, 18시, 24시)
 // timeSlot: "06" | "12" | "18" | "24"
-export const useQuizByTimeSlot = (timeSlot: string) => {
+// summaryId: 추후 API로 가져올 예정, 현재는 optional
+export const useQuizByTimeSlot = (timeSlot: string, summaryId?: number) => {
   return useQuery({
     queryKey: ["quiz", "timeSlot", timeSlot],
     queryFn: async () => {
@@ -104,25 +105,44 @@ export const useQuizByTimeSlot = (timeSlot: string) => {
         throw new Error("시작 시간이 종료 시간보다 늦을 수 없습니다");
       }
 
-      const response = await getAllQuizzes({
-        scope: "period",
-        from: formatKST(from),
-        to: formatKST(to),
-      });
+      try {
+        // 1. 먼저 해당 시간대의 퀴즈가 있는지 조회
+        const response = await getAllQuizzes({
+          scope: "period",
+          from: formatKST(from),
+          to: formatKST(to),
+        });
 
-      if (!response.data || response.data.length === 0) {
-        throw new Error(`${timeSlot}시 퀴즈가 없습니다`);
+        // 퀴즈가 있으면 가장 최신 퀴즈 반환
+        if (response.data && response.data.length > 0) {
+          const sortedQuizzes = [...response.data].sort((a, b) =>
+            new Date(b.startAt).getTime() - new Date(a.startAt).getTime()
+          );
+
+          return {
+            ...response,
+            data: sortedQuizzes[0],
+          };
+        }
+
+        // 2. 퀴즈가 없고 summaryId가 있으면 퀴즈 생성
+        if (summaryId) {
+          console.log(`${timeSlot}시 퀴즈가 없어 생성합니다. summaryId: ${summaryId}`);
+          const generateResponse = await generateQuiz(summaryId);
+          return generateResponse;
+        }
+
+        // 3. summaryId도 없으면 에러
+        throw new Error(`${timeSlot}시 퀴즈가 없으며, summaryId도 제공되지 않았습니다`);
+      } catch (error) {
+        // 퀴즈 조회 실패 시 summaryId가 있으면 생성 시도
+        if (summaryId) {
+          console.log(`퀴즈 조회 실패, 생성을 시도합니다. summaryId: ${summaryId}`);
+          const generateResponse = await generateQuiz(summaryId);
+          return generateResponse;
+        }
+        throw error;
       }
-
-      // startAt 기준으로 내림차순 정렬하여 가장 최신 퀴즈 반환
-      const sortedQuizzes = [...response.data].sort((a, b) =>
-        new Date(b.startAt).getTime() - new Date(a.startAt).getTime()
-      );
-
-      return {
-        ...response,
-        data: sortedQuizzes[0], // 해당 시간대의 가장 최신 퀴즈
-      };
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     enabled: !!timeSlot, // timeSlot이 있을 때만 쿼리 실행
@@ -190,5 +210,14 @@ export const useSubmitQuizAnswer = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quiz"] });
     },
+  });
+};
+
+// 10. 퀴즈 통계 조회
+export const useQuizStats = () => {
+  return useQuery({
+    queryKey: ["quiz", "stats"],
+    queryFn: () => getQuizStats(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

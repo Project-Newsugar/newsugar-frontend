@@ -27,7 +27,7 @@ import {
   toUserStatsFromQuizResult,
   type BadgeGroup 
 } from "../components/badge";
-import { useLatestQuiz, useQuizResult } from '../hooks/useQuizQuery';
+import { useLatestQuiz, useQuizResult, useQuizStats } from '../hooks/useQuizQuery';
 import { useUserProfile } from '../hooks/useUserQuery';
 
 export const CATEGORY_ID_MAP: Record<typeof CATEGORIES[number], number> = {
@@ -88,18 +88,20 @@ const MyPage = () => {
   const { data: latestQuizResponse } = useLatestQuiz();
   // 데이터가 없으면 0으로 fallback하여 훅 호출 규칙 준수
   const latestQuizId = latestQuizResponse?.data?.id || 0;
-  // 퀴즈 누적 통계 조회
+  // 퀴즈 누적 통계 조회 (뱃지용)
   const { data: quizResultResponse, isLoading: isResultLoading } = useQuizResult(latestQuizId);
-  
+
+  // 퀴즈 통계 조회 (화면 표시용)
+  const { data: quizStatsResponse } = useQuizStats();
+
   // 통계 데이터 가공 (화면 표시용)
   const stats = useMemo(() => {
-    const quizStats = quizResultResponse?.data;
-    const totalScore = quizStats?.correct ? quizStats.correct * 100 : 0; // 1문제당 100점 예시
+    const apiStats = quizStatsResponse?.data;
 
     return {
-      totalScore, 
-      solvedCount: quizStats?.total || 0,
-      correctCount: quizStats?.correct || 0,
+      totalQuestions: apiStats?.totalQuestions || 0,
+      totalCorrect: apiStats?.totalCorrect || 0,
+      accuracyPercent: apiStats?.accuracyPercent || 0,
       favoriteCategories: [
         { name: "경제", count: 42 },
         { name: "IT/과학", count: 28 },
@@ -107,7 +109,7 @@ const MyPage = () => {
       ],
       readingStyle: "새벽형 스캐너",
     };
-  }, [quizResultResponse]);
+  }, [quizStatsResponse]);
  
   // 뱃지 그룹 정의 (화면에 보여줄 순서와 제목)
   const BADGE_SECTIONS: { title: string; group: BadgeGroup }[] = [
@@ -129,42 +131,8 @@ const MyPage = () => {
   }, [quizResultResponse]);
     // ======= 뱃지 및 통계 데이터 연동 로직 종료
 
-  // 최근 활동 데이터 (localStorage 기반)
+  // 최근 활동 데이터 (추후 API 연동 예정)
   const [recentActivity, setRecentActivity] = useState<{ date: string; result: "정답" | "오답" }[]>([]);
-
-  // localStorage에서 퀴즈 히스토리 불러오기
-  useEffect(() => {
-      try {
-        const activities: { date: string; result: "정답" | "오답" }[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith("quiz_state_")) {
-            const stateStr = localStorage.getItem(key);
-            if (stateStr) {
-              try {
-                const state = JSON.parse(stateStr);
-                if (state.isSolved && state.quizResults) {
-                  const allCorrect = state.quizResults.results?.every((r: boolean) => r === true);
-                  activities.push({
-                    date: new Date().toISOString(),
-                    result: allCorrect ? "정답" : "오답",
-                  });
-                }
-              } catch (e) { continue; }
-            }
-          }
-        }
-        const formattedActivity = activities.map((item) => {
-          const dateObj = new Date(item.date);
-          const formattedDate = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, '0')}.${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
-          return { date: formattedDate, result: item.result };
-        });
-        setRecentActivity(formattedActivity);
-      } catch (error) {
-        console.error("퀴즈 내역 불러오기 실패:", error);
-        setRecentActivity([]);
-      }
-    }, []);
 
   // --- 핸들러 함수들 ---
 
@@ -465,8 +433,9 @@ const MyPage = () => {
                 <span className="text-lg text-gray-500">점</span>
               </div>
               <p className="text-gray-500 text-sm mt-4">
-                누적 정답: <span className="font-semibold text-gray-900">{stats.correctCount}개</span>
-                {" · "}누적 풀이: <span className="font-semibold text-gray-900">{stats.solvedCount}개</span>
+                누적 풀이: <span className="font-semibold text-gray-900">{stats.totalQuestions}개</span>
+                {" · "}누적 정답: <span className="font-semibold text-gray-900">{stats.totalCorrect}개</span>
+                {" · "}정답률: <span className="font-semibold text-gray-900">{stats.accuracyPercent}%</span>
               </p>
               {/* <p className="text-gray-500 text-sm mt-4">
                 정답 퀴즈:{" "}
