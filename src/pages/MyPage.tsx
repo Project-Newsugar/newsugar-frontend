@@ -10,7 +10,7 @@ import clsx from "clsx";
 import { useNavigate } from "react-router-dom"; // 페이지 이동용
 import Modal from "../components/Modal"; // 공통 모달
 import CategoryGrid from "../components/home/CategoryGrid";
-import { CATEGORIES } from "../constants/CategoryData";
+import { CATEGORIES, type CategoryId } from "../constants/CategoryData";
 import { getCategorySlug } from "../utils/getCategorySlug";
 // 상태 관리
 import { useAtom } from "jotai";
@@ -28,23 +28,14 @@ import {
   type BadgeGroup 
 } from "../components/badge";
 import { useLatestQuiz, useQuizResult } from '../hooks/useQuizQuery';
-import { useUserProfile } from '../hooks/useUserQuery';
+import { useUserCategories, useUserProfile } from '../hooks/useUserQuery';
 
-export const CATEGORY_ID_MAP: Record<typeof CATEGORIES[number], number> = {
-  정치: 1,
-  경제: 2,
-  사회: 7,         
-  문화: 5,
-  해외: 6,         
-  '과학/기술': 3,
-  엔터테인먼트: 8,  
-  오피니언: 9     
-};
 const MyPage = () => {
   const navigate = useNavigate();
   const { isLoggedIn, logout } = useAuth();
 
   const { data: userProfile, isLoading, error } = useUserProfile(isLoggedIn);
+  const { data: userCategories, isLoading: isCategoriesLoading, error: isCategoriesError } = useUserCategories(isLoggedIn);
 
   const [user, setUser] = useState(() => ({
     name: userProfile?.name || "",
@@ -65,6 +56,13 @@ const MyPage = () => {
       });
     }
   }, [userProfile]);
+
+  useEffect(() => {
+    if (userCategories?.categoryIdList) {
+      setFavorites(userCategories.categoryIdList as CategoryId[]);
+    }
+  }, [userCategories]);
+
 
   // 편집 모드 상태
   const [isEditing, setIsEditing] = useState(false);
@@ -272,34 +270,24 @@ const MyPage = () => {
     navigate(`/category/${slug}`);
   };
 
-  // 즐겨찾기 토글 핸들러
-  const handleToggleFavorite = async (category: string) => {
-   const categoryId = CATEGORY_ID_MAP[category as keyof typeof CATEGORY_ID_MAP];
-    // 현재 즐겨찾기에 있는지 확인
-    const existingCategory = favorites.find((fav) => fav.name === category);
-
-    try {
-      if (existingCategory) {
-        // 이미 즐겨찾기에 있으면 삭제
-        const response = await deleteCategoryMutation.mutateAsync(categoryId);
-        if (response.success) {
-          setFavorites((prev) => prev.filter((c) => c.name !== category));
-        } else {
-          throw new Error(response.message || "즐겨찾기 삭제에 실패했습니다.");
-        }
-      } else {
-        // 없으면 추가
-        const response = await addCategoryMutation.mutateAsync(categoryId);
-        if (response.success && response.data) {
-          setFavorites((prev) => [...prev, response.data]);
-        } else {
-          throw new Error(response.message || "즐겨찾기 추가에 실패했습니다.");
-        }
+  // 즐겨찾기 토글
+  const handleToggleFavorite = async (categoryId: CategoryId) => {
+  try {
+    if (favorites.includes(categoryId)) {
+      const response = await deleteCategoryMutation.mutateAsync(categoryId);
+      if (response.success) {
+        setFavorites(prev => prev.filter(id => id !== categoryId));
       }
-    } catch (error: any) {
-      console.error("Failed to toggle favorite:", error);
+    } else {
+      const response = await addCategoryMutation.mutateAsync(categoryId);
+      if (response.success && response.data) {
+        setFavorites(prev => [...prev, categoryId]);
+      }
     }
-  };
+  } catch (error) {
+    console.error("즐겨찾기 토글 실패:", error);
+  }
+};
 
   if (isLoading) return <p>로딩 중...</p>;
   if (error) return <p>유저 정보를 불러오는데 실패했습니다.</p>;
@@ -548,7 +536,7 @@ const MyPage = () => {
       {/* 3. 즐겨찾기 설정 섹션 */}
       <section className="mb-12">
         <CategoryGrid
-          categories={[...CATEGORIES]}
+          categories={CATEGORIES}
           onCategoryClick={handleCategoryClick}
           favorites={favorites}
           onToggleFavorite={handleToggleFavorite}
