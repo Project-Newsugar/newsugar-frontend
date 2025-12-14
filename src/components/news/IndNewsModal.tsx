@@ -59,9 +59,6 @@ const NewsModal: React.FC<NewsModalProps> = ({ news, isOpen, onClose }) => {
           <h3 className="text-2xl font-bold text-gray-900 line-clamp-3">
             {news.title}
           </h3>
-          <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
-            요약
-          </span>
         </div>
 
         {/* 요약 내용 */}
