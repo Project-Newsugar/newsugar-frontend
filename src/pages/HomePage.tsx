@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import {
-  useAllNews,
   useQuizByTimeSlot,
   useSubmitQuizAnswer,
   useQuizResult,
+  useNewsByCategory,
 } from "../hooks/useNewsQuery";
 import NewsSummaryCard from "../components/home/NewsSummaryCard";
 import QuizQuestion from "../components/quiz/QuizQuestion";
@@ -14,7 +14,7 @@ import { getCategorySlug } from "../utils/getCategorySlug";
 import { useAtom } from "jotai";
 import { favoriteCategoriesAtom } from "../store/atoms";
 import { FaStar } from "react-icons/fa";
-import type { News } from "../types/news";
+import type {NewsItem } from "../types/news";
 import AdBanner from "../components/home/AdBanner";
 import { useAuth } from "../hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -37,22 +37,8 @@ export default function HomePage() {
   );
 
   // 새로운 API 사용: 뉴스 목록을 가져와서 summary로 변환
-  const { data: newsListData, isLoading } = useAllNews(0, 20);
+  const { data: newsListData, isLoading } = useNewsByCategory(null);
 
-  // 뉴스 목록을 summary 형태로 가공
-  const newsSummary = useMemo(() => {
-    if (!newsListData?.content) return null;
-
-    // 각 뉴스의 summary를 합쳐서 전체 summary로 만들기
-    const summaryText = newsListData.content
-      .map((news, index) => `${index + 1}. ${news.title}\n${news.summary}`)
-      .join("\n\n");
-
-    return {
-      summary: summaryText || "뉴스를 불러오는 중입니다...",
-      date: new Date().toISOString(),
-    };
-  }, [newsListData]);
 
   // 선택한 시간대의 퀴즈 조회
   const { data: quiz, isLoading: isQuizLoading } = useQuizByTimeSlot(selectedTime);
@@ -115,6 +101,13 @@ export default function HomePage() {
 
     return isSameDate && isAfterQuizStart;
   };
+
+  // 최신 뉴스 하나를 summary로 사용
+  const newsSummary: { summary: string } | undefined = useMemo(() => {
+    if (!newsListData || newsListData.length === 0) return undefined;
+    const latestNews = newsListData[0];
+    return { summary: latestNews.summary || "" };
+  }, [newsListData]);
 
   // 퀴즈 변경 시 상태 초기화 (시간대 변경 시)
   useEffect(() => {
@@ -317,23 +310,23 @@ export default function HomePage() {
   };
 
   // 즐겨찾기한 카테고리의 뉴스들 필터링 (실제 API 데이터 사용)
-  const filteredNews: News[] = useMemo(() => {
-    if (!newsListData?.content) return [];
+  const filteredNews: NewsItem[] = useMemo(() => {
+    if (!newsListData) return [];
 
     if (favorites.length > 0) {
       // UserCategory 객체 배열에서 name 필드를 추출하여 비교
       const favoriteCategoryNames = favorites.map((fav) => fav.name);
-      return newsListData.content.filter((news) =>
-        favoriteCategoryNames.includes(news.category)
+      return newsListData.filter((news) =>
+        favoriteCategoryNames.includes(news.sections[0])
       );
     }
 
     // 즐겨찾기가 없으면 최신 뉴스 5개 표시
-    return newsListData.content.slice(0, 5);
+    return newsListData.slice(0, 5);
   }, [newsListData, favorites]);
 
   // 즐겨찾기가 2개 이상일 때 뉴스를 랜덤으로 섞기
-  const favoriteNews: News[] = useMemo(() => {
+  const favoriteNews: NewsItem[] = useMemo(() => {
     if (favorites.length >= 2) {
       return [...filteredNews].sort(() => Math.random() - 0.5);
     }

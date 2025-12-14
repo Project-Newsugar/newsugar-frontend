@@ -1,57 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { newsApi } from "../api/newsApi";
+
 import type { SubmitQuizAnswerRequest } from "../types/quiz";
-import type { CategoryType } from "../types/news";
+import { getNewsByCategory } from '../api/news';
+import type { NewsItem } from '../types/news';
+import { newsApi } from '../api/newsApi';
 
-// 1. 뉴스 전체 조회 (페이지네이션)
-export const useAllNews = (page: number = 0, size: number = 20) => {
-  return useQuery({
-    queryKey: ["news", "all", page, size],
-    queryFn: () => newsApi.getAllNews(page, size),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+
+export const useNewsByCategory = (category: string | null) => {
+  return useQuery<NewsItem[]>({
+    queryKey: ["news", "category", category ?? "all"],
+    queryFn: () => getNewsByCategory(category),       
+    enabled: true,                                 
+    staleTime: 5 * 60 * 1000,                      
   });
 };
 
-// 2. 카테고리별 뉴스 조회
-export const useNewsByCategory = (category: CategoryType) => {
-  return useQuery({
-    queryKey: ["news", "category", category],
-    queryFn: () => newsApi.getNewsByCategory(category),
-    enabled: !!category,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-};
-
-// 3. 단일 뉴스 조회
-export const useNewsById = (newsId: number) => {
-  return useQuery({
-    queryKey: ["news", newsId],
-    queryFn: () => newsApi.getNewsById(newsId),
-    enabled: !!newsId,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-  });
-};
-
-// 4. 뉴스 저장 (크롤러/배치 서버용)
-export const useCreateNews = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: newsApi.createNews,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["news"] });
-    },
-  });
-};
-
-// 5. URL 중복 확인
-export const useCheckNewsExists = (url: string) => {
-  return useQuery({
-    queryKey: ["news", "exists", url],
-    queryFn: () => newsApi.checkNewsExists(url),
-    enabled: !!url,
-  });
-};
 
 // 6. 퀴즈 전체 조회
 export const useAllQuizzes = () => {

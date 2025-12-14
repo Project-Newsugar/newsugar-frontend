@@ -2,20 +2,24 @@
 export const categorySlugMap = {
   '정치': 'politics',
   '경제': 'economy',
-  '과학/기술': 'science-tech',
-  '스포츠': 'sports',
+  '사회': 'society',
   '문화': 'culture',
-  '국제': 'international',
+  '과학/기술': 'tech',
+  '해외': 'world',
+  '엔터테인먼트': 'entertainment',
+  '오피니언': 'opinion',
 } as const;
 
 // 영문 -> 한글 카테고리명
 export const categoryNameMap = {
-  'politics': '정치',
-  'economy': '경제',
-  'science-tech': '과학/기술',
-  'sports': '스포츠',
-  'culture': '문화',
-  'international': '국제',
+  "politics": "정치",
+  "economy": "경제",
+  "society": "사회",
+  "culture": "문화",
+  "world": "해외",
+  "tech": "과학/기술",
+  "entertainment": "엔터테인먼트",
+  "opinion": "오피니언",
 } as const;
 
 // 카테고리명 변환

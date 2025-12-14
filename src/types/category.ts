@@ -6,18 +6,27 @@ export interface ApiResponse<T> {
   data: T;
   timestamp: string;
 }
-
-// 뉴스 카테고리 타입 (getCategorySlug에 맞춤)
-export type NewsCategory = "politics" | "economy" | "science-tech" | "sports" | "culture" | "international";
+// 뉴스 카테고리 타입
+export type NewsCategory =
+  | "politics"
+  | "economy"
+  | "society"
+  | "culture"
+  | "world"
+  | "tech"
+  | "entertainment"
+  | "opinion";
 
 // 카테고리 한글 매핑
 export const CATEGORY_LABELS: Record<NewsCategory, string> = {
   politics: "정치",
   economy: "경제",
-  "science-tech": "과학/기술",
-  sports: "스포츠",
+  society: "사회",
   culture: "문화",
-  international: "국제",
+  world: "해외",
+  tech: "과학/기술",
+  entertainment: "엔터테인먼트",
+  opinion: "오피니언",
 };
 
 // 카테고리 추가 Request

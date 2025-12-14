@@ -37,15 +37,16 @@ import {
 // 카테고리 한글명 -> ID 매핑 (백엔드 DB 기준)
 // 주의: 이 ID는 백엔드 DB의 실제 카테고리 ID와 일치해야 합니다
 // 백엔드 API 응답을 확인하여 정확한 ID를 설정하세요
-const CATEGORY_ID_MAP: Record<string, number> = {
+export const CATEGORY_ID_MAP: Record<typeof CATEGORIES[number], number> = {
   정치: 1,
   경제: 2,
-  "과학/기술": 3,
-  스포츠: 4,
+  사회: 7,         
   문화: 5,
-  국제: 6,
+  해외: 6,         
+  '과학/기술': 3,
+  엔터테인먼트: 8,  
+  오피니언: 9     
 };
-
 const MyPage = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -305,13 +306,7 @@ const MyPage = () => {
 
   // 즐겨찾기 토글 핸들러
   const handleToggleFavorite = async (category: string) => {
-    const categoryId = CATEGORY_ID_MAP[category];
-
-    if (!categoryId) {
-      console.error("Invalid category:", category);
-      return;
-    }
-
+   const categoryId = CATEGORY_ID_MAP[category as keyof typeof CATEGORY_ID_MAP];
     // 현재 즐겨찾기에 있는지 확인
     const existingCategory = favorites.find((fav) => fav.name === category);
 

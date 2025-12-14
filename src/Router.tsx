@@ -7,7 +7,7 @@ import { MainLayout } from './layout/MainLayout';
 import HomePage from './pages/HomePage';
 import CategoryPage from './pages/CategoryPage';
 import MyPage from './pages/MyPage';
-import NewsDetailPage from './pages/NewsDetailPage';
+// import NewsDetailPage from './pages/NewsDetailPage';
 import HelpPage from './pages/HelpPage';
 // ▼ [추가 1] 임시 페이지 가져오기
 import BadgeGalleryDemo from './pages/BadgeGalleryDemo';
@@ -23,7 +23,7 @@ const router = createBrowserRouter([
   {
     element: <MainLayout />,
     children: [
-      { path: '/news/:newsId', element: <NewsDetailPage /> },
+      // { path: '/news/:newsId', element: <NewsDetailPage /> },
       { path: "/", element: <HomePage /> },
       { path: '/mypage', element: <MyPage /> },
       { path: '/category/:categoryName', element: <CategoryPage /> },

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { CATEGORY_SUMMARIES, NEWS_DATA } from "../constants/CategoryData";
-import type { LocalNewsItem } from "../types/news";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { getCategoryName } from "../utils/getCategorySlug";
+import type { NewsItem } from '../types/news';
+import IndNewsFeed from '../components/news/IndNewsFeed';
+import { useNewsByCategory } from '../hooks/useNewsQuery';
 
 const CategoryPage = () => {
   const { categoryName: categorySlug } = useParams<{ categoryName: string }>();
-  const navigate = useNavigate();
 
   const initialCategory = getCategoryName(categorySlug || "economy");
 
@@ -21,9 +21,15 @@ const CategoryPage = () => {
     }
   }, [categorySlug]);
 
-  const currentNews: LocalNewsItem[] = NEWS_DATA.filter(
-    (news) => news.tags === selectedCategory
-  );
+
+const { data: currentNews, isLoading, error } = useNewsByCategory(categorySlug!);
+
+useEffect(() => {
+  console.log("🔥 currentNews:", currentNews);
+}, [currentNews]);
+
+  if (isLoading) return <div>뉴스 로딩 중...</div>;
+  if (error) return <div>뉴스를 불러올 수 없습니다.</div>;
 
   return (
     <div>
@@ -39,7 +45,7 @@ const CategoryPage = () => {
               <span>AI 요약</span>
             </div>
             <p className="text-gray-700 leading-relaxed">
-              {CATEGORY_SUMMARIES[selectedCategory]}
+              {/* {CATEGORY_SUMMARIES[selectedCategory]} */}
             </p>
           </div>
         </section>
@@ -47,25 +53,9 @@ const CategoryPage = () => {
         <section>
           <h3 className="text-xl font-bold text-gray-900 mb-4">관련 뉴스</h3>
           <div className="space-y-4">
-            {currentNews.length > 0 ? (
-              currentNews.map((news: LocalNewsItem) => (
-                <article
-                  key={news.id}
-                  className="bg-white border border-gray-200 rounded p-6 hover:border-blue-600 hover:shadow-md transition-all cursor-pointer"
-                  onClick={() => navigate(`/news/${news.id}`)}
-                >
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                    {news.title}
-                  </h4>
-                  <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-2">
-                    {news.content}
-                  </p>
-                  <div className="flex gap-3 text-xs text-gray-500">
-                    <span>{news.date}</span>
-                    <span>·</span>
-                    <span>{news.source}</span>
-                  </div>
-                </article>
+            {currentNews!.length > 0 ? (
+              currentNews!.map((news: NewsItem) => (
+                <IndNewsFeed key={news.id} news={news} />
               ))
             ) : (
               <div className="bg-white border border-gray-200 rounded p-12 text-center">
