@@ -5,14 +5,10 @@ import {
   MdCheck,
 } from "react-icons/md";
 import { FaBell } from "react-icons/fa"; // FaLock 제거 (BadgeCard 내부에서 처리됨)
-import { useState, useMemo, type ChangeEvent, useEffect, type Key } from "react";
+import { useState, useMemo, type ChangeEvent, useEffect } from "react";
 import clsx from "clsx";
 import { useNavigate } from "react-router-dom"; // 페이지 이동용
-// 공통 컴포넌트 & 유틸
 import Modal from "../components/Modal"; // 공통 모달
-// localStorage 유틸과 키 import
-import { getLocalStorage } from "../utils/getLocalStorage";
-import { LOCAL_STORAGE_KEY } from "../constants/keys";
 import CategoryGrid from "../components/home/CategoryGrid";
 import { CATEGORIES } from "../constants/CategoryData";
 import { getCategorySlug } from "../utils/getCategorySlug";
@@ -21,8 +17,7 @@ import { useAtom } from "jotai";
 import { favoriteCategoriesAtom } from "../store/atoms";
 // API & Hooks
 import { useAddCategory, useDeleteCategory } from "../hooks/useCategoryQuery";
-import { updateUserProfile, getMyProfile } from "../api/auth";
-import { useQuizResult, useLatestQuiz } from "../hooks/useNewsQuery";
+import { updateUserProfile } from "../api/auth";
 import { useAuth } from "../hooks/useAuth";
 // 뱃지 관련 컴포넌트 및 로직
 import { 
@@ -32,11 +27,9 @@ import {
   toUserStatsFromQuizResult,
   type BadgeGroup 
 } from "../components/badge";
+import { useLatestQuiz, useQuizResult } from '../hooks/useQuizQuery';
+import { useUserProfile } from '../hooks/useUserQuery';
 
-
-// 카테고리 한글명 -> ID 매핑 (백엔드 DB 기준)
-// 주의: 이 ID는 백엔드 DB의 실제 카테고리 ID와 일치해야 합니다
-// 백엔드 API 응답을 확인하여 정확한 ID를 설정하세요
 export const CATEGORY_ID_MAP: Record<typeof CATEGORIES[number], number> = {
   정치: 1,
   경제: 2,
@@ -49,54 +42,29 @@ export const CATEGORY_ID_MAP: Record<typeof CATEGORIES[number], number> = {
 };
 const MyPage = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { isLoggedIn, logout } = useAuth();
 
-  // 컴포넌트 마운트 시 토큰 확인
+  const { data: userProfile, isLoading, error } = useUserProfile(isLoggedIn);
+
+  const [user, setUser] = useState(() => ({
+    name: userProfile?.name || "",
+    nickname: userProfile?.nickname || "",
+    email: userProfile?.email || "",
+    phone: userProfile?.phone || null,
+    score: userProfile?.score || 0,
+  }));
+
   useEffect(() => {
-    const accessToken = getLocalStorage(
-      LOCAL_STORAGE_KEY.accessToken
-    ).getItem();
-    if (!accessToken) {
-      // alert 제거 - 바로 로그인 페이지로 리다이렉트
-      navigate("/login");
+    if (userProfile) {
+      setUser({
+        name: userProfile.name,
+        nickname: userProfile.nickname,
+        email: userProfile.email,
+        phone: userProfile.phone,
+        score: userProfile.score,
+      });
     }
-  }, [navigate]);
-
-  // 사용자 정보 상태
-  const [user, setUser] = useState({
-    name: "홍길동",
-    nickname: "멋쟁이사자",
-    email: "test@example.com",
-    phone: "010-1234-5678" as string | null,
-    score: 0,
-  });
-
-  // 유저 정보 불러오기
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const response = await getMyProfile();
-        if (response.success) {
-          setUser({
-            name: response.data.name,
-            nickname: response.data.nickname,
-            email: response.data.email,
-            phone: response.data.phone,
-            score: response.data.score,
-          });
-        }
-      } catch (error: any) {
-        console.error("유저 정보 불러오기 실패:", error);
-        // 에러 처리 - 인증 오류 시 로그인 페이지로 리다이렉트
-        if (error.response?.status === 401) {
-          // alert 제거 - 바로 로그인 페이지로 리다이렉트
-          navigate("/login");
-        }
-      }
-    };
-
-    fetchUserInfo();
-  }, [navigate]);
+  }, [userProfile]);
 
   // 편집 모드 상태
   const [isEditing, setIsEditing] = useState(false);
@@ -151,7 +119,7 @@ const MyPage = () => {
 
   // 획득한 뱃지 목록 계산 (Memoization)
   const earnedSet = useMemo(() => {
-        const isMember = true; // 로그인 된 상태이므로 true
+    const isMember = true; // 로그인 된 상태이므로 true
 
     // API 데이터를 뱃지 로직용 통계로 변환
     const badgeStats = toUserStatsFromQuizResult(quizResultResponse?.data, { isMember });
@@ -332,6 +300,10 @@ const MyPage = () => {
       console.error("Failed to toggle favorite:", error);
     }
   };
+
+  if (isLoading) return <p>로딩 중...</p>;
+  if (error) return <p>유저 정보를 불러오는데 실패했습니다.</p>;
+
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12 min-h-screen pb-24">

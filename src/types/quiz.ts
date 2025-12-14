@@ -1,5 +1,3 @@
-// ========== API 명세에 맞춘 타입 ==========
-
 // 퀴즈 문제 구조
 export interface QuizQuestion {
   text: string;
