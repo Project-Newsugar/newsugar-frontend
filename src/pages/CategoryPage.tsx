@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getCategoryName } from "../utils/getCategorySlug";
 import type { NewsItem } from '../types/news';
@@ -55,6 +55,8 @@ useEffect(() => {
   return cleanup;
 }, [refetchSummary]);
 
+const displayedSummary = useMemo(() => summary || "요약이 준비되는 중입니다...", [summary]);
+
   if (isLoading) return <div>뉴스 로딩 중...</div>;
   if (error) return <div>뉴스를 불러올 수 없습니다.</div>;
 
@@ -77,7 +79,7 @@ useEffect(() => {
               </div>
             </div>
             <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
-              {summary || "요약이 준비되는 중입니다..."}
+              {displayedSummary}
             </p>
           </div>
         </section>
