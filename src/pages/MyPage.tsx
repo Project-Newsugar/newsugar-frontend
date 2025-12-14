@@ -4,41 +4,38 @@ import {
   MdClose,
   MdCheck,
 } from "react-icons/md";
-import { FaBell, FaLock } from "react-icons/fa";
-import { useState, useMemo, type ChangeEvent, useEffect } from "react";
+import { FaBell } from "react-icons/fa"; // FaLock 제거 (BadgeCard 내부에서 처리됨)
+import { useState, useMemo, type ChangeEvent, useEffect, type Key } from "react";
 import clsx from "clsx";
 import { useNavigate } from "react-router-dom"; // 페이지 이동용
+// 공통 컴포넌트 & 유틸
 import Modal from "../components/Modal"; // 공통 모달
-// [추가] localStorage 유틸과 키 import
+// localStorage 유틸과 키 import
 import { getLocalStorage } from "../utils/getLocalStorage";
 import { LOCAL_STORAGE_KEY } from "../constants/keys";
 import CategoryGrid from "../components/home/CategoryGrid";
 import { CATEGORIES } from "../constants/CategoryData";
 import { getCategorySlug } from "../utils/getCategorySlug";
+// 상태 관리
 import { useAtom } from "jotai";
 import { favoriteCategoriesAtom } from "../store/atoms";
+// API & Hooks
 import { useAddCategory, useDeleteCategory } from "../hooks/useCategoryQuery";
 import { updateUserProfile, getMyProfile } from "../api/auth";
-import { useQuizResult } from "../hooks/useNewsQuery";
+import { useQuizResult, useLatestQuiz } from "../hooks/useNewsQuery";
 import { useAuth } from "../hooks/useAuth";
+// 뱃지 관련 컴포넌트 및 로직
+import { 
+  BADGE_META, 
+  BadgeCard, 
+  getEarnedBadges, 
+  toUserStatsFromQuizResult,
+  type BadgeGroup 
+} from "../components/badge";
 
-// 1. 뱃지 마스터 데이터
-const BADGE_MASTER_LIST = [
-  { code: "MORNING", name: "갓생러", icon: "☀️", desc: "05~09시 접속" },
-  { code: "DIVER", name: "뉴스 다독가", icon: "📚", desc: "3개 카테고리 섭렵" },
-  {
-    code: "PERFECT_SCORE",
-    name: "퀴즈 마스터",
-    icon: "💯",
-    desc: "퀴즈 100점 달성",
-  },
-  { code: "NIGHT_OWL", name: "올빼미", icon: "🦉", desc: "심야 시간 활동" },
-];
-
-type BadgeCode = (typeof BADGE_MASTER_LIST)[number]["code"];
 
 // 카테고리 한글명 -> ID 매핑 (백엔드 DB 기준)
-// ⚠️ 주의: 이 ID는 백엔드 DB의 실제 카테고리 ID와 일치해야 합니다
+// 주의: 이 ID는 백엔드 DB의 실제 카테고리 ID와 일치해야 합니다
 // 백엔드 API 응답을 확인하여 정확한 ID를 설정하세요
 const CATEGORY_ID_MAP: Record<string, number> = {
   정치: 1,
@@ -53,7 +50,7 @@ const MyPage = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
-  // [추가] 컴포넌트 마운트 시 토큰 확인
+  // 컴포넌트 마운트 시 토큰 확인
   useEffect(() => {
     const accessToken = getLocalStorage(
       LOCAL_STORAGE_KEY.accessToken
@@ -117,15 +114,21 @@ const MyPage = () => {
   const addCategoryMutation = useAddCategory();
   const deleteCategoryMutation = useDeleteCategory();
 
+  // ======= 뱃지 및 통계 데이터 연동 로직
   // 퀴즈 결과 조회 (임의의 quizId 1 사용 - 실제로는 사용자 통계를 반환)
-  const { data: quizResultData } = useQuizResult(1);
-
-  // 통계 데이터 - API에서 가져온 실제 데이터 사용
+  const { data: latestQuizResponse } = useLatestQuiz();
+  // 데이터가 없으면 0으로 fallback하여 훅 호출 규칙 준수
+  const latestQuizId = latestQuizResponse?.data?.id || 0;
+  // 퀴즈 누적 통계 조회
+  const { data: quizResultResponse, isLoading: isResultLoading } = useQuizResult(latestQuizId);
+  
+  // 통계 데이터 가공 (화면 표시용)
   const stats = useMemo(() => {
-    const quizStats = quizResultData?.data;
+    const quizStats = quizResultResponse?.data;
+    const totalScore = quizStats?.correct ? quizStats.correct * 100 : 0; // 1문제당 100점 예시
 
     return {
-      totalScore: quizStats?.correct ? quizStats.correct * 100 : 0, // 맞춘 퀴즈당 100점
+      totalScore, 
       solvedCount: quizStats?.total || 0,
       correctCount: quizStats?.correct || 0,
       favoriteCategories: [
@@ -135,71 +138,64 @@ const MyPage = () => {
       ],
       readingStyle: "새벽형 스캐너",
     };
-  }, [quizResultData]);
+  }, [quizResultResponse]);
+ 
+  // 뱃지 그룹 정의 (화면에 보여줄 순서와 제목)
+  const BADGE_SECTIONS: { title: string; group: BadgeGroup }[] = [
+    { title: "기자 배지", group: "기자등급" },
+    { title: "부엉이 배지", group: "퀴즈풀이" },
+    { title: "오답 배지", group: "오답" },
+    { title: "점수 배지", group: "점수" },
+  ];
 
-  // [임시] 뱃지 계산 - 목업 데이터
-  const myBadgeCodes: BadgeCode[] = useMemo(() => {
-    const badges: BadgeCode[] = ["MORNING", "PERFECT_SCORE"]; // 기본 뱃지
-    return badges;
-  }, []);
+  // 획득한 뱃지 목록 계산 (Memoization)
+  const earnedSet = useMemo(() => {
+        const isMember = true; // 로그인 된 상태이므로 true
 
+    // API 데이터를 뱃지 로직용 통계로 변환
+    const badgeStats = toUserStatsFromQuizResult(quizResultResponse?.data, { isMember });
+    
+    // 로직을 통해 획득 뱃지 ID 목록 생성
+    return new Set(getEarnedBadges(badgeStats));
+  }, [quizResultResponse]);
+    // ======= 뱃지 및 통계 데이터 연동 로직 종료
 
   // 최근 활동 데이터 (localStorage 기반)
-  const [recentActivity, setRecentActivity] = useState<
-    {
-      date: string;
-      result: "정답" | "오답";
-    }[]
-  >([]);
+  const [recentActivity, setRecentActivity] = useState<{ date: string; result: "정답" | "오답" }[]>([]);
 
   // localStorage에서 퀴즈 히스토리 불러오기
   useEffect(() => {
-    try {
-      const activities: { date: string; result: "정답" | "오답" }[] = [];
-
-      // localStorage의 모든 키를 순회하면서 quiz_state_ 로 시작하는 항목 찾기
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith("quiz_state_")) {
-          const stateStr = localStorage.getItem(key);
-          if (stateStr) {
-            try {
-              const state = JSON.parse(stateStr);
-              // isSolved가 true인 퀴즈만 포함
-              if (state.isSolved && state.quizResults) {
-                // 모든 문제를 맞췄는지 확인
-                const allCorrect = state.quizResults.results?.every((r: boolean) => r === true);
-
-                activities.push({
-                  date: new Date().toISOString(), // 실제 날짜는 저장되어 있지 않으므로 현재 시간 사용
-                  result: allCorrect ? "정답" : "오답",
-                });
-              }
-            } catch (e) {
-              // JSON 파싱 실패 시 무시
-              continue;
+      try {
+        const activities: { date: string; result: "정답" | "오답" }[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith("quiz_state_")) {
+            const stateStr = localStorage.getItem(key);
+            if (stateStr) {
+              try {
+                const state = JSON.parse(stateStr);
+                if (state.isSolved && state.quizResults) {
+                  const allCorrect = state.quizResults.results?.every((r: boolean) => r === true);
+                  activities.push({
+                    date: new Date().toISOString(),
+                    result: allCorrect ? "정답" : "오답",
+                  });
+                }
+              } catch (e) { continue; }
             }
           }
         }
+        const formattedActivity = activities.map((item) => {
+          const dateObj = new Date(item.date);
+          const formattedDate = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, '0')}.${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+          return { date: formattedDate, result: item.result };
+        });
+        setRecentActivity(formattedActivity);
+      } catch (error) {
+        console.error("퀴즈 내역 불러오기 실패:", error);
+        setRecentActivity([]);
       }
-
-      // 날짜 형식 변환
-      const formattedActivity = activities.map((item) => {
-        const dateObj = new Date(item.date);
-        const formattedDate = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, '0')}.${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
-
-        return {
-          date: formattedDate,
-          result: item.result,
-        };
-      });
-
-      setRecentActivity(formattedActivity);
-    } catch (error) {
-      console.error("퀴즈 내역 불러오기 실패:", error);
-      setRecentActivity([]);
-    }
-  }, []);
+    }, []);
 
   // --- 핸들러 함수들 ---
 
@@ -484,21 +480,27 @@ const MyPage = () => {
       {/* 2. 학습 리포트 + 뱃지 섹션 */}
       <section className="mb-12">
         <h2 className="text-lg font-bold text-gray-900 mb-4">학습 리포트</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* 점수 통계 카드 */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+
+        {/* 점수 카드(3) + 배지 카드(7)를 한 flex 컨테이너 안에 배치 */}
+        <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+          {/* 점수 통계 카드 (약 30%) */}
+          <div className="w-full lg:w-[32%] bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between shrink-0">
             <div>
               <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-100">
                 퀴즈 진행 상황
               </span>
             </div>
-            <div className="flex-1 flex flex-col justify-center -mt-2">
-              <div className="flex items-baseline gap-3">
+            <div className="flex flex-col items-center py-3">
+              <div className="flex items-baseline gap-2">
                 <span className="text-5xl font-bold text-gray-900">
                   {user.score}
                 </span>
                 <span className="text-lg text-gray-500">점</span>
               </div>
+              <p className="text-gray-500 text-sm mt-4">
+                누적 정답: <span className="font-semibold text-gray-900">{stats.correctCount}개</span>
+                {" · "}누적 풀이: <span className="font-semibold text-gray-900">{stats.solvedCount}개</span>
+              </p>
               {/* <p className="text-gray-500 text-sm mt-4">
                 정답 퀴즈:{" "}
                 <span className="font-semibold text-gray-900">
@@ -519,59 +521,59 @@ const MyPage = () => {
               </p> */}
             </div>
           </div>
+      
 
-          {/* 뱃지 카드 */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-100">
-                보유 뱃지
-              </span>
-              <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                {myBadgeCodes.length} / {BADGE_MASTER_LIST.length}
-              </span>
+          {/* 뱃지 카드 섹션 (BadgeCard 컴포넌트 사용, 5칸 중 3칸 차지 (60%)) */}
+        <div className="w-full lg:w-[68%] bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg font-bold text-gray-800">획득한 배지</h3>
+                <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full">
+                  COLLECTION
+                </span>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              {BADGE_MASTER_LIST.map((badge) => {
-                const isAcquired = myBadgeCodes.includes(badge.code);
-                return (
-                  <div
-                    key={badge.code}
-                    className={clsx(
-                      "flex items-center gap-3 p-3 rounded-xl border transition-all",
-                      isAcquired
-                        ? "bg-white border-blue-100 shadow-sm"
-                        : "bg-gray-50 border-dashed border-gray-200 opacity-60"
-                    )}
-                  >
-                    <div
-                      className={clsx(
-                        "w-10 h-10 flex items-center justify-center rounded-full text-xl shrink-0",
-                        isAcquired ? "bg-blue-50" : "bg-gray-100"
-                      )}
-                    >
-                      {isAcquired ? (
-                        badge.icon
-                      ) : (
-                        <FaLock size={14} className="text-gray-400" />
-                      )}
+            
+            {/* 로딩 중일 때 표시 */}
+            {isResultLoading && (
+              <div className="flex-1 flex items-center justify-center min-h-[200px]">
+                <p className="text-gray-400 text-sm animate-pulse">뱃지 정보를 불러오는 중...</p>
+              </div>
+            )}
+            {/* 뱃지 그룹별 렌더링 */}
+            {!isResultLoading && (
+              <div className="space-y-8 max-h-[240px] overflow-y-auto pr-4 custom-scrollbar">
+                {BADGE_SECTIONS.map((section) => {
+                  const groupBadges = BADGE_META.filter(
+                    (b) => b.group === section.group
+                  );
+                  if (groupBadges.length === 0) return null;
+
+                  return (
+                    <div key={section.title}>
+                      {/* 그룹 타이틀 */}
+                      <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                        <span className="w-1 h-4 bg-blue-500 rounded-full" />
+                        {section.title}
+                      </h3>
+
+                      {/* 배지 그리드: 기본 3개, md 4개, lg 5개 */}
+                      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                        {groupBadges.map((badge) => (
+                          <BadgeCard
+                            key={badge.id}
+                            id={badge.id}
+                            earned={earnedSet.has(badge.id)}
+                            size="sm"
+                            className="hover:scale-105 transition-transform duration-200"
+                          />
+                        ))}
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p
-                        className={clsx(
-                          "text-sm font-bold truncate",
-                          isAcquired ? "text-gray-900" : "text-gray-500"
-                        )}
-                      >
-                        {badge.name}
-                      </p>
-                      <p className="text-[10px] text-gray-400 leading-tight mt-0.5 truncate">
-                        {badge.desc}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -646,7 +648,7 @@ const MyPage = () => {
         </button>
 
         <button
-          onClick={handleLogoutClick} // 👈 수정됨: alert 대신 모달 열기 핸들러 연결
+          onClick={handleLogoutClick} // 수정됨: alert 대신 모달 열기 핸들러 연결
           className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-white text-red-600 border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 transition-all font-medium mt-6"
         >
           <MdLogout size={20} />
@@ -654,7 +656,7 @@ const MyPage = () => {
         </button>
       </section>
 
-      {/* 👇 공통 모달 추가 */}
+      {/* 공통 모달 추가 */}
       <Modal
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}

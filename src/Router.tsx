@@ -9,7 +9,8 @@ import CategoryPage from './pages/CategoryPage';
 import MyPage from './pages/MyPage';
 import NewsDetailPage from './pages/NewsDetailPage';
 import HelpPage from './pages/HelpPage';
-
+// ▼ [추가 1] 임시 페이지 가져오기
+import BadgeGalleryDemo from './pages/BadgeGalleryDemo';
 const router = createBrowserRouter([
   {
     element: <AuthLayout />,
@@ -28,6 +29,11 @@ const router = createBrowserRouter([
       { path: '/category/:categoryName', element: <CategoryPage /> },
       { path: '/help', element: <HelpPage /> },
     ],
+  },
+  // ▼ [추가 2] 테스트 페이지 경로 설정 (레이아웃 없이 독립적으로 띄움)
+  {
+    path: "/test",
+    element: <BadgeGalleryDemo />,
   },
   {
     path: "*",
