@@ -1,8 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNewsByCategory } from "../hooks/useNewsQuery";
 import NewsSummaryCard from "../components/home/NewsSummaryCard";
-import QuizQuestion from "../components/quiz/QuizQuestion";
-import QuizForm from "../components/quiz/QuizForm";
 import Modal from "../components/Modal";
 import { useNavigate } from "react-router-dom";
 import { getCategorySlug } from "../utils/getCategorySlug";
@@ -17,6 +15,8 @@ import { useQuizByTimeSlot, useQuizResult, useSubmitQuizAnswer } from '../hooks/
 import IndNewsFeed from '../components/news/IndNewsFeed';
 import QuizFeed from '../components/quiz/QuizFeed';
 import type { SubmitQuizAnswerResponse } from '../types/quiz';
+import { CATEGORIES } from '../constants/CategoryData';
+import { useUserCategories } from '../hooks/useUserQuery';
 
 export default function HomePage() {
   // 현재 시간대 계산 함수 (오전 6시 기준으로 하루가 시작됨)
@@ -47,18 +47,19 @@ export default function HomePage() {
 
   // 퀴즈 결과 조회 (DB 기반 완료 여부 확인용)
   const { data: quizResultData, isSuccess: isQuizResultSuccess } = useQuizResult(quizId);
-
+  const { isLoggedIn } = useAuth();
   const [isSolved, setIsSolved] = useState(false);
-  const [favorites] = useAtom(favoriteCategoriesAtom);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
   const [quizResults, setQuizResults] = useState<SubmitQuizAnswerResponse["data"] | null>(null);
+  const { data: userCategories } = useUserCategories(isLoggedIn);
+  const favorites = userCategories?.categoryIdList ?? [];
+  
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     type: "correct" | "incorrect" | null;
   }>({ isOpen: false, type: null });
   const navigate = useNavigate();
-  const { isLoggedIn } = useAuth();
 
   // 사용자 정보 조회 (로그인한 경우에만)
   const { data: userProfile } = useQuery({
@@ -305,19 +306,25 @@ export default function HomePage() {
 
   // 즐겨찾기한 카테고리의 뉴스들 필터링 (실제 API 데이터 사용)
   const filteredNews: NewsItem[] = useMemo(() => {
-    if (!newsListData) return [];
+  if (!newsListData) return [];
 
-    if (favorites.length > 0) {
-      // UserCategory 객체 배열에서 name 필드를 추출하여 비교
-      const favoriteCategoryNames = favorites.map((fav) => fav.name);
-      return newsListData.filter((news) =>
-        favoriteCategoryNames.includes(news.sections[0])
-      );
-    }
+  console.log("Filtering news based on favorites:", { favorites, newsListData });
 
-    // 즐겨찾기가 없으면 최신 뉴스 5개 표시
-    return newsListData.slice(0, 5);
-  }, [newsListData, favorites]);
+  if (favorites.length > 0) {
+    const favoriteCategoryNames = favorites
+      .map((favId) => {
+        const category = CATEGORIES.find((c) => c.id === Number(favId));
+        return category?.label;
+      })
+      .filter(Boolean) as string[]; // undefined 제거
+
+    return newsListData.filter((news) =>
+      favoriteCategoryNames.includes(news.sections[0])
+    );
+  }
+
+  return newsListData;
+}, [newsListData, favorites]);
 
   // 즐겨찾기가 2개 이상일 때 뉴스를 랜덤으로 섞기
   const favoriteNews: NewsItem[] = useMemo(() => {
@@ -408,19 +415,23 @@ export default function HomePage() {
         {/* 즐겨찾기 카테고리 버튼 */}
         {favorites.length > 0 && (
           <div className="mb-6 flex flex-wrap gap-2">
-            {favorites.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => handleCategoryClick(category.name)}
-                className="px-4 py-2 rounded-full border bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all font-medium flex items-center gap-1.5"
-              >
-                <FaStar className="text-yellow-400" />
-                <span>{category.name}</span>
-              </button>
-            ))}
+            {favorites.map((categoryId) => {
+              const category = CATEGORIES.find((c) => c.id === Number(categoryId));
+              if (!category) return null;
+
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => handleCategoryClick(category.key)}
+                  className="px-4 py-2 rounded-full border bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all font-medium flex items-center gap-1.5"
+                >
+                  <FaStar className="text-yellow-400" />
+                  <span>{category.label}</span>
+                </button>
+              );
+            })}
           </div>
         )}
-
         {/* 뉴스 리스트 */}
         <div className="space-y-4">
           {favoriteNews.length > 0 ? (

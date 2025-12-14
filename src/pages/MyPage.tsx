@@ -14,7 +14,6 @@ import { CATEGORIES, type CategoryId } from "../constants/CategoryData";
 import { getCategorySlug } from "../utils/getCategorySlug";
 // 상태 관리
 import { useAtom } from "jotai";
-import { favoriteCategoriesAtom } from "../store/atoms";
 // API & Hooks
 import { useAddCategory, useDeleteCategory } from "../hooks/useCategoryQuery";
 import { updateUserProfile } from "../api/auth";
@@ -29,10 +28,12 @@ import {
 } from "../components/badge";
 import { useLatestQuiz, useQuizResult } from '../hooks/useQuizQuery';
 import { useUserCategories, useUserProfile } from '../hooks/useUserQuery';
+import { favoriteCategoriesAtom } from '../store/atoms';
 
 const MyPage = () => {
   const navigate = useNavigate();
   const { isLoggedIn, logout } = useAuth();
+  const [favorites, setFavorites] = useAtom(favoriteCategoriesAtom);
 
   const { data: userProfile, isLoading, error } = useUserProfile(isLoggedIn);
   const { data: userCategories, isLoading: isCategoriesLoading, error: isCategoriesError } = useUserCategories(isLoggedIn);
@@ -73,9 +74,6 @@ const MyPage = () => {
 
   // 모달 상태 (로그아웃 확인용)
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-
-  // 즐겨찾기 전역 상태
-  const [favorites, setFavorites] = useAtom(favoriteCategoriesAtom);
 
   // 카테고리 API 훅
   const addCategoryMutation = useAddCategory();
