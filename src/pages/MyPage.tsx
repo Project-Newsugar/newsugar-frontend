@@ -1,8 +1,5 @@
 import {
   MdLogout,
-  MdEdit,
-  MdClose,
-  MdCheck,
 } from "react-icons/md";
 import { FaBell } from "react-icons/fa"; // FaLock 제거 (BadgeCard 내부에서 처리됨)
 import { useState, useMemo, type ChangeEvent, useEffect } from "react";
@@ -29,6 +26,7 @@ import {
 import { useLatestQuiz, useQuizResult } from '../hooks/useQuizQuery';
 import { useUserCategories, useUserProfile } from '../hooks/useUserQuery';
 import { favoriteCategoriesAtom } from '../store/atoms';
+import ProfileSection from '../components/myPage/Profile';
 
 const MyPage = () => {
   const navigate = useNavigate();
@@ -294,142 +292,17 @@ const MyPage = () => {
   return (
     <div className="max-w-6xl mx-auto px-6 py-12 min-h-screen pb-24">
       {/* 1. 프로필 섹션 */}
-      <section className="mb-12">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">프로필</h2>
-        <div className="bg-white border-l-4 border-blue-600 rounded p-6 shadow-sm">
-          {isEditing ? (
-            // 편집 모드 UI (생략 없이 유지)
-            <div>
-              <div className="space-y-4 mb-6">
-                <div>
-                  <label className="text-xs text-gray-500 mb-2 block">
-                    이름
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={editForm.name}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-2 block">
-                    닉네임
-                  </label>
-                  <input
-                    type="text"
-                    name="nickname"
-                    value={editForm.nickname}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-2 block">
-                    이메일
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={editForm.email}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600 bg-gray-50"
-                    disabled
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    * 이메일은 변경할 수 없습니다
-                  </p>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-2 block">
-                    비밀번호
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={editForm.password}
-                    onChange={handleChange}
-                    placeholder="변경하지 않으려면 비워두세요"
-                    className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    * 비밀번호를 변경하지 않으려면 입력하지 마세요
-                  </p>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-2 block">
-                    휴대전화
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={editForm.phone || ""}
-                    onChange={handlePhoneChange}
-                    placeholder="010-1234-5678"
-                    maxLength={13}
-                    className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleSave}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium text-sm"
-                >
-                  <MdCheck size={18} /> 저장
-                </button>
-                <button
-                  onClick={handleCancel}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors font-medium text-sm"
-                >
-                  <MdClose size={18} /> 취소
-                </button>
-              </div>
-            </div>
-          ) : (
-            // 조회 모드 UI
-            <div>
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">
-                    {user.name}
-                  </h3>
-                  <p className="text-gray-600 text-xs mt-1">@{user.nickname}</p>
-                  <p className="text-gray-500 text-xs mt-1">{user.email}</p>
-                  <p className="text-gray-500 text-xs mt-1">{user.phone}</p>
-                </div>
-                <button
-                  onClick={handleEditClick}
-                  className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
-                >
-                  <MdEdit size={20} />
-                </button>
-              </div>
-              <div className="mt-6 pt-4 border-t border-gray-100">
-                <p className="text-xs text-gray-400 mb-2">나의 읽기 성향</p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-100">
-                    #{stats.readingStyle}
-                  </span>
-                  {stats.favoriteCategories.map((cat) => (
-                    <span
-                      key={cat.name}
-                      className="px-3 py-1 bg-gray-50 text-gray-600 rounded-full text-xs border border-gray-200"
-                    >
-                      #{cat.name}{" "}
-                      <span className="text-gray-400 text-[10px] ml-1">
-                        ({cat.count}회)
-                      </span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
+      <ProfileSection
+        user={user}
+        editForm={editForm}
+        isEditing={isEditing}
+        stats={stats}
+        onEditClick={handleEditClick}
+        onSave={handleSave}
+        onCancel={handleCancel}
+        onChange={handleChange}
+        onPhoneChange={handlePhoneChange}
+      />
       {/* 2. 학습 리포트 + 뱃지 섹션 */}
       <section className="mb-12">
         <h2 className="text-lg font-bold text-gray-900 mb-4">학습 리포트</h2>
