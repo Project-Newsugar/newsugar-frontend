@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { generateQuiz, getAllQuizzes, getQuizById, getQuizResult, submitQuizAnswer } from '../api/quiz';
+import { generateQuiz, getAllQuizzes, getQuizById, getQuizResult, getQuizStats, submitQuizAnswer } from '../api/quiz';
 import type { SubmitQuizAnswerRequest } from '../types/quiz';
 
 export const useAllQuizzes = () => {
@@ -104,25 +104,27 @@ export const useQuizByTimeSlot = (timeSlot: string) => {
         throw new Error("시작 시간이 종료 시간보다 늦을 수 없습니다");
       }
 
+      // 해당 시간대의 퀴즈 조회
       const response = await getAllQuizzes({
         scope: "period",
         from: formatKST(from),
         to: formatKST(to),
       });
 
-      if (!response.data || response.data.length === 0) {
-        throw new Error(`${timeSlot}시 퀴즈가 없습니다`);
+      // 퀴즈가 있으면 가장 최신 퀴즈 반환
+      if (response.data && response.data.length > 0) {
+        const sortedQuizzes = [...response.data].sort((a, b) =>
+          new Date(b.startAt).getTime() - new Date(a.startAt).getTime()
+        );
+
+        return {
+          ...response,
+          data: sortedQuizzes[0],
+        };
       }
 
-      // startAt 기준으로 내림차순 정렬하여 가장 최신 퀴즈 반환
-      const sortedQuizzes = [...response.data].sort((a, b) =>
-        new Date(b.startAt).getTime() - new Date(a.startAt).getTime()
-      );
-
-      return {
-        ...response,
-        data: sortedQuizzes[0], // 해당 시간대의 가장 최신 퀴즈
-      };
+      // 퀴즈가 없으면 에러 (백엔드 스케줄러가 생성할 예정)
+      throw new Error(`${timeSlot}시 퀴즈가 아직 생성되지 않았습니다`);
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     enabled: !!timeSlot, // timeSlot이 있을 때만 쿼리 실행
@@ -190,5 +192,14 @@ export const useSubmitQuizAnswer = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quiz"] });
     },
+  });
+};
+
+// 10. 퀴즈 통계 조회
+export const useQuizStats = () => {
+  return useQuery({
+    queryKey: ["quiz", "stats"],
+    queryFn: () => getQuizStats(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

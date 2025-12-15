@@ -1,9 +1,7 @@
 import { axiosInstance } from "./axios";
 import type { LoginForm } from "../schema/login.schema";
-import type { GetUserInfoResponseData, LoginResponseData, SignupRequest, SignupResponseData, UpdateUserRequest, UpdateUserResponseData } from '../types/user';
+import type { GetUserInfoResponseData, LoginResponseData, SignupRequest, SignupResponseData, UpdateUserRequest, UpdateUserResponseData, UserCategories } from '../types/user';
 import type { ApiResponse } from '../types/common';
-
-// --- API 함수들 ---
 
 export const registerUser = async (userData: SignupRequest) => {
   const { data } = await axiosInstance.post<ApiResponse<SignupResponseData>>(
@@ -43,3 +41,9 @@ export const updateUserProfile = async (userData: UpdateUserRequest) => {
   >("/api/v1/users/modify", userData);
   return data;
 };
+
+export const getUserCategories = async () => {
+  const { data } = await axiosInstance.get<ApiResponse<UserCategories>>("/api/v1/users/my-category");
+  console.log("getUserCategories data:", data);
+  return data.data;
+}

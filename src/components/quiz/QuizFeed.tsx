@@ -85,6 +85,7 @@ export default function QuizFeed({
             <QuizStatic
               key={idx}
               correctAnswer={(q.correctIndex + 1).toString()}
+              explanation={q.explanation}
               isRevealed={isRevealed}
             />
           ))}
@@ -94,13 +95,21 @@ export default function QuizFeed({
       {/* 퀴즈 완료 시 결과 */}
       {isSolved && quizResult && (
         <div className="space-y-4">
-          {quiz.questions.map((q, idx) => (
-            <QuizResult
-              key={idx}
-              correctAnswer={(q.correctIndex + 1).toString()}
-              isRevealed={isRevealed}
-            />
-          ))}
+          {quiz.questions.map((q, idx) => {
+            const userAnswerIndex = userAnswers[idx];
+            const isCorrect = quizResult.results[idx] === true;
+
+            return (
+              <QuizResult
+                key={idx}
+                correctAnswer={(q.correctIndex + 1).toString()}
+                userAnswer={userAnswerIndex}
+                isCorrect={isCorrect}
+                explanation={q.explanation}
+                isRevealed={isRevealed}
+              />
+            );
+          })}
         </div>
       )}
     </div>

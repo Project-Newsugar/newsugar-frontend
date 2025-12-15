@@ -1,8 +1,5 @@
 import {
   MdLogout,
-  MdEdit,
-  MdClose,
-  MdCheck,
 } from "react-icons/md";
 import { FaBell } from "react-icons/fa"; // FaLock 제거 (BadgeCard 내부에서 처리됨)
 import { useState, useMemo, type ChangeEvent, useEffect } from "react";
@@ -10,41 +7,45 @@ import clsx from "clsx";
 import { useNavigate } from "react-router-dom"; // 페이지 이동용
 import Modal from "../components/Modal"; // 공통 모달
 import CategoryGrid from "../components/home/CategoryGrid";
-import { CATEGORIES } from "../constants/CategoryData";
+import { CATEGORIES, type CategoryId } from "../constants/CategoryData";
 import { getCategorySlug } from "../utils/getCategorySlug";
 // 상태 관리
 import { useAtom } from "jotai";
-import { favoriteCategoriesAtom } from "../store/atoms";
 // API & Hooks
 import { useAddCategory, useDeleteCategory } from "../hooks/useCategoryQuery";
 import { updateUserProfile } from "../api/auth";
 import { useAuth } from "../hooks/useAuth";
 // 뱃지 관련 컴포넌트 및 로직
-import { 
-  BADGE_META, 
-  BadgeCard, 
-  getEarnedBadges, 
-  toUserStatsFromQuizResult,
-  type BadgeGroup 
+import {
+  BADGE_META,
+  BadgeCard,
+  getEarnedBadges,
+  type BadgeGroup
 } from "../components/badge";
-import { useLatestQuiz, useQuizResult } from '../hooks/useQuizQuery';
-import { useUserProfile } from '../hooks/useUserQuery';
+import { useQuizStats } from '../hooks/useQuizQuery';
 
-export const CATEGORY_ID_MAP: Record<typeof CATEGORIES[number], number> = {
-  정치: 1,
-  경제: 2,
-  사회: 7,         
-  문화: 5,
-  해외: 6,         
-  '과학/기술': 3,
-  엔터테인먼트: 8,  
-  오피니언: 9     
-};
+// export const CATEGORY_ID_MAP: Record<typeof CATEGORIES[number], number> = {
+//   정치: 1,
+//   경제: 2,
+//   사회: 7,         
+//   문화: 5,
+//   해외: 6,         
+//   '과학/기술': 3,
+//   엔터테인먼트: 8,  
+//   오피니언: 9     
+// };
+// import { useLatestQuiz, useQuizResult } from '../hooks/useQuizQuery';
+import { useUserCategories, useUserProfile } from '../hooks/useUserQuery';
+import { favoriteCategoriesAtom } from '../store/atoms';
+import ProfileSection from '../components/myPage/Profile';
+
 const MyPage = () => {
   const navigate = useNavigate();
   const { isLoggedIn, logout } = useAuth();
+  const [favorites, setFavorites] = useAtom(favoriteCategoriesAtom);
 
   const { data: userProfile, isLoading, error } = useUserProfile(isLoggedIn);
+  const { data: userCategories, isLoading: isCategoriesLoading, error: isCategoriesError } = useUserCategories(isLoggedIn);
 
   const [user, setUser] = useState(() => ({
     name: userProfile?.name || "",
@@ -66,6 +67,13 @@ const MyPage = () => {
     }
   }, [userProfile]);
 
+  useEffect(() => {
+    if (userCategories?.categoryIdList) {
+      setFavorites(userCategories.categoryIdList as CategoryId[]);
+    }
+  }, [userCategories, navigate]);
+
+
   // 편집 모드 상태
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -76,30 +84,22 @@ const MyPage = () => {
   // 모달 상태 (로그아웃 확인용)
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // 즐겨찾기 전역 상태
-  const [favorites, setFavorites] = useAtom(favoriteCategoriesAtom);
-
   // 카테고리 API 훅
   const addCategoryMutation = useAddCategory();
   const deleteCategoryMutation = useDeleteCategory();
 
   // ======= 뱃지 및 통계 데이터 연동 로직
-  // 퀴즈 결과 조회 (임의의 quizId 1 사용 - 실제로는 사용자 통계를 반환)
-  const { data: latestQuizResponse } = useLatestQuiz();
-  // 데이터가 없으면 0으로 fallback하여 훅 호출 규칙 준수
-  const latestQuizId = latestQuizResponse?.data?.id || 0;
-  // 퀴즈 누적 통계 조회
-  const { data: quizResultResponse, isLoading: isResultLoading } = useQuizResult(latestQuizId);
-  
+  // 퀴즈 통계 조회 (화면 표시용 + 배지 계산용)
+  const { data: quizStatsResponse, isLoading: isResultLoading } = useQuizStats();
+
   // 통계 데이터 가공 (화면 표시용)
   const stats = useMemo(() => {
-    const quizStats = quizResultResponse?.data;
-    const totalScore = quizStats?.correct ? quizStats.correct * 100 : 0; // 1문제당 100점 예시
+    const apiStats = quizStatsResponse?.data;
 
     return {
-      totalScore, 
-      solvedCount: quizStats?.total || 0,
-      correctCount: quizStats?.correct || 0,
+      totalQuestions: apiStats?.totalQuestions || 0,
+      totalCorrect: apiStats?.totalCorrect || 0,
+      accuracyPercent: apiStats?.accuracyPercent || 0,
       favoriteCategories: [
         { name: "경제", count: 42 },
         { name: "IT/과학", count: 28 },
@@ -107,7 +107,7 @@ const MyPage = () => {
       ],
       readingStyle: "새벽형 스캐너",
     };
-  }, [quizResultResponse]);
+  }, [quizStatsResponse]);
  
   // 뱃지 그룹 정의 (화면에 보여줄 순서와 제목)
   const BADGE_SECTIONS: { title: string; group: BadgeGroup }[] = [
@@ -120,51 +120,23 @@ const MyPage = () => {
   // 획득한 뱃지 목록 계산 (Memoization)
   const earnedSet = useMemo(() => {
     const isMember = true; // 로그인 된 상태이므로 true
+    const apiStats = quizStatsResponse?.data;
 
     // API 데이터를 뱃지 로직용 통계로 변환
-    const badgeStats = toUserStatsFromQuizResult(quizResultResponse?.data, { isMember });
-    
+    const badgeStats = {
+      quizCount: apiStats?.totalQuestions || 0,  // 총 문제 수
+      wrongCount: Math.max(0, (apiStats?.totalQuestions || 0) - (apiStats?.totalCorrect || 0)),  // 총 문제 - 정답 = 오답
+      totalScore: apiStats?.totalCorrect || 0,  // 정답 수 = 점수
+      isMember,
+    };
+
     // 로직을 통해 획득 뱃지 ID 목록 생성
     return new Set(getEarnedBadges(badgeStats));
-  }, [quizResultResponse]);
+  }, [quizStatsResponse]);
     // ======= 뱃지 및 통계 데이터 연동 로직 종료
 
-  // 최근 활동 데이터 (localStorage 기반)
+  // 최근 활동 데이터 (추후 API 연동 예정)
   const [recentActivity, setRecentActivity] = useState<{ date: string; result: "정답" | "오답" }[]>([]);
-
-  // localStorage에서 퀴즈 히스토리 불러오기
-  useEffect(() => {
-      try {
-        const activities: { date: string; result: "정답" | "오답" }[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith("quiz_state_")) {
-            const stateStr = localStorage.getItem(key);
-            if (stateStr) {
-              try {
-                const state = JSON.parse(stateStr);
-                if (state.isSolved && state.quizResults) {
-                  const allCorrect = state.quizResults.results?.every((r: boolean) => r === true);
-                  activities.push({
-                    date: new Date().toISOString(),
-                    result: allCorrect ? "정답" : "오답",
-                  });
-                }
-              } catch (e) { continue; }
-            }
-          }
-        }
-        const formattedActivity = activities.map((item) => {
-          const dateObj = new Date(item.date);
-          const formattedDate = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, '0')}.${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
-          return { date: formattedDate, result: item.result };
-        });
-        setRecentActivity(formattedActivity);
-      } catch (error) {
-        console.error("퀴즈 내역 불러오기 실패:", error);
-        setRecentActivity([]);
-      }
-    }, []);
 
   // --- 핸들러 함수들 ---
 
@@ -272,34 +244,24 @@ const MyPage = () => {
     navigate(`/category/${slug}`);
   };
 
-  // 즐겨찾기 토글 핸들러
-  const handleToggleFavorite = async (category: string) => {
-   const categoryId = CATEGORY_ID_MAP[category as keyof typeof CATEGORY_ID_MAP];
-    // 현재 즐겨찾기에 있는지 확인
-    const existingCategory = favorites.find((fav) => fav.name === category);
-
-    try {
-      if (existingCategory) {
-        // 이미 즐겨찾기에 있으면 삭제
-        const response = await deleteCategoryMutation.mutateAsync(categoryId);
-        if (response.success) {
-          setFavorites((prev) => prev.filter((c) => c.name !== category));
-        } else {
-          throw new Error(response.message || "즐겨찾기 삭제에 실패했습니다.");
-        }
-      } else {
-        // 없으면 추가
-        const response = await addCategoryMutation.mutateAsync(categoryId);
-        if (response.success && response.data) {
-          setFavorites((prev) => [...prev, response.data]);
-        } else {
-          throw new Error(response.message || "즐겨찾기 추가에 실패했습니다.");
-        }
+  // 즐겨찾기 토글
+  const handleToggleFavorite = async (categoryId: CategoryId) => {
+  try {
+    if (favorites.includes(categoryId)) {
+      const response = await deleteCategoryMutation.mutateAsync(categoryId);
+      if (response.success) {
+        setFavorites(prev => prev.filter(id => id !== categoryId));
       }
-    } catch (error: any) {
-      console.error("Failed to toggle favorite:", error);
+    } else {
+      const response = await addCategoryMutation.mutateAsync(categoryId);
+      if (response.success && response.data) {
+        setFavorites(prev => [...prev, categoryId]);
+      }
     }
-  };
+  } catch (error) {
+    console.error("즐겨찾기 토글 실패:", error);
+  }
+};
 
   if (isLoading) return <p>로딩 중...</p>;
   if (error) return <p>유저 정보를 불러오는데 실패했습니다.</p>;
@@ -308,142 +270,17 @@ const MyPage = () => {
   return (
     <div className="max-w-6xl mx-auto px-6 py-12 min-h-screen pb-24">
       {/* 1. 프로필 섹션 */}
-      <section className="mb-12">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">프로필</h2>
-        <div className="bg-white border-l-4 border-blue-600 rounded p-6 shadow-sm">
-          {isEditing ? (
-            // 편집 모드 UI (생략 없이 유지)
-            <div>
-              <div className="space-y-4 mb-6">
-                <div>
-                  <label className="text-xs text-gray-500 mb-2 block">
-                    이름
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={editForm.name}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-2 block">
-                    닉네임
-                  </label>
-                  <input
-                    type="text"
-                    name="nickname"
-                    value={editForm.nickname}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-2 block">
-                    이메일
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={editForm.email}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600 bg-gray-50"
-                    disabled
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    * 이메일은 변경할 수 없습니다
-                  </p>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-2 block">
-                    비밀번호
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={editForm.password}
-                    onChange={handleChange}
-                    placeholder="변경하지 않으려면 비워두세요"
-                    className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    * 비밀번호를 변경하지 않으려면 입력하지 마세요
-                  </p>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-2 block">
-                    휴대전화
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={editForm.phone || ""}
-                    onChange={handlePhoneChange}
-                    placeholder="010-1234-5678"
-                    maxLength={13}
-                    className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-600"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleSave}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium text-sm"
-                >
-                  <MdCheck size={18} /> 저장
-                </button>
-                <button
-                  onClick={handleCancel}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors font-medium text-sm"
-                >
-                  <MdClose size={18} /> 취소
-                </button>
-              </div>
-            </div>
-          ) : (
-            // 조회 모드 UI
-            <div>
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">
-                    {user.name}
-                  </h3>
-                  <p className="text-gray-600 text-xs mt-1">@{user.nickname}</p>
-                  <p className="text-gray-500 text-xs mt-1">{user.email}</p>
-                  <p className="text-gray-500 text-xs mt-1">{user.phone}</p>
-                </div>
-                <button
-                  onClick={handleEditClick}
-                  className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
-                >
-                  <MdEdit size={20} />
-                </button>
-              </div>
-              <div className="mt-6 pt-4 border-t border-gray-100">
-                <p className="text-xs text-gray-400 mb-2">나의 읽기 성향</p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-100">
-                    #{stats.readingStyle}
-                  </span>
-                  {stats.favoriteCategories.map((cat) => (
-                    <span
-                      key={cat.name}
-                      className="px-3 py-1 bg-gray-50 text-gray-600 rounded-full text-xs border border-gray-200"
-                    >
-                      #{cat.name}{" "}
-                      <span className="text-gray-400 text-[10px] ml-1">
-                        ({cat.count}회)
-                      </span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
+      <ProfileSection
+        user={user}
+        editForm={editForm}
+        isEditing={isEditing}
+        stats={stats}
+        onEditClick={handleEditClick}
+        onSave={handleSave}
+        onCancel={handleCancel}
+        onChange={handleChange}
+        onPhoneChange={handlePhoneChange}
+      />
       {/* 2. 학습 리포트 + 뱃지 섹션 */}
       <section className="mb-12">
         <h2 className="text-lg font-bold text-gray-900 mb-4">학습 리포트</h2>
@@ -465,8 +302,9 @@ const MyPage = () => {
                 <span className="text-lg text-gray-500">점</span>
               </div>
               <p className="text-gray-500 text-sm mt-4">
-                누적 정답: <span className="font-semibold text-gray-900">{stats.correctCount}개</span>
-                {" · "}누적 풀이: <span className="font-semibold text-gray-900">{stats.solvedCount}개</span>
+                누적 풀이: <span className="font-semibold text-gray-900">{stats.totalQuestions}개</span>
+                {" · "}누적 정답: <span className="font-semibold text-gray-900">{stats.totalCorrect}개</span>
+                {" · "}정답률: <span className="font-semibold text-gray-900">{stats.accuracyPercent}%</span>
               </p>
               {/* <p className="text-gray-500 text-sm mt-4">
                 정답 퀴즈:{" "}
@@ -548,7 +386,7 @@ const MyPage = () => {
       {/* 3. 즐겨찾기 설정 섹션 */}
       <section className="mb-12">
         <CategoryGrid
-          categories={[...CATEGORIES]}
+          categories={CATEGORIES}
           onCategoryClick={handleCategoryClick}
           favorites={favorites}
           onToggleFavorite={handleToggleFavorite}
