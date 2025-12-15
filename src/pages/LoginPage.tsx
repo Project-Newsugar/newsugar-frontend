@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import { GoogleLogo } from '../assets';
 import useForm from '../hooks/useForm';
@@ -72,7 +72,7 @@ const LoginPage: React.FC = () => {
 
           // 5. 홈으로 이동
           // alert('환영합니다!'); // 필요 시 주석 해제
-          navigate('/'); 
+          window.location.href = "/"; 
         } else {
           // 성공 응답이지만 success: false인 경우 에러 처리
           throw new Error(response.message || '로그인에 실패했습니다.');
@@ -120,7 +120,7 @@ const LoginPage: React.FC = () => {
       {/* 서버 에러 메시지 블록 */}
       {serverError && (
         <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center font-medium">
-          ⚠️ {serverError}
+         ⚠️ {serverError}
         </div>
       )}
 
@@ -185,20 +185,18 @@ const LoginPage: React.FC = () => {
 
       <div className="mt-6 text-center text-sm text-slate-500">
         아직 계정이 없으신가요?{' '}
-        <Link
-          to="/signup"
+        <a href="/signup"
           className="text-blue-600 font-semibold hover:underline"
         >
           회원가입
-        </Link>
+        </a>
       </div>
       <div className="mt-8 text-center">
-        <Link 
-          to="/" 
+        <a href="/" 
           className="text-xs text-slate-400 hover:text-slate-600 transition-colors border-b border-transparent hover:border-slate-400 pb-0.5"
         >
           홈으로 돌아가기
-        </Link>
+        </a>
       </div>
     </div>
   );
