@@ -72,7 +72,7 @@ const LoginPage: React.FC = () => {
 
           // 5. 홈으로 이동
           // alert('환영합니다!'); // 필요 시 주석 해제
-          navigate('/'); 
+          window.location.href = "/"; 
         } else {
           // 성공 응답이지만 success: false인 경우 에러 처리
           throw new Error(response.message || '로그인에 실패했습니다.');

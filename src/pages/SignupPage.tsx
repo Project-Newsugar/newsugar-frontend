@@ -88,7 +88,7 @@ const SignupPage: React.FC = () => {
       // 3. 성공/실패 분기
       if (response.success) {
         alert(`환영합니다, ${response.data.name}님! 회원가입이 완료되었습니다.`);
-        navigate("/login");
+        window.location.href = "/login";
       } else {
         throw new Error(response.message || "회원가입에 실패했습니다.");
       }
