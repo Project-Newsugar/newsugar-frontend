@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from 'react';
 import { Navigate, useNavigate } from "react-router-dom";
 import clsx from "clsx";
 import { GoogleLogo } from "../assets";
@@ -20,26 +20,22 @@ const LoginPage: React.FC = () => {
   const setIsLoggedIn = useSetAtom(isLoggedInAtom); // 로그인 상태 업데이트용
   const [serverError, setServerError] = useState<string | null>(null);
 
-  // 이미 로그인된 사용자는 홈으로 리다이렉트
-  if (isLoggedIn) {
-    return <Navigate to="/" replace />;
-  }
-
+  
   // useForm 훅 + Zod 스키마 연동
-  const { values, errors, touched, getInputProps } = useForm<LoginForm>({
+  const formConfig = useMemo(() => ({
     initialValue: {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
     },
-    validate: (values) => {
+    validate: (values: LoginForm) => {
       const result = loginSchema.safeParse(values);
       if (result.success) {
-        return { email: "", password: "" };
+        return { email: '', password: '' };
       }
 
       const newErrors: Record<keyof LoginForm, string> = {
-        email: "",
-        password: "",
+        email: '',
+        password: '',
       };
 
       result.error.issues.forEach((issue) => {
@@ -49,7 +45,14 @@ const LoginPage: React.FC = () => {
 
       return newErrors;
     },
-  });
+  }), []);
+
+  const { values, errors, touched, getInputProps } = useForm<LoginForm>(formConfig);
+  
+  // 이미 로그인된 사용자는 홈으로 리다이렉트
+  if (isLoggedIn) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
