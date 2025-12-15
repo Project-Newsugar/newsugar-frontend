@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { getNewsByCategory } from '../api/news';
+import { getCategoryNewsSummary, getNewsByCategory } from '../api/news';
 import type { NewsItem } from '../types/news';
 
 const normalizeCategory = (category: string | string[] | null) => {
@@ -24,3 +24,18 @@ export const useNewsByCategory = (
     staleTime: 5 * 60 * 1000,
   });
 };
+
+export const useCategoryNewsSummary = (
+  category: string
+) => {
+ return useQuery<String>({
+    queryKey: ["categorySummary", category],
+    queryFn: async () => {
+      const summary = await getCategoryNewsSummary(category);
+      return summary;
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 60, // 1시간마다 갱신
+    enabled: false, 
+  });
+}
