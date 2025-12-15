@@ -16,14 +16,25 @@ import { useAddCategory, useDeleteCategory } from "../hooks/useCategoryQuery";
 import { updateUserProfile } from "../api/auth";
 import { useAuth } from "../hooks/useAuth";
 // 뱃지 관련 컴포넌트 및 로직
-import { 
-  BADGE_META, 
-  BadgeCard, 
-  getEarnedBadges, 
-  toUserStatsFromQuizResult,
-  type BadgeGroup 
+import {
+  BADGE_META,
+  BadgeCard,
+  getEarnedBadges,
+  type BadgeGroup
 } from "../components/badge";
-import { useLatestQuiz, useQuizResult } from '../hooks/useQuizQuery';
+import { useQuizStats } from '../hooks/useQuizQuery';
+
+// export const CATEGORY_ID_MAP: Record<typeof CATEGORIES[number], number> = {
+//   정치: 1,
+//   경제: 2,
+//   사회: 7,         
+//   문화: 5,
+//   해외: 6,         
+//   '과학/기술': 3,
+//   엔터테인먼트: 8,  
+//   오피니언: 9     
+// };
+// import { useLatestQuiz, useQuizResult } from '../hooks/useQuizQuery';
 import { useUserCategories, useUserProfile } from '../hooks/useUserQuery';
 import { favoriteCategoriesAtom } from '../store/atoms';
 import ProfileSection from '../components/myPage/Profile';
@@ -78,22 +89,17 @@ const MyPage = () => {
   const deleteCategoryMutation = useDeleteCategory();
 
   // ======= 뱃지 및 통계 데이터 연동 로직
-  // 퀴즈 결과 조회 (임의의 quizId 1 사용 - 실제로는 사용자 통계를 반환)
-  const { data: latestQuizResponse } = useLatestQuiz();
-  // 데이터가 없으면 0으로 fallback하여 훅 호출 규칙 준수
-  const latestQuizId = latestQuizResponse?.data?.id || 0;
-  // 퀴즈 누적 통계 조회
-  const { data: quizResultResponse, isLoading: isResultLoading } = useQuizResult(latestQuizId);
-  
+  // 퀴즈 통계 조회 (화면 표시용 + 배지 계산용)
+  const { data: quizStatsResponse, isLoading: isResultLoading } = useQuizStats();
+
   // 통계 데이터 가공 (화면 표시용)
   const stats = useMemo(() => {
-    const quizStats = quizResultResponse?.data;
-    const totalScore = quizStats?.correct ? quizStats.correct * 100 : 0; // 1문제당 100점 예시
+    const apiStats = quizStatsResponse?.data;
 
     return {
-      totalScore, 
-      solvedCount: quizStats?.total || 0,
-      correctCount: quizStats?.correct || 0,
+      totalQuestions: apiStats?.totalQuestions || 0,
+      totalCorrect: apiStats?.totalCorrect || 0,
+      accuracyPercent: apiStats?.accuracyPercent || 0,
       favoriteCategories: [
         { name: "경제", count: 42 },
         { name: "IT/과학", count: 28 },
@@ -101,7 +107,7 @@ const MyPage = () => {
       ],
       readingStyle: "새벽형 스캐너",
     };
-  }, [quizResultResponse]);
+  }, [quizStatsResponse]);
  
   // 뱃지 그룹 정의 (화면에 보여줄 순서와 제목)
   const BADGE_SECTIONS: { title: string; group: BadgeGroup }[] = [
@@ -114,51 +120,23 @@ const MyPage = () => {
   // 획득한 뱃지 목록 계산 (Memoization)
   const earnedSet = useMemo(() => {
     const isMember = true; // 로그인 된 상태이므로 true
+    const apiStats = quizStatsResponse?.data;
 
     // API 데이터를 뱃지 로직용 통계로 변환
-    const badgeStats = toUserStatsFromQuizResult(quizResultResponse?.data, { isMember });
-    
+    const badgeStats = {
+      quizCount: apiStats?.totalQuestions || 0,  // 총 문제 수
+      wrongCount: Math.max(0, (apiStats?.totalQuestions || 0) - (apiStats?.totalCorrect || 0)),  // 총 문제 - 정답 = 오답
+      totalScore: apiStats?.totalCorrect || 0,  // 정답 수 = 점수
+      isMember,
+    };
+
     // 로직을 통해 획득 뱃지 ID 목록 생성
     return new Set(getEarnedBadges(badgeStats));
-  }, [quizResultResponse]);
+  }, [quizStatsResponse]);
     // ======= 뱃지 및 통계 데이터 연동 로직 종료
 
-  // 최근 활동 데이터 (localStorage 기반)
+  // 최근 활동 데이터 (추후 API 연동 예정)
   const [recentActivity, setRecentActivity] = useState<{ date: string; result: "정답" | "오답" }[]>([]);
-
-  // localStorage에서 퀴즈 히스토리 불러오기
-  useEffect(() => {
-      try {
-        const activities: { date: string; result: "정답" | "오답" }[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith("quiz_state_")) {
-            const stateStr = localStorage.getItem(key);
-            if (stateStr) {
-              try {
-                const state = JSON.parse(stateStr);
-                if (state.isSolved && state.quizResults) {
-                  const allCorrect = state.quizResults.results?.every((r: boolean) => r === true);
-                  activities.push({
-                    date: new Date().toISOString(),
-                    result: allCorrect ? "정답" : "오답",
-                  });
-                }
-              } catch (e) { continue; }
-            }
-          }
-        }
-        const formattedActivity = activities.map((item) => {
-          const dateObj = new Date(item.date);
-          const formattedDate = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, '0')}.${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
-          return { date: formattedDate, result: item.result };
-        });
-        setRecentActivity(formattedActivity);
-      } catch (error) {
-        console.error("퀴즈 내역 불러오기 실패:", error);
-        setRecentActivity([]);
-      }
-    }, []);
 
   // --- 핸들러 함수들 ---
 
@@ -324,8 +302,9 @@ const MyPage = () => {
                 <span className="text-lg text-gray-500">점</span>
               </div>
               <p className="text-gray-500 text-sm mt-4">
-                누적 정답: <span className="font-semibold text-gray-900">{stats.correctCount}개</span>
-                {" · "}누적 풀이: <span className="font-semibold text-gray-900">{stats.solvedCount}개</span>
+                누적 풀이: <span className="font-semibold text-gray-900">{stats.totalQuestions}개</span>
+                {" · "}누적 정답: <span className="font-semibold text-gray-900">{stats.totalCorrect}개</span>
+                {" · "}정답률: <span className="font-semibold text-gray-900">{stats.accuracyPercent}%</span>
               </p>
               {/* <p className="text-gray-500 text-sm mt-4">
                 정답 퀴즈:{" "}

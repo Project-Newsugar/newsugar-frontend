@@ -2,10 +2,19 @@ import { useNavigate } from "react-router-dom";
 
 interface QuizResultProps {
   correctAnswer: string;
+  userAnswer?: number; // 사용자가 선택한 답안 인덱스 (0-based)
+  isCorrect: boolean; // 정답 여부
+  explanation?: string; // 해설
   isRevealed: boolean;
 }
 
-export default function QuizResult({ correctAnswer, isRevealed }: QuizResultProps) {
+export default function QuizResult({
+  correctAnswer,
+  userAnswer,
+  isCorrect,
+  explanation,
+  isRevealed
+}: QuizResultProps) {
   const navigate = useNavigate();
 
   const handleNavigateToMyPage = () => {
@@ -14,10 +23,35 @@ export default function QuizResult({ correctAnswer, isRevealed }: QuizResultProp
 
   return (
     <div className="space-y-6">
-      <div className="p-5 rounded-lg border bg-green-50 border-green-200">
-        <p className="mb-2 font-medium text-green-900">✓ 정답입니다!</p>
+      {/* 정답/오답 결과 */}
+      <div className={`p-5 rounded-lg border ${
+        isCorrect
+          ? 'bg-green-50 border-green-200'
+          : 'bg-red-50 border-red-200'
+      }`}>
+        <p className={`mb-2 font-medium ${
+          isCorrect ? 'text-green-900' : 'text-red-900'
+        }`}>
+          {isCorrect ? '✓ 정답입니다!' : '✗ 틀렸습니다'}
+        </p>
+
         {isRevealed && (
-          <p className="text-sm text-gray-700">정답: {correctAnswer}번</p>
+          <div className="space-y-2">
+            {userAnswer !== undefined && (
+              <p className="text-sm text-gray-700">
+                내 답안: {userAnswer + 1}번
+              </p>
+            )}
+            <p className="text-sm text-gray-700">
+              정답: {correctAnswer}번
+            </p>
+            {explanation && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <p className="text-sm font-medium text-gray-800 mb-1">해설</p>
+                <p className="text-sm text-gray-700">{explanation}</p>
+              </div>
+            )}
+          </div>
         )}
       </div>
 

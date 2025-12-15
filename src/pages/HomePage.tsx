@@ -31,15 +31,21 @@ export default function HomePage() {
     getCurrentTimeSlot()
   );
 
-  // 선택한 시간대의 퀴즈 조회
+  // 새로운 API 사용: 뉴스 목록을 가져와서 summary로 변환
+//   const { data: newsListData, isLoading } = useNewsByCategory(null);
+
+
+  // 선택한 시간대의 퀴즈 조회 (백엔드 스케줄러가 자동으로 생성)
   const { data: quiz, isLoading: isQuizLoading } = useQuizByTimeSlot(selectedTime);
 
-  // 퀴즈 ID 추출 (localStorage 키 등에서 사용)
+  // 퀴즈 ID 추출
   const quizId = quiz?.data?.id || 0;
   const submitAnswer = useSubmitQuizAnswer();
 
   // 퀴즈 결과 조회 (DB 기반 완료 여부 확인용)
-  const { data: quizResultData, isSuccess: isQuizResultSuccess } = useQuizResult(quizId);
+  const { data: quizResultData } = useQuizResult(quizId);
+
+//   const { data: quizResultData, isSuccess: isQuizResultSuccess } = useQuizResult(quizId);
   const { isLoggedIn } = useAuth();
   const [isSolved, setIsSolved] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -75,9 +81,6 @@ export default function HomePage() {
     queryFn: () => getMyProfile(),
     enabled: isLoggedIn,
   });
-
-  // localStorage 키: 퀴즈 완료 상태 저장 (시간대별로 구분) - 백업용
-  const QUIZ_STATE_KEY = `quiz_state_${quizId}_${selectedTime}`;
 
   /**
    * timestamp 기반으로 현재 퀴즈를 풀었는지 확인하는 함수
@@ -147,22 +150,6 @@ export default function HomePage() {
         results: quizResultData.data.results,
         userId: quizResultData.data.userId,
       });
-    } else if (isCompleted && quizResultData.data.results.length === 0) {
-      // DB에 기록은 있지만 results 배열이 비어있으면 로컬스토리지 확인
-      console.log("⚠️ DB results 배열이 비어있음, 로컬스토리지 확인");
-      const savedState = localStorage.getItem(QUIZ_STATE_KEY);
-      if (savedState) {
-        try {
-          const parsedState = JSON.parse(savedState);
-          console.log("✅ 퀴즈 완료 상태로 설정 (localStorage)");
-          setIsSolved(parsedState.isSolved);
-          setQuizResults(parsedState.quizResults);
-          setUserAnswers(parsedState.userAnswers);
-          setCurrentQuestionIndex(parsedState.currentQuestionIndex || 0);
-        } catch (error) {
-          console.error("Failed to parse saved quiz state:", error);
-        }
-      }
     } else {
       // 아직 풀지 않았으면 초기 상태로 설정
       console.log("❌ 퀴즈 미완료 상태로 설정");
@@ -171,45 +158,7 @@ export default function HomePage() {
       setUserAnswers([]);
       setCurrentQuestionIndex(0);
     }
-  }, [quizResultData, quiz?.data, QUIZ_STATE_KEY]);
-
-  // localStorage 백업 상태 복구 (API 실패 시 대체용)
-  useEffect(() => {
-    if (isQuizResultSuccess && quizResultData) return; // API 성공 시 localStorage 사용 안 함
-
-    const savedState = localStorage.getItem(QUIZ_STATE_KEY);
-    if (savedState) {
-      try {
-        const parsedState = JSON.parse(savedState);
-        console.log("✅ API 실패, localStorage에서 복구");
-        setIsSolved(parsedState.isSolved);
-        setQuizResults(parsedState.quizResults);
-        setUserAnswers(parsedState.userAnswers);
-        setCurrentQuestionIndex(parsedState.currentQuestionIndex || 0);
-      } catch (error) {
-        console.error("Failed to parse saved quiz state:", error);
-      }
-    }
-  }, [QUIZ_STATE_KEY, quizResultData, isQuizResultSuccess]);
-
-  // 퀴즈 상태를 localStorage에 저장
-  useEffect(() => {
-    if (isSolved && quizResults) {
-      const stateToSave = {
-        isSolved,
-        quizResults,
-        userAnswers,
-        currentQuestionIndex,
-      };
-      localStorage.setItem(QUIZ_STATE_KEY, JSON.stringify(stateToSave));
-    }
-  }, [
-    isSolved,
-    quizResults,
-    userAnswers,
-    currentQuestionIndex,
-    QUIZ_STATE_KEY,
-  ]);
+  }, [quizResultData, quiz?.data]);
 
   // 선택한 시간대가 과거인지 확인
   const isPastTimeSlot = useMemo(() => {
