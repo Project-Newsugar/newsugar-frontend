@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import { GoogleLogo } from '../assets';
 import useForm from '../hooks/useForm';
@@ -12,11 +12,18 @@ import { LOCAL_STORAGE_KEY } from "../constants/keys"
 
 import { useSetAtom } from 'jotai';
 import { isLoggedInAtom } from '../store/atoms'; // 전역 상태
+import { useAuth } from '../hooks/useAuth';
 
 const LoginPage: React.FC = () => {
-  const navigate = useNavigate();
+  
+  const { checkAuth } = useAuth();
   const setIsLoggedIn = useSetAtom(isLoggedInAtom); // 로그인 상태 업데이트용
   const [serverError, setServerError] = useState<string | null>(null);
+
+  if (checkAuth()) {
+    return <Navigate to="/" replace />; // 홈 페이지로 이동
+  }
+
 
   // useForm 훅 + Zod 스키마 연동
   const { values, errors, touched, getInputProps } = useForm<LoginForm>({
