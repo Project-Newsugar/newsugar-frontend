@@ -38,13 +38,8 @@ export default function HomePage() {
   const { data: newsListData, isLoading } = useNewsByCategory(null);
 
 
-  // TODO: summaryId를 가져오는 API 구현 필요
-  // 현재는 임시로 summaryId = 1을 사용하여 퀴즈가 없을 때 자동 생성
-  // 추후 시간대별 summaryId를 반환하는 API가 구현되면 해당 값을 전달
-  const summaryId: number | undefined = 1;
-
-  // 선택한 시간대의 퀴즈 조회 (퀴즈가 없으면 summaryId로 생성)
-  const { data: quiz, isLoading: isQuizLoading } = useQuizByTimeSlot(selectedTime, summaryId);
+  // 선택한 시간대의 퀴즈 조회 (백엔드 스케줄러가 자동으로 생성)
+  const { data: quiz, isLoading: isQuizLoading } = useQuizByTimeSlot(selectedTime);
 
   // 퀴즈 ID 추출
   const quizId = quiz?.data?.id || 0;

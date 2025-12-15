@@ -23,8 +23,7 @@ const formatKST = (date: Date): string => {
 
 // 6-1. 시간대별 퀴즈 조회 (06시, 12시, 18시, 24시)
 // timeSlot: "06" | "12" | "18" | "24"
-// summaryId: 추후 API로 가져올 예정, 현재는 optional
-export const useQuizByTimeSlot = (timeSlot: string, summaryId?: number) => {
+export const useQuizByTimeSlot = (timeSlot: string) => {
   return useQuery({
     queryKey: ["quiz", "timeSlot", timeSlot],
     queryFn: async () => {
@@ -105,44 +104,27 @@ export const useQuizByTimeSlot = (timeSlot: string, summaryId?: number) => {
         throw new Error("시작 시간이 종료 시간보다 늦을 수 없습니다");
       }
 
-      try {
-        // 1. 먼저 해당 시간대의 퀴즈가 있는지 조회
-        const response = await getAllQuizzes({
-          scope: "period",
-          from: formatKST(from),
-          to: formatKST(to),
-        });
+      // 해당 시간대의 퀴즈 조회
+      const response = await getAllQuizzes({
+        scope: "period",
+        from: formatKST(from),
+        to: formatKST(to),
+      });
 
-        // 퀴즈가 있으면 가장 최신 퀴즈 반환
-        if (response.data && response.data.length > 0) {
-          const sortedQuizzes = [...response.data].sort((a, b) =>
-            new Date(b.startAt).getTime() - new Date(a.startAt).getTime()
-          );
+      // 퀴즈가 있으면 가장 최신 퀴즈 반환
+      if (response.data && response.data.length > 0) {
+        const sortedQuizzes = [...response.data].sort((a, b) =>
+          new Date(b.startAt).getTime() - new Date(a.startAt).getTime()
+        );
 
-          return {
-            ...response,
-            data: sortedQuizzes[0],
-          };
-        }
-
-        // 2. 퀴즈가 없고 summaryId가 있으면 퀴즈 생성
-        if (summaryId) {
-          console.log(`${timeSlot}시 퀴즈가 없어 생성합니다. summaryId: ${summaryId}`);
-          const generateResponse = await generateQuiz(summaryId);
-          return generateResponse;
-        }
-
-        // 3. summaryId도 없으면 에러
-        throw new Error(`${timeSlot}시 퀴즈가 없으며, summaryId도 제공되지 않았습니다`);
-      } catch (error) {
-        // 퀴즈 조회 실패 시 summaryId가 있으면 생성 시도
-        if (summaryId) {
-          console.log(`퀴즈 조회 실패, 생성을 시도합니다. summaryId: ${summaryId}`);
-          const generateResponse = await generateQuiz(summaryId);
-          return generateResponse;
-        }
-        throw error;
+        return {
+          ...response,
+          data: sortedQuizzes[0],
+        };
       }
+
+      // 퀴즈가 없으면 에러 (백엔드 스케줄러가 생성할 예정)
+      throw new Error(`${timeSlot}시 퀴즈가 아직 생성되지 않았습니다`);
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     enabled: !!timeSlot, // timeSlot이 있을 때만 쿼리 실행
