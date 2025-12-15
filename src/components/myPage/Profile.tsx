@@ -18,10 +18,6 @@ interface ProfileSectionProps {
     password: string;
   };
   isEditing: boolean;
-  stats: {
-    readingStyle: string;
-    favoriteCategories: { name: string; count: number }[];
-  };
   onEditClick: () => void;
   onSave: () => void;
   onCancel: () => void;
@@ -33,7 +29,6 @@ const ProfileSection = ({
   user,
   editForm,
   isEditing,
-  stats,
   onEditClick,
   onSave,
   onCancel,
@@ -115,26 +110,6 @@ const ProfileSection = ({
                     <MdEdit size={20} />
                     </button>
                 </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-400 mb-2">나의 읽기 성향</p>
-              <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">
-                  #{stats.readingStyle}
-                </span>
-                {stats.favoriteCategories.map((cat) => (
-                  <span
-                    key={cat.name}
-                    className="px-3 py-1 bg-gray-50 text-gray-600 rounded-full text-xs"
-                  >
-                    #{cat.name}
-                    <span className="text-gray-400 text-[10px] ml-1">
-                      ({cat.count}회)
-                    </span>
-                  </span>
-                ))}
-              </div>
             </div>
           </div>
         )}

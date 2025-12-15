@@ -4,7 +4,7 @@ import {
 import { FaBell } from "react-icons/fa"; // FaLock 제거 (BadgeCard 내부에서 처리됨)
 import { useState, useMemo, type ChangeEvent, useEffect } from "react";
 import clsx from "clsx";
-import { useNavigate } from "react-router-dom"; // 페이지 이동용
+import { Navigate, useNavigate } from "react-router-dom"; // 페이지 이동용
 import Modal from "../components/Modal"; // 공통 모달
 import CategoryGrid from "../components/home/CategoryGrid";
 import { CATEGORIES, type CategoryId } from "../constants/CategoryData";
@@ -24,25 +24,18 @@ import {
 } from "../components/badge";
 import { useQuizStats } from '../hooks/useQuizQuery';
 
-// export const CATEGORY_ID_MAP: Record<typeof CATEGORIES[number], number> = {
-//   정치: 1,
-//   경제: 2,
-//   사회: 7,         
-//   문화: 5,
-//   해외: 6,         
-//   '과학/기술': 3,
-//   엔터테인먼트: 8,  
-//   오피니언: 9     
-// };
-// import { useLatestQuiz, useQuizResult } from '../hooks/useQuizQuery';
 import { useUserCategories, useUserProfile } from '../hooks/useUserQuery';
 import { favoriteCategoriesAtom } from '../store/atoms';
 import ProfileSection from '../components/myPage/Profile';
 
 const MyPage = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, logout, checkAuth } = useAuth();
   const [favorites, setFavorites] = useAtom(favoriteCategoriesAtom);
+
+  if (!checkAuth()) {
+    return <Navigate to="/login" replace />; // 홈 페이지로 이동
+  }
 
   const { data: userProfile, isLoading, error } = useUserProfile(isLoggedIn);
   const { data: userCategories, isLoading: isCategoriesLoading, error: isCategoriesError } = useUserCategories(isLoggedIn);
@@ -100,12 +93,6 @@ const MyPage = () => {
       totalQuestions: apiStats?.totalQuestions || 0,
       totalCorrect: apiStats?.totalCorrect || 0,
       accuracyPercent: apiStats?.accuracyPercent || 0,
-      favoriteCategories: [
-        { name: "경제", count: 42 },
-        { name: "IT/과학", count: 28 },
-        { name: "스포츠", count: 15 },
-      ],
-      readingStyle: "새벽형 스캐너",
     };
   }, [quizStatsResponse]);
  
@@ -274,7 +261,6 @@ const MyPage = () => {
         user={user}
         editForm={editForm}
         isEditing={isEditing}
-        stats={stats}
         onEditClick={handleEditClick}
         onSave={handleSave}
         onCancel={handleCancel}
@@ -432,25 +418,6 @@ const MyPage = () => {
 
       {/* 5. 설정 및 로그아웃 */}
       <section className="mb-10 space-y-3">
-        <button className="w-full flex items-center justify-between px-6 py-4 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">
-          <div className="flex items-center gap-3">
-            <FaBell size={20} className="text-gray-600" />
-            <span className="text-gray-900 font-medium">알림 설정</span>
-          </div>
-          <svg
-            className="w-5 h-5 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </button>
 
         <button
           onClick={handleLogoutClick} // 수정됨: alert 대신 모달 열기 핸들러 연결

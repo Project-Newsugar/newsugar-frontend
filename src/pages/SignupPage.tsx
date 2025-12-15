@@ -1,15 +1,20 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import clsx from "clsx";
 import useForm from "../hooks/useForm";
 import { signupSchema, type SignupForm } from "../schema/signup.schema";
 import { isAxiosError } from "axios";
 import { registerUser } from "../api/auth";
 import type { SignupRequest } from "../types/user";
+import { useAuth } from '../hooks/useAuth';
 // 타입을 명시적으로 가져옴
 
 const SignupPage: React.FC = () => {
-  const navigate = useNavigate();
+
+  const { checkAuth } = useAuth();
+  if (checkAuth()) {
+    return <Navigate to="/" replace />; 
+  }
   const [serverError, setServerError] = useState<string | null>(null); // 서버 에러 메시지 상태
   const { values, errors, touched, getInputProps, handleChange } = useForm<SignupForm>({
     // 1. 초기값에 nickname 추가
