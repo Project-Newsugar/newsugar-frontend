@@ -7,4 +7,4 @@ export type NewsItem = {
   image_url?: string | null;
   content_url: string;
   published_at: string;
-}
+};

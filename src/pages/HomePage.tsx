@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useNewsByCategory } from "../hooks/useNewsQuery";
+import { useMainSummary, useNewsByCategory } from "../hooks/useNewsQuery";
 import NewsSummaryCard from "../components/home/NewsSummaryCard";
 import Modal from "../components/Modal";
 import { useNavigate } from "react-router-dom";
@@ -8,13 +8,18 @@ import { FaStar } from "react-icons/fa";
 import { useAuth } from "../hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { getMyProfile } from "../api/auth";
-import { useQuizByTimeSlot, useQuizResult, useSubmitQuizAnswer } from '../hooks/useQuizQuery';
-import QuizFeed from '../components/quiz/QuizFeed';
-import type { SubmitQuizAnswerResponse } from '../types/quiz';
-import { CATEGORIES } from '../constants/CategoryData';
-import { useUserCategories } from '../hooks/useUserQuery';
-import IndNewsFeed from '../components/news/IndNewsFeed';
-import IndNewsFeedSkeleton from '../components/news/IndNewsFeedSkeleton';
+import {
+  useQuizByTimeSlot,
+  useQuizResult,
+  useSubmitQuizAnswer,
+} from "../hooks/useQuizQuery";
+import QuizFeed from "../components/quiz/QuizFeed";
+import type { SubmitQuizAnswerResponse } from "../types/quiz";
+import { CATEGORIES } from "../constants/CategoryData";
+import { useUserCategories } from "../hooks/useUserQuery";
+import IndNewsFeed from "../components/news/IndNewsFeed";
+import IndNewsFeedSkeleton from "../components/news/IndNewsFeedSkeleton";
+import { getMainSummary } from "../api/news";
 
 export default function HomePage() {
   // 현재 시간대 계산 함수 (오전 6시 기준으로 하루가 시작됨)
@@ -32,12 +37,9 @@ export default function HomePage() {
     getCurrentTimeSlot()
   );
 
-  // 새로운 API 사용: 뉴스 목록을 가져와서 summary로 변환
-//   const { data: newsListData, isLoading } = useNewsByCategory(null);
-
-
   // 선택한 시간대의 퀴즈 조회 (백엔드 스케줄러가 자동으로 생성)
-  const { data: quiz, isLoading: isQuizLoading } = useQuizByTimeSlot(selectedTime);
+  const { data: quiz, isLoading: isQuizLoading } =
+    useQuizByTimeSlot(selectedTime);
 
   // 퀴즈 ID 추출
   const quizId = quiz?.data?.id || 0;
@@ -46,14 +48,19 @@ export default function HomePage() {
   // 퀴즈 결과 조회 (DB 기반 완료 여부 확인용)
   const { data: quizResultData } = useQuizResult(quizId);
 
-//   const { data: quizResultData, isSuccess: isQuizResultSuccess } = useQuizResult(quizId);
+  //   const { data: quizResultData, isSuccess: isQuizResultSuccess } = useQuizResult(quizId);
   const { isLoggedIn } = useAuth();
   const [isSolved, setIsSolved] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
-  const [quizResults, setQuizResults] = useState<SubmitQuizAnswerResponse["data"] | null>(null);
+  const [quizResults, setQuizResults] = useState<
+    SubmitQuizAnswerResponse["data"] | null
+  >(null);
   const { data: userCategories } = useUserCategories(isLoggedIn);
   const favorites = userCategories?.categoryIdList ?? [];
+
+  // 최신 뉴스 하나를 summary로 사용
+  const { data: mainSummary } = useMainSummary();
 
   const favoriteCategoryKeys = useMemo(() => {
     if (favorites.length === 0) return null;
@@ -67,7 +74,7 @@ export default function HomePage() {
   }, [favorites]);
 
   const { data: newsListData, isLoading: isLoadingFavoriteNews } =
-  useNewsByCategory(favoriteCategoryKeys);
+    useNewsByCategory(favoriteCategoryKeys);
 
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
@@ -106,13 +113,6 @@ export default function HomePage() {
 
     return isSameDate && isAfterQuizStart;
   };
-
-  // 최신 뉴스 하나를 summary로 사용
-  const newsSummary: { summary: string } | undefined = useMemo(() => {
-    if (!newsListData || newsListData.length === 0) return undefined;
-    const latestNews = newsListData[0];
-    return { summary: latestNews.summary || "" };
-  }, [newsListData]);
 
   // 퀴즈 변경 시 상태 초기화 (시간대 변경 시)
   useEffect(() => {
@@ -167,7 +167,9 @@ export default function HomePage() {
     // 현재 시간대별 비교
     if (hour >= 0 && hour < 6) {
       // 새벽 0~6시: 24시가 현재, 06/12/18시는 과거
-      return selectedTime === "06" || selectedTime === "12" || selectedTime === "18";
+      return (
+        selectedTime === "06" || selectedTime === "12" || selectedTime === "18"
+      );
     } else if (hour >= 6 && hour < 12) {
       // 오전 6~12시: 06시가 현재, 12/18/24시는 미래
       return false; // 모두 미래이거나 현재
@@ -261,10 +263,7 @@ export default function HomePage() {
     setModalState({ isOpen: false, type: null });
   };
 
-  const favoriteNews = useMemo(
-    () => newsListData ?? [],
-    [newsListData]
-  );
+  const favoriteNews = useMemo(() => newsListData ?? [], [newsListData]);
 
   // 즐겨찾기가 2개 이상일 때 뉴스를 랜덤으로 섞기
   return (
@@ -305,10 +304,10 @@ export default function HomePage() {
       {/* TODO : 주요 뉴스 요약 및 퀴즈 연동 필요*/}
       {/* SUMMARY & QUIZ */}
       <NewsSummaryCard
-        summary={newsSummary?.summary || ""}
+        summary={mainSummary ?? ""}
         isLoading={isLoadingFavoriteNews} // TODO : Loading 변수 수정 필요
         onTimeChange={handleTimeChange}
-        selectedTime={selectedTime} 
+        selectedTime={selectedTime}
         quizSection={
           <>
             <h3 className="text-xl font-bold text-gray-900 mb-4">퀴즈</h3>
@@ -328,7 +327,9 @@ export default function HomePage() {
                 isPastTimeSlot={isPastTimeSlot}
               />
             ) : (
-              <p className="text-center text-gray-500">오늘의 퀴즈를 불러오는데 실패했습니다.</p>
+              <p className="text-center text-gray-500">
+                오늘의 퀴즈를 불러오는데 실패했습니다.
+              </p>
             )}
           </>
         }
@@ -349,7 +350,9 @@ export default function HomePage() {
         {favorites.length > 0 && (
           <div className="mb-6 flex flex-wrap gap-2">
             {favorites.map((categoryId) => {
-              const category = CATEGORIES.find((c) => c.id === Number(categoryId));
+              const category = CATEGORIES.find(
+                (c) => c.id === Number(categoryId)
+              );
               if (!category) return null;
 
               return (
@@ -375,7 +378,11 @@ export default function HomePage() {
             </>
           ) : favoriteNews.length > 0 ? (
             favoriteNews.map((news) => (
-              <IndNewsFeed key={news.id} news={news} category={news.sections[0]} />
+              <IndNewsFeed
+                key={news.id}
+                news={news}
+                category={news.sections[0]}
+              />
             ))
           ) : (
             <div className="bg-white border border-gray-200 rounded p-12 text-center">

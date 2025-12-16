@@ -1,7 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { getCategoryNewsSummary, getNewsByCategory } from '../api/news';
-import type { NewsItem } from '../types/news';
+import {
+  getCategoryNewsSummary,
+  getMainSummary,
+  getNewsByCategory,
+} from "../api/news";
+import type { NewsItem } from "../types/news";
 
 const normalizeCategory = (category: string | string[] | null) => {
   if (!category) return null;
@@ -12,9 +16,7 @@ const normalizeCategory = (category: string | string[] | null) => {
   return category;
 };
 
-export const useNewsByCategory = (
-  category: string | string[] | null
-) => {
+export const useNewsByCategory = (category: string | string[] | null) => {
   const normalizedCategory = normalizeCategory(category);
 
   return useQuery<NewsItem[]>({
@@ -25,10 +27,8 @@ export const useNewsByCategory = (
   });
 };
 
-export const useCategoryNewsSummary = (
-  category: string
-) => {
- return useQuery<String>({
+export const useCategoryNewsSummary = (category: string) => {
+  return useQuery<String>({
     queryKey: ["categorySummary", category],
     queryFn: async () => {
       const summary = await getCategoryNewsSummary(category);
@@ -36,6 +36,18 @@ export const useCategoryNewsSummary = (
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 60, // 1시간마다 갱신
-    enabled: false, 
+    enabled: true,
   });
-}
+};
+
+export const useMainSummary = () => {
+  return useQuery<string>({
+    queryKey: ["mainSummary"],
+    queryFn: async () => {
+      const summary = await getMainSummary();
+      return summary;
+    },
+    refetchOnWindowFocus: false,
+    enabled: true,
+  });
+};
