@@ -421,7 +421,8 @@ export const useRecentQuizActivity = () => {
       // 제출 시간 기준으로 정렬 (최신순)
       solvedQuizzes.sort(
         (a, b) =>
-          new Date(b!.submittedAt).getTime() - new Date(a!.submittedAt).getTime()
+          new Date(b!.submittedAt).getTime() -
+          new Date(a!.submittedAt).getTime()
       );
 
       // 최대 3개만 반환
@@ -438,5 +439,77 @@ export const useQuizAnswers = (id: number) => {
     queryFn: () => getQuizAnswers(id),
     enabled: !!id,
     staleTime: Infinity, // 정답은 변하지 않으므로 무한 캐시
+  });
+};
+
+// 13. 최근 한 달간 푼 퀴즈 조회 및 점수 계산
+export const useMonthlyQuizScore = () => {
+  return useQuery({
+    queryKey: ["quiz", "monthlyScore"],
+    queryFn: async () => {
+      // 한 달 전부터 현재까지의 기간 설정
+      const now = new Date();
+      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      // 한 달간의 모든 퀴즈 조회
+      const quizzesResponse = await getAllQuizzes({
+        scope: "period",
+        from: formatKST(monthAgo),
+        to: formatKST(now),
+      });
+
+      if (!quizzesResponse.data || quizzesResponse.data.length === 0) {
+        return {
+          totalQuizzes: 0,
+          solvedQuizzes: 0,
+          correctQuizzes: 0,
+          score: 0,
+        };
+      }
+
+      // 각 퀴즈의 결과 확인 (병렬 처리)
+      const quizResults = await Promise.all(
+        quizzesResponse.data.map(async (quiz) => {
+          try {
+            const resultResponse = await getQuizResult(quiz.id);
+
+            // 결과가 있으면 (= 퀴즈를 푼 경우)
+            if (resultResponse && resultResponse.data) {
+              return {
+                quizId: quiz.id,
+                isCorrect: resultResponse.data.correct > 0, // correct가 1이면 정답, 0이면 오답
+              };
+            }
+            return null;
+          } catch (error: any) {
+            // 404 에러는 퀴즈를 풀지 않은 것이므로 null 반환
+            if (error?.response?.status === 404) {
+              return null;
+            }
+            // 다른 에러는 무시
+            return null;
+          }
+        })
+      );
+
+      // null이 아닌 것만 필터링 (= 퀴즈를 푼 것만)
+      const solvedQuizzes = quizResults.filter((result) => result !== null);
+
+      // 정답으로 맞춘 퀴즈만 필터링
+      const correctQuizzes = solvedQuizzes.filter(
+        (result) => result!.isCorrect
+      );
+
+      // 점수 계산: 정답 퀴즈 수 × 5
+      const score = correctQuizzes.length * 5;
+
+      return {
+        totalQuizzes: quizzesResponse.data.length, // 전체 퀴즈 수
+        solvedQuizzes: solvedQuizzes.length, // 푼 퀴즈 수
+        correctQuizzes: correctQuizzes.length, // 정답 퀴즈 수
+        score, // 계산된 점수
+      };
+    },
+    staleTime: 5 * 60 * 1000, // 5분
   });
 };
