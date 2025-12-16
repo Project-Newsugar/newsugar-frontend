@@ -22,11 +22,12 @@ import {
   getEarnedBadges,
   type BadgeGroup
 } from "../components/badge";
-import { useQuizStats } from '../hooks/useQuizQuery';
+import { useQuizStats, useRecentQuizActivity } from '../hooks/useQuizQuery';
 
 import { useUserCategories, useUserProfile } from '../hooks/useUserQuery';
 import { favoriteCategoriesAtom } from '../store/atoms';
 import ProfileSection from '../components/myPage/Profile';
+import { formatQuizDate } from '../utils/formatQuizDate';
 
 const MyPage = () => {
   const navigate = useNavigate();
@@ -85,6 +86,9 @@ const MyPage = () => {
   // 퀴즈 통계 조회 (화면 표시용 + 배지 계산용)
   const { data: quizStatsResponse, isLoading: isResultLoading } = useQuizStats();
 
+  // 최근 활동 내역 조회
+  const { data: recentActivityData, isLoading: isActivityLoading } = useRecentQuizActivity();
+
   // 통계 데이터 가공 (화면 표시용)
   const stats = useMemo(() => {
     const apiStats = quizStatsResponse?.data;
@@ -122,8 +126,6 @@ const MyPage = () => {
   }, [quizStatsResponse]);
     // ======= 뱃지 및 통계 데이터 연동 로직 종료
 
-  // 최근 활동 데이터 (추후 API 연동 예정)
-  const [recentActivity, setRecentActivity] = useState<{ date: string; result: "정답" | "오답" }[]>([]);
 
   // --- 핸들러 함수들 ---
 
@@ -383,26 +385,32 @@ const MyPage = () => {
       <section className="mb-12">
         <h2 className="text-lg font-bold text-gray-900 mb-4">최근 활동</h2>
         <div className="space-y-3">
-          {recentActivity.length > 0 ? (
-            recentActivity.map((activity, idx) => (
+          {isActivityLoading ? (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
+              <p className="text-gray-400 text-sm animate-pulse">
+                최근 활동을 불러오는 중...
+              </p>
+            </div>
+          ) : recentActivityData && recentActivityData.length > 0 ? (
+            recentActivityData.map((activity, idx) => (
               <div
                 key={idx}
                 className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:border-blue-400 transition-colors"
               >
                 <div className="flex gap-2 text-sm text-gray-500">
-                  <span>{activity.date}</span>
+                  <span>{formatQuizDate(activity.startAt)}</span>
                   <span>·</span>
-                  <span>퀴즈 참여</span>
+                  <span>{activity.title}</span>
                 </div>
                 <span
                   className={clsx(
                     "text-xs font-bold px-3 py-1.5 rounded-full",
-                    activity.result === "정답"
+                    activity.isCorrect
                       ? "bg-green-100 text-green-700"
                       : "bg-red-100 text-red-700"
                   )}
                 >
-                  {activity.result}
+                  {activity.isCorrect ? "정답" : "오답"}
                 </span>
               </div>
             ))

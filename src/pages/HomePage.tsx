@@ -328,7 +328,7 @@ export default function HomePage() {
               />
             ) : (
               <p className="text-center text-gray-500">
-                오늘의 퀴즈를 불러오는데 실패했습니다.
+                {selectedTime}시 퀴즈가 아직 생성되지 않았습니다.
               </p>
             )}
           </>

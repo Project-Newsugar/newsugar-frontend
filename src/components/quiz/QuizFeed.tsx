@@ -27,38 +27,30 @@ export default function QuizFeed({
   userProfile,
   isPastTimeSlot,
 }: QuizFeedProps) {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
 
   if (!quiz) return <p>퀴즈를 불러오는 중...</p>;
 
-  const currentQuestion = quiz.questions[currentQuestionIndex];
+  // 첫 번째 문제만 사용
+  const currentQuestion = quiz.questions[0];
 
   const handleSubmit = async (answer: string, resetForm: () => void) => {
-    const answerIndex = parseInt(answer) - 1;
-    const newAnswers = [...userAnswers];
-    newAnswers[currentQuestionIndex] = answerIndex;
-    setUserAnswers(newAnswers);
+    const answerNumber = parseInt(answer); // 1, 2, 3, 4 등 그대로 사용
+    const answerIndex = answerNumber - 1; // UI 표시용 인덱스 (0-based)
 
-    // 마지막 문제 아니면 다음 문제로 이동
-    if (currentQuestionIndex < quiz.questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      resetForm();
-      return;
-    }
-
-    // 마지막 문제라면 답안 제출
+    // 답안 제출
     try {
       const result = await submitAnswer.mutateAsync({
         id: quiz.id,
         answerData: {
           userId: userProfile?.id || 1,
-          answers: newAnswers,
+          answers: [answerNumber], // 1번 선택 시 1을 그대로 전송
         },
       });
 
       setQuizResults(result.data);
       setIsSolved(true);
+      setUserAnswers([answerIndex]); // UI 표시용으로는 인덱스 저장
     } catch (error) {
       console.error("답안 제출 실패", error);
       alert("답안 제출 실패");
@@ -74,43 +66,28 @@ export default function QuizFeed({
       {!isSolved && !isPastTimeSlot && (
         <>
           <QuizQuestion question={currentQuestion.text} />
-          <QuizForm onSubmit={handleSubmit} />
+          <QuizForm onSubmit={handleSubmit} options={currentQuestion.options} />
         </>
       )}
 
       {/* 과거 시간대 - 정답 공개 */}
       {isPastTimeSlot && (
-        <div className="space-y-4">
-          {quiz.questions.map((q, idx) => (
-            <QuizStatic
-              key={idx}
-              correctAnswer={(q.correctIndex + 1).toString()}
-              explanation={q.explanation}
-              isRevealed={isRevealed}
-            />
-          ))}
-        </div>
+        <QuizStatic
+          correctAnswer={(currentQuestion.correctIndex + 1).toString()}
+          explanation={currentQuestion.explanation}
+          isRevealed={isRevealed}
+        />
       )}
 
       {/* 퀴즈 완료 시 결과 */}
       {isSolved && quizResult && (
-        <div className="space-y-4">
-          {quiz.questions.map((q, idx) => {
-            const userAnswerIndex = userAnswers[idx];
-            const isCorrect = quizResult.results[idx] === true;
-
-            return (
-              <QuizResult
-                key={idx}
-                correctAnswer={(q.correctIndex + 1).toString()}
-                userAnswer={userAnswerIndex}
-                isCorrect={isCorrect}
-                explanation={q.explanation}
-                isRevealed={isRevealed}
-              />
-            );
-          })}
-        </div>
+        <QuizResult
+          correctAnswer={(currentQuestion.correctIndex + 1).toString()}
+          userAnswer={userAnswers[0]}
+          isCorrect={quizResult.results[quizResult.results.length - 1] === true}
+          explanation={currentQuestion.explanation}
+          isRevealed={isRevealed}
+        />
       )}
     </div>
   );
