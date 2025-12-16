@@ -317,7 +317,7 @@ export const useGenerateQuiz = () => {
 };
 
 // 8. 퀴즈 결과 조회
-export const useQuizResult = (id: number) => {
+export const useQuizResult = (id: number, isLoggedIn: boolean) => {
   return useQuery({
     queryKey: ["quiz", "result", id],
     queryFn: async () => {
@@ -331,7 +331,7 @@ export const useQuizResult = (id: number) => {
         throw error;
       }
     },
-    enabled: !!id,
+    enabled: !!id && isLoggedIn, // 로그인 상태일 때만 활성화
     retry: false, // 재시도 비활성화
     retryOnMount: false, // 마운트 시 재시도 비활성화
     staleTime: Infinity, // 페이지 새로고침 전까지 캐시 유지

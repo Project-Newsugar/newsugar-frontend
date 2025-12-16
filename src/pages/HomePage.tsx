@@ -45,11 +45,11 @@ export default function HomePage() {
   const quizId = quiz?.data?.id || 0;
   const submitAnswer = useSubmitQuizAnswer();
 
-  // 퀴즈 결과 조회 (DB 기반 완료 여부 확인용)
-  const { data: quizResultData } = useQuizResult(quizId);
-
   //   const { data: quizResultData, isSuccess: isQuizResultSuccess } = useQuizResult(quizId);
   const { isLoggedIn } = useAuth();
+
+  // 퀴즈 결과 조회 (DB 기반 완료 여부 확인용 - 로그인 상태에서만)
+  const { data: quizResultData } = useQuizResult(quizId, isLoggedIn);
   const [isSolved, setIsSolved] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
@@ -325,6 +325,7 @@ export default function HomePage() {
                 setQuizResults={setQuizResults}
                 userProfile={userProfile?.id ? userProfile : undefined}
                 isPastTimeSlot={isPastTimeSlot}
+                isLoggedIn={isLoggedIn}
               />
             ) : (
               <p className="text-center text-gray-500">
