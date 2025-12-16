@@ -1,6 +1,5 @@
-import { ca } from 'zod/v4/locales';
-import type { NewsItem } from '../types/news';
-import { axiosInstance } from './axios';
+import type { NewsItem } from "../types/news";
+import { axiosInstance } from "./axios";
 
 export const getNewsByCategory = async (
   category: string | null = null,
@@ -16,7 +15,7 @@ export const getNewsByCategory = async (
     if (category) {
       params.category = category;
     }
-    const { data } = await axiosInstance.get('/api/v1/news', { params });
+    const { data } = await axiosInstance.get("/api/v1/news", { params });
 
     return data.data.data as NewsItem[];
   } catch (error) {
@@ -25,13 +24,27 @@ export const getNewsByCategory = async (
   }
 };
 
-export const getCategoryNewsSummary = async (category: string): Promise<string> => {
+export const getCategoryNewsSummary = async (
+  category: string
+): Promise<string> => {
   try {
-    const { data } = await axiosInstance.get(`/api/v1/news/category-summary/${category}`);
-    
-    return data.data; 
+    const { data } = await axiosInstance.get(
+      `/api/v1/news/category-summary/${category}`
+    );
+
+    return data.data;
   } catch (error) {
     console.error("카테고리 뉴스 요약 조회 실패:", error);
-      throw error;
+    throw error;
+  }
+};
+
+export const getMainSummary = async () => {
+  try {
+    const { data } = await axiosInstance.get(`/api/v1/news/today-main-summary`);
+    console.log(data);
+    return data.data;
+  } catch (error) {
+    console.error("주요 뉴스 요약 조회 실패: ", error);
   }
 };
