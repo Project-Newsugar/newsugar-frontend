@@ -222,9 +222,10 @@ const MyPage = () => {
     // useAuth의 logout 함수로 토큰 삭제 및 로그인 상태 해제
     logout();
 
-    // 모달 닫고 홈페이지로 이동
+    // 모달 닫고 홈페이지로 이동 후 새로고침
     setShowLogoutModal(false);
     navigate("/");
+    window.location.reload();
   };
 
   // 카테고리 클릭 핸들러

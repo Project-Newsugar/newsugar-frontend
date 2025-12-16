@@ -122,6 +122,16 @@ export default function HomePage() {
     setQuizResults(null);
   }, [quizId, selectedTime]);
 
+  // 로그인 상태 변경 시 퀴즈 상태 초기화 (로그아웃 시)
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setIsSolved(false);
+      setCurrentQuestionIndex(0);
+      setUserAnswers([]);
+      setQuizResults(null);
+    }
+  }, [isLoggedIn]);
+
   // DB 기반 퀴즈 완료 여부 확인 (API 응답이 있을 때)
   useEffect(() => {
     if (!quizResultData?.data || !quiz?.data) return;
