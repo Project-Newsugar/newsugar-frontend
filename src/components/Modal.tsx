@@ -11,6 +11,9 @@ type ModalProps = {
   onCancel?: () => void;
   confirmText?: string;
   cancelText?: string;
+  showActionButton?: boolean;
+  actionButtonText?: string;
+  onActionButtonClick?: () => void;
 };
 
 const Modal: React.FC<ModalProps> = ({
@@ -23,6 +26,9 @@ const Modal: React.FC<ModalProps> = ({
   onCancel,
   confirmText = '예',
   cancelText = '아니오',
+  showActionButton = false,
+  actionButtonText = '이동',
+  onActionButtonClick,
 }) => {
   if (!isOpen) return null;
 
@@ -39,13 +45,26 @@ const Modal: React.FC<ModalProps> = ({
         <div className="text-gray-700 mb-6">{content}</div>
 
         {type === 'alert' && (
-         <div className="flex justify-end">
-            <button
-            onClick={onClose}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-            >
-            확인
-            </button>
+         <div className="flex justify-end gap-3">
+            {showActionButton && onActionButtonClick && (
+              <button
+                onClick={() => {
+                  onActionButtonClick();
+                  onClose();
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+              >
+                {actionButtonText}
+              </button>
+            )}
+            {!showActionButton && (
+              <button
+                onClick={onClose}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+              >
+                확인
+              </button>
+            )}
         </div>
         )}
 
