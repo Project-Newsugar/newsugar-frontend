@@ -4,17 +4,16 @@ interface QuizFormProps {
   onSubmit: (answer: string, resetForm: () => void) => void;
   isSubmitting?: boolean;
   isLoggedIn?: boolean;
+  options: string[];
 }
 
 export default function QuizForm({
   onSubmit,
   isSubmitting = false,
   isLoggedIn = true,
+  options,
 }: QuizFormProps) {
   const [selectedAnswer, setSelectedAnswer] = useState("");
-
-  // 고정된 선택지 (1~4번)
-  const options = ["1", "2", "3", "4"];
 
   const resetForm = () => {
     setSelectedAnswer("");
@@ -37,7 +36,7 @@ export default function QuizForm({
               key={index}
               className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all
                 ${
-                  selectedAnswer === option
+                  selectedAnswer === String(index + 1)
                     ? "border-[#5277F1] bg-blue-50"
                     : "border-gray-200 hover:border-gray-300"
                 }
@@ -46,14 +45,14 @@ export default function QuizForm({
               <input
                 type="radio"
                 name="answer"
-                value={option}
-                checked={selectedAnswer === option}
+                value={String(index + 1)}
+                checked={selectedAnswer === String(index + 1)}
                 onChange={(e) => setSelectedAnswer(e.target.value)}
                 disabled={isSubmitting || !isLoggedIn}
                 className="w-4 h-4 text-[#5277F1] focus:ring-[#5277F1]"
                 required
               />
-              <span className="ml-3 text-gray-900">{option}번</span>
+              <span className="ml-3 text-gray-900">{index + 1}. {option}</span>
             </label>
           ))}
         </div>

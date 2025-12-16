@@ -320,9 +320,22 @@ export const useGenerateQuiz = () => {
 export const useQuizResult = (id: number) => {
   return useQuery({
     queryKey: ["quiz", "result", id],
-    queryFn: () => getQuizResult(id),
+    queryFn: async () => {
+      try {
+        return await getQuizResult(id);
+      } catch (error: any) {
+        // 404는 아직 퀴즈를 풀지 않은 정상 상태
+        if (error?.response?.status === 404) {
+          return null;
+        }
+        throw error;
+      }
+    },
     enabled: !!id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false, // 재시도 비활성화
+    retryOnMount: false, // 마운트 시 재시도 비활성화
+    staleTime: Infinity, // 페이지 새로고침 전까지 캐시 유지
+    gcTime: 30 * 60 * 1000, // 30분간 메모리 유지
   });
 };
 
@@ -350,5 +363,69 @@ export const useQuizStats = () => {
     queryKey: ["quiz", "stats"],
     queryFn: () => getQuizStats(),
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+// 11. 최근 활동 내역 조회 (최근 일주일간의 퀴즈 중 푼 것 최대 3개)
+export const useRecentQuizActivity = () => {
+  return useQuery({
+    queryKey: ["quiz", "recentActivity"],
+    queryFn: async () => {
+      // 일주일 전부터 현재까지의 기간 설정
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      // 일주일간의 모든 퀴즈 조회
+      const quizzesResponse = await getAllQuizzes({
+        scope: "period",
+        from: formatKST(weekAgo),
+        to: formatKST(now),
+      });
+
+      if (!quizzesResponse.data || quizzesResponse.data.length === 0) {
+        return [];
+      }
+
+      // 각 퀴즈의 결과 확인 (병렬 처리)
+      const quizResults = await Promise.all(
+        quizzesResponse.data.map(async (quiz) => {
+          try {
+            const resultResponse = await getQuizResult(quiz.id);
+
+            // 결과가 있으면 (= 퀴즈를 푼 경우)
+            if (resultResponse && resultResponse.data) {
+              return {
+                quizId: quiz.id,
+                title: quiz.title,
+                startAt: quiz.startAt,
+                isCorrect: resultResponse.data.correct > 0, // correct가 1이면 정답, 0이면 오답
+                submittedAt: resultResponse.timestamp, // 제출 시간
+              };
+            }
+            return null;
+          } catch (error: any) {
+            // 404 에러는 퀴즈를 풀지 않은 것이므로 null 반환
+            if (error?.response?.status === 404) {
+              return null;
+            }
+            // 다른 에러는 무시
+            return null;
+          }
+        })
+      );
+
+      // null이 아닌 것만 필터링 (= 퀴즈를 푼 것만)
+      const solvedQuizzes = quizResults.filter((result) => result !== null);
+
+      // 제출 시간 기준으로 정렬 (최신순)
+      solvedQuizzes.sort(
+        (a, b) =>
+          new Date(b!.submittedAt).getTime() - new Date(a!.submittedAt).getTime()
+      );
+
+      // 최대 3개만 반환
+      return solvedQuizzes.slice(0, 3);
+    },
+    staleTime: 5 * 60 * 1000, // 5분
   });
 };
