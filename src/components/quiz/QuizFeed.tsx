@@ -7,6 +7,7 @@ import QuizStatic from "./QuizStatic";
 import Modal from "../Modal";
 import type { QuizData, SubmitQuizAnswerResponse } from '../../types/quiz';
 import type { GetUserInfoResponseData } from '../../types/user';
+import { useQuizAnswers } from '../../hooks/useQuizQuery';
 
 interface QuizFeedProps {
   quiz: QuizData | undefined;
@@ -35,10 +36,17 @@ export default function QuizFeed({
   const [showLoginModal, setShowLoginModal] = useState(false);
   const navigate = useNavigate();
 
+  // 정답 조회 (퀴즈를 풀었거나 과거 시간대일 때만)
+  const shouldFetchAnswers = isSolved || isPastTimeSlot;
+  const { data: answersData } = useQuizAnswers(shouldFetchAnswers && quiz ? quiz.id : 0);
+
   if (!quiz) return <p>퀴즈를 불러오는 중...</p>;
 
   // 첫 번째 문제만 사용
   const currentQuestion = quiz.questions[0];
+
+  // 정답 데이터에서 해설 가져오기
+  const answerQuestion = answersData?.data?.questions?.[0];
 
   const handleSubmit = async (answer: string, resetForm: () => void) => {
     // 로그인 체크
@@ -86,8 +94,8 @@ export default function QuizFeed({
         {/* 과거 시간대 - 정답 공개 */}
         {isPastTimeSlot && (
           <QuizStatic
-            correctAnswer={(currentQuestion.correctIndex + 1).toString()}
-            explanation={currentQuestion.explanation}
+            correctAnswer={answerQuestion ? answerQuestion.correctIndex.toString() : ""}
+            explanation={answerQuestion?.explanation}
             isRevealed={isRevealed}
           />
         )}
@@ -95,10 +103,10 @@ export default function QuizFeed({
         {/* 퀴즈 완료 시 결과 */}
         {isSolved && quizResult && (
           <QuizResult
-            correctAnswer={(currentQuestion.correctIndex + 1).toString()}
+            correctAnswer={answerQuestion ? answerQuestion.correctIndex.toString() : ""}
             userAnswer={userAnswers[0]}
             isCorrect={quizResult.results[quizResult.results.length - 1] === true}
-            explanation={currentQuestion.explanation}
+            explanation={answerQuestion?.explanation}
             isRevealed={isRevealed}
           />
         )}

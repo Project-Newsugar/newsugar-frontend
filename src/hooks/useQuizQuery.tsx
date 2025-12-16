@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   generateQuiz,
   getAllQuizzes,
+  getQuizAnswers,
   getQuizById,
   getQuizResult,
   getQuizStats,
@@ -427,5 +428,15 @@ export const useRecentQuizActivity = () => {
       return solvedQuizzes.slice(0, 3);
     },
     staleTime: 5 * 60 * 1000, // 5분
+  });
+};
+
+// 12. 퀴즈 정답 조회 (퀴즈 풀고 난 후 정답 확인용)
+export const useQuizAnswers = (id: number) => {
+  return useQuery({
+    queryKey: ["quiz", "answers", id],
+    queryFn: () => getQuizAnswers(id),
+    enabled: !!id,
+    staleTime: Infinity, // 정답은 변하지 않으므로 무한 캐시
   });
 };

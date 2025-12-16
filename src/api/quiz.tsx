@@ -1,6 +1,7 @@
 import type {
   GenerateQuizResponse,
   GetAllQuizzesResponse,
+  GetQuizAnswersResponse,
   GetQuizResponse,
   GetQuizResultResponse,
   GetQuizStatsResponse,
@@ -58,6 +59,13 @@ export const generateQuiz = async (summaryId: number): Promise<GenerateQuizRespo
 export const getQuizStats = async (): Promise<GetQuizStatsResponse> => {
   const { data } = await axiosInstance.get<GetQuizStatsResponse>(
     "/api/v1/quizzes/stats"
+  );
+  return data;
+};
+
+export const getQuizAnswers = async (id: number): Promise<GetQuizAnswersResponse> => {
+  const { data } = await axiosInstance.get<GetQuizAnswersResponse>(
+    `/api/v1/quizzes/${id}/answers`
   );
   return data;
 };
