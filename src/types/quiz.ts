@@ -99,6 +99,15 @@ export interface GetQuizStatsResponse {
   timestamp: string;
 }
 
+// GET /api/v1/quizzes/{id}/answers - 퀴즈 정답 조회 Response
+export interface GetQuizAnswersResponse {
+  success: boolean;
+  code: string;
+  message: string;
+  data: QuizData;
+  timestamp: string;
+}
+
 // ========== 기존 타입 (하위 호환용) ==========
 // export interface Quiz {
 //   id: number;
