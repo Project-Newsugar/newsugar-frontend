@@ -121,13 +121,13 @@ const MyPage = () => {
     const badgeStats = {
       quizCount: apiStats?.totalQuestions || 0,  // 총 문제 수
       wrongCount: Math.max(0, (apiStats?.totalQuestions || 0) - (apiStats?.totalCorrect || 0)),  // 총 문제 - 정답 = 오답
-      totalScore: apiStats?.totalCorrect || 0,  // 정답 수 = 점수
+      totalScore: monthlyScoreData?.score || 0,  // 프론트에서 계산한 점수 사용
       isMember,
     };
 
     // 로직을 통해 획득 뱃지 ID 목록 생성
     return new Set(getEarnedBadges(badgeStats));
-  }, [quizStatsResponse]);
+  }, [quizStatsResponse, monthlyScoreData]);
     // ======= 뱃지 및 통계 데이터 연동 로직 종료
 
 
