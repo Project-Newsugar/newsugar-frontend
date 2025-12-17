@@ -1,7 +1,7 @@
 import {
   MdLogout,
 } from "react-icons/md";
-import { FaBell } from "react-icons/fa"; // FaLock 제거 (BadgeCard 내부에서 처리됨)
+import { FaBell, FaQuestionCircle } from "react-icons/fa"; // FaLock 제거 (BadgeCard 내부에서 처리됨)
 import { useState, useMemo, type ChangeEvent, useEffect } from "react";
 import clsx from "clsx";
 import { Navigate, useNavigate } from "react-router-dom"; // 페이지 이동용
@@ -22,7 +22,7 @@ import {
   getEarnedBadges,
   type BadgeGroup
 } from "../components/badge";
-import { useQuizStats, useRecentQuizActivity } from '../hooks/useQuizQuery';
+import { useQuizStats, useRecentQuizActivity, useMonthlyQuizScore } from '../hooks/useQuizQuery';
 
 import { useUserCategories, useUserProfile } from '../hooks/useUserQuery';
 import { favoriteCategoriesAtom } from '../store/atoms';
@@ -75,8 +75,9 @@ const MyPage = () => {
     password: "", // 비밀번호 변경용 필드
   });
 
-  // 모달 상태 (로그아웃 확인용)
+  // 모달 상태 (로그아웃 확인용, 퀴즈 설명용)
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showQuizInfoModal, setShowQuizInfoModal] = useState(false);
 
   // 카테고리 API 훅
   const addCategoryMutation = useAddCategory();
@@ -88,6 +89,9 @@ const MyPage = () => {
 
   // 최근 활동 내역 조회
   const { data: recentActivityData, isLoading: isActivityLoading } = useRecentQuizActivity();
+
+  // 최근 한 달 퀴즈 점수 조회 (프론트에서 계산)
+  const { data: monthlyScoreData, isLoading: isMonthlyScoreLoading } = useMonthlyQuizScore();
 
   // 통계 데이터 가공 (화면 표시용)
   const stats = useMemo(() => {
@@ -117,13 +121,13 @@ const MyPage = () => {
     const badgeStats = {
       quizCount: apiStats?.totalQuestions || 0,  // 총 문제 수
       wrongCount: Math.max(0, (apiStats?.totalQuestions || 0) - (apiStats?.totalCorrect || 0)),  // 총 문제 - 정답 = 오답
-      totalScore: apiStats?.totalCorrect || 0,  // 정답 수 = 점수
+      totalScore: monthlyScoreData?.score || 0,  // 프론트에서 계산한 점수 사용
       isMember,
     };
 
     // 로직을 통해 획득 뱃지 ID 목록 생성
     return new Set(getEarnedBadges(badgeStats));
-  }, [quizStatsResponse]);
+  }, [quizStatsResponse, monthlyScoreData]);
     // ======= 뱃지 및 통계 데이터 연동 로직 종료
 
 
@@ -278,42 +282,37 @@ const MyPage = () => {
         <div className="flex flex-col lg:flex-row gap-6 items-stretch">
           {/* 점수 통계 카드 (약 30%) */}
           <div className="w-full lg:w-[32%] bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between shrink-0">
-            <div>
+            <div className="flex items-center justify-between">
               <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-100">
                 퀴즈 진행 상황
               </span>
+              <button
+                onClick={() => setShowQuizInfoModal(true)}
+                className="text-gray-400 hover:text-blue-600 transition-colors"
+                title="점수 계산 방식"
+              >
+                <FaQuestionCircle size={16} />
+              </button>
             </div>
-            <div className="flex flex-col items-center py-3">
-              <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-bold text-gray-900">
-                  {user.score}
-                </span>
-                <span className="text-lg text-gray-500">점</span>
+            {isMonthlyScoreLoading ? (
+              <div className="flex flex-col items-center justify-center flex-1">
+                <p className="text-gray-400 text-sm animate-pulse">점수 계산 중...</p>
               </div>
-              <p className="text-gray-500 text-sm mt-4">
-                누적 풀이: <span className="font-semibold text-gray-900">{stats.totalQuestions}개</span>
-                {" · "}누적 정답: <span className="font-semibold text-gray-900">{stats.totalCorrect}개</span>
-                {" · "}정답률: <span className="font-semibold text-gray-900">{stats.accuracyPercent}%</span>
-              </p>
-              {/* <p className="text-gray-500 text-sm mt-4">
-                정답 퀴즈:{" "}
-                <span className="font-semibold text-gray-900">
-                  {stats.correctCount}개
-                </span>
-                {" · "}푼 퀴즈:{" "}
-                <span className="font-semibold text-gray-900">
-                  {stats.solvedCount}개
-                </span>
-                {" · "}
-                정답률:{" "}
-                <span className="font-semibold text-gray-900">
-                  {stats.solvedCount > 0
-                    ? Math.round((stats.correctCount / stats.solvedCount) * 100)
-                    : 0}
-                  %
-                </span>
-              </p> */}
-            </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center flex-1">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-bold text-gray-900">
+                    {monthlyScoreData?.score || 0}
+                  </span>
+                  <span className="text-lg text-gray-500">점</span>
+                </div>
+                <p className="text-gray-500 text-sm mt-4">
+                  누적 풀이: <span className="font-semibold text-gray-900">{stats.totalQuestions}개</span>
+                  {" · "}누적 정답: <span className="font-semibold text-gray-900">{stats.totalCorrect}개</span>
+                  {" · "}정답률: <span className="font-semibold text-gray-900">{stats.accuracyPercent}%</span>
+                </p>
+              </div>
+            )}
           </div>
       
 
@@ -448,6 +447,58 @@ const MyPage = () => {
         cancelText="취소"
         onConfirm={handleConfirmLogout} // 실제 로그아웃 로직 실행
         onCancel={() => setShowLogoutModal(false)}
+      />
+
+      {/* 퀴즈 점수 계산 설명 모달 */}
+      <Modal
+        isOpen={showQuizInfoModal}
+        onClose={() => setShowQuizInfoModal(false)}
+        type="alert"
+        title="퀴즈 점수 계산 방식"
+        content={
+          <div className="text-left space-y-4">
+            <p className="text-gray-700">
+              <span className="font-semibold text-gray-900">최근 한 달</span> 동안 풀이한 퀴즈의 점수를 합산하여 표시합니다.
+            </p>
+
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-blue-900 mb-2">📊 점수 계산식</p>
+                <p className="text-sm text-gray-700 font-mono bg-white px-3 py-2 rounded border border-blue-200">
+                  점수 = 정답 퀴즈 수 × 5
+                </p>
+              </div>
+              <div className="border-t border-blue-200 pt-2">
+                <p className="text-sm text-gray-700">
+                  <span className="font-semibold text-blue-700">• 정답 1개 = 5점</span>
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-semibold text-blue-700">• 오답 = 0점</span>
+                </p>
+              </div>
+            </div>
+
+            {monthlyScoreData && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-2">
+                <p className="text-xs font-semibold text-gray-600 mb-2">📈 내 최근 한 달 통계</p>
+                <div className="space-y-1 text-sm text-gray-700">
+                  <p>• 전체 퀴즈: <span className="font-semibold text-gray-900">{monthlyScoreData.totalQuizzes}개</span></p>
+                  <p>• 푼 퀴즈: <span className="font-semibold text-gray-900">{monthlyScoreData.solvedQuizzes}개</span></p>
+                  <p>• 정답 퀴즈: <span className="font-semibold text-blue-700">{monthlyScoreData.correctQuizzes}개</span></p>
+                  <p className="pt-2 border-t border-gray-300">
+                    • 내 점수: <span className="font-bold text-lg text-blue-700">{monthlyScoreData.correctQuizzes} × 5 = {monthlyScoreData.score}점</span>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <p className="text-xs text-gray-500 border-t pt-3">
+              ※ 누적 풀이, 누적 정답, 정답률은 전체 기간의 통계입니다.
+            </p>
+          </div>
+        }
+        confirmText="확인"
+        onConfirm={() => setShowQuizInfoModal(false)}
       />
     </div>
   );
