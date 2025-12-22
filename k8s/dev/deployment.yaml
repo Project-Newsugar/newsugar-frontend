@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: newsugar-frontend-dev
+  namespace: default
+  labels:
+    app: newsugar-frontend
+    env: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: newsugar-frontend
+      env: dev
+  template:
+    metadata:
+      labels:
+        app: newsugar-frontend
+        env: dev
+    spec:
+      containers:
+        - name: newsugar-frontend
+          # ECR 이미지 경로 (프론트엔드용 ECR 레포 생성 필요)
+          # AWS Account ID: 061039804626
+          image: 061039804626.dkr.ecr.ap-northeast-2.amazonaws.com/newsugar-frontend:dev
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
