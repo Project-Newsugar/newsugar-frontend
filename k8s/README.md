@@ -29,7 +29,7 @@ aws configure
 # Access Key ID, Secret Access Key, Region(ap-northeast-2) 입력
 ```
 
-### 3.2. ECR 레포지토리 생성 (최초 1회)
+### 3.2. ECR 레포지토리 생성 (최초 1회) - 이건 인프라 담당에서 해줌
 
 ```bash
 aws ecr create-repository \
@@ -37,7 +37,7 @@ aws ecr create-repository \
   --region ap-northeast-2
 ```
 
-### 3.3. kubectl 설정
+### 3.3. kubectl 설정 - eks를 매번 새로 만들어서 매번 새로 생성될 때마다 해야 함
 
 ```bash
 # EKS 클러스터 연결
@@ -47,7 +47,7 @@ aws eks update-kubeconfig --region ap-northeast-2 --name newsugar-prod-eks
 kubectl get nodes
 ```
 
-### 3.4. ArgoCD Application 등록 (최초 1회)
+### 3.4. ArgoCD Application 등록 - 3.3 과 동일한 이유로 해야 함
 
 ```bash
 # Dev 환경
@@ -75,12 +75,76 @@ chmod +x scripts/ecr-push.sh
 ./scripts/ecr-push.sh -e prod
 # → nginx.conf 사용 (프로덕션 설정)
 
+# Windows PowerShell 사용 시
+.\scripts\ecr-push.ps1 -Environment dev
+.\scripts\ecr-push.ps1 -Environment prod
+
 # Local 환경 배포
 .\scripts\test-local.ps1
 # → nginx.local.conf 사용
 ```
 
-### 4.2. ArgoCD 자동 배포
+### 4.2. Prod 환경 배포 (완전 가이드)
+
+**Step 1: ECR에 Prod 이미지 푸시**
+
+```powershell
+.\scripts\ecr-push.ps1 -Environment prod
+```
+
+**Step 2: ArgoCD Application 설정 수정 (브랜치 변경 필요 시)**
+
+[k8s/argocd-app-prod.yaml](k8s/argocd-app-prod.yaml) 파일 수정:
+
+```yaml
+# 배포할 브랜치 변경
+targetRevision: main # 또는 feature/ecr-push, develop 등
+```
+
+**Step 3: ArgoCD Application 적용**
+
+```bash
+kubectl apply -f k8s/argocd-app-prod.yaml
+```
+
+**Step 4: ArgoCD 자동 동기화**
+
+ArgoCD가 자동으로 Git 레포지토리의 변경사항을 감지하여 배포합니다:
+
+- `syncPolicy.automated` 설정으로 자동 동기화
+- `k8s/prod/` 폴더의 매니페스트를 읽고 EKS에 적용
+- `imagePullPolicy: Always`로 최신 이미지 자동 적용
+
+**Step 5: 배포 확인**
+
+```bash
+# ArgoCD Application 상태 확인
+kubectl get applications -n argocd
+
+# Pod 상태 확인
+kubectl get pods -l env=prod
+
+# Service 상태 확인
+kubectl get svc -l env=prod
+
+# LoadBalancer External IP 확인
+kubectl get svc newsugar-frontend-service-prod -n default -o wide
+```
+
+### 4.3. Dev 환경 배포 (간단 버전)
+
+```bash
+# 1. ECR에 Dev 이미지 푸시
+.\scripts\ecr-push.ps1 -Environment dev
+
+# 2. ArgoCD가 자동으로 배포 (별도 작업 불필요)
+
+# 3. 확인
+kubectl get pods -l env=dev
+kubectl get svc newsugar-frontend-service-dev
+```
+
+### 4.4. ArgoCD 자동 배포 동작 원리
 
 ECR에 이미지를 푸시하면 **ArgoCD가 자동으로 감지하여 EKS에 배포**합니다.
 
@@ -88,7 +152,7 @@ ECR에 이미지를 푸시하면 **ArgoCD가 자동으로 감지하여 EKS에 �
 - `syncPolicy.automated`가 설정되어 있어 변경 감지 시 자동 배포
 - `imagePullPolicy: Always`로 설정되어 최신 이미지 자동 적용
 
-### 4.3. 수동 배포 (ArgoCD 없이)
+### 4.5. 수동 배포 (ArgoCD 없이)
 
 ArgoCD를 사용하지 않는 경우:
 

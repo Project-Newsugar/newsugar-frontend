@@ -6,11 +6,11 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/Project-Newsugar/newsugar-frontend.git'
-    targetRevision: HEAD
+    repoURL: "https://github.com/Project-Newsugar/newsugar-frontend.git"
+    targetRevision: develop
     path: k8s/dev
   destination:
-    server: 'https://kubernetes.default.svc'
+    server: "https://kubernetes.default.svc"
     namespace: default
   syncPolicy:
     automated:
