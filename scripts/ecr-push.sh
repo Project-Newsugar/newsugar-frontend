@@ -51,9 +51,9 @@ echo "=== 2. Building Docker Image (Frontend)... ==="
 
 # 환경별 API URL 설정
 if [ "$ENV" = "dev" ]; then
-    API_URL="http://newsugar-backend-dev.default.svc.cluster.local/"
+    API_URL="http://k8s-default-newsugar-b56f5d85c3-55ff014973bc1e0a.elb.ap-northeast-2.amazonaws.com/"
 elif [ "$ENV" = "prod" ]; then
-    API_URL="https://api.newsugar.com/"
+    API_URL="http://k8s-default-newsugar-b56f5d85c3-55ff014973bc1e0a.elb.ap-northeast-2.amazonaws.com/"
 else
     echo "Error: Unknown environment '$ENV'"
     exit 1
@@ -61,8 +61,12 @@ fi
 
 echo "Using API URL: $API_URL"
 
-# Build ARG로 API URL 주입
-docker build --build-arg VITE_API_URL="$API_URL" -t $FULL_IMAGE_NAME .
+# Build ARG로 API URL 및 Nginx 설정 주입
+docker build \
+    --build-arg VITE_API_URL="$API_URL" \
+    --build-arg NGINX_CONF=nginx.conf \
+    -t $FULL_IMAGE_NAME \
+    .
 
 if [ $? -ne 0 ]; then
     echo "Error: Docker build failed."

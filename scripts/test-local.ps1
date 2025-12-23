@@ -23,6 +23,7 @@ Write-Host ""
 Write-Host "=== Building Docker image... ===" -ForegroundColor Green
 docker build `
     --build-arg VITE_API_URL="$ApiUrl" `
+    --build-arg NGINX_CONF=nginx.local.conf `
     -t $ImageName `
     .
 

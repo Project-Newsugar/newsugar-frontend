@@ -14,7 +14,7 @@ export const useAllQuizzes = () => {
   return useQuery({
     queryKey: ["quiz", "all"],
     queryFn: () => getAllQuizzes(),
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 0,
   });
 };
 
@@ -272,7 +272,7 @@ export const useQuizByTimeSlot = (timeSlot: string) => {
     // staleTime: 10 * 60 * 1000,
 
     // 캐싱 기능 사용 시작
-    staleTime: Infinity, // 한 번 불러온 퀴즈 데이터는 페이지 새로고침 전까지 계속 사용
+    staleTime: 0,
     gcTime: 30 * 60 * 1000, // 30분간 캐시 유지 (메모리에서 제거되지 않음)
     // 캐싱 기능 사용 끝
     // 아마 지금 캐시 저장될 정보가 없어서..?
@@ -301,7 +301,7 @@ export const useQuizById = (id: number) => {
     queryKey: ["quiz", id],
     queryFn: () => getQuizById(id),
     enabled: !!id,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 0,
   });
 };
 
@@ -335,7 +335,7 @@ export const useQuizResult = (id: number, isLoggedIn: boolean) => {
     enabled: !!id && isLoggedIn, // 로그인 상태일 때만 활성화
     retry: false, // 재시도 비활성화
     retryOnMount: false, // 마운트 시 재시도 비활성화
-    staleTime: Infinity, // 페이지 새로고침 전까지 캐시 유지
+    staleTime: 0,
     gcTime: 30 * 60 * 1000, // 30분간 메모리 유지
   });
 };
@@ -363,7 +363,7 @@ export const useQuizStats = () => {
   return useQuery({
     queryKey: ["quiz", "stats"],
     queryFn: () => getQuizStats(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0,
   });
 };
 
@@ -428,7 +428,7 @@ export const useRecentQuizActivity = () => {
       // 최대 3개만 반환
       return solvedQuizzes.slice(0, 3);
     },
-    staleTime: 5 * 60 * 1000, // 5분
+    staleTime: 0,
   });
 };
 
@@ -438,7 +438,7 @@ export const useQuizAnswers = (id: number) => {
     queryKey: ["quiz", "answers", id],
     queryFn: () => getQuizAnswers(id),
     enabled: !!id,
-    staleTime: Infinity, // 정답은 변하지 않으므로 무한 캐시
+    staleTime: 0,
   });
 };
 
@@ -510,6 +510,6 @@ export const useMonthlyQuizScore = () => {
         score, // 계산된 점수
       };
     },
-    staleTime: 5 * 60 * 1000, // 5분
+    staleTime: 0,
   });
 };

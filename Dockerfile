@@ -18,8 +18,9 @@ RUN npm run build
 # Stage 2: Production
 FROM nginx:alpine
 
-# Nginx 설정 복사 (프로덕션용 - BFF 패턴 활성화)
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Nginx 설정 파일 선택 (기본값: 프로덕션용)
+ARG NGINX_CONF=nginx.conf
+COPY ${NGINX_CONF} /etc/nginx/conf.d/default.conf
 
 # 빌드된 정적 파일 복사
 COPY --from=builder /app/dist /usr/share/nginx/html

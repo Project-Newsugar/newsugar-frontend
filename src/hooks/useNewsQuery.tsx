@@ -23,7 +23,7 @@ export const useNewsByCategory = (category: string | string[] | null) => {
     queryKey: ["news", "category", normalizedCategory ?? "all"],
     queryFn: () => getNewsByCategory(normalizedCategory),
     enabled: true,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 };
 
@@ -35,7 +35,7 @@ export const useCategoryNewsSummary = (category: string) => {
       return summary;
     },
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 60, // 1시간마다 갱신
+    staleTime: 0,
     enabled: true,
   });
 };
