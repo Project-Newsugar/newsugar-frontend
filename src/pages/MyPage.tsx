@@ -378,6 +378,7 @@ const MyPage = () => {
           onCategoryClick={handleCategoryClick}
           favorites={favorites}
           onToggleFavorite={handleToggleFavorite}
+          variant="compact"
         />
       </section>
 

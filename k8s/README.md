@@ -37,7 +37,26 @@ aws ecr create-repository \
   --region ap-northeast-2
 ```
 
-### 3.3. kubectl 설정 - eks를 매번 새로 만들어서 매번 새로 생성될 때마다 해야 함
+### 3.3 백엔드 API URL 설정
+
+[scripts/ecr-push.ps1](scripts/ecr-push.ps1) 파일에서 환경별 백엔드 ALB 주소를 설정합니다.
+
+```powershell
+# 환경별 API URL 설정
+$ApiUrl = switch ($Environment) {
+    "dev" { "http://your-backend-alb-address-dev/" }
+    "prod" { "http://your-backend-alb-address-prod/" }
+}
+```
+
+**설정 방법:**
+
+1. 백엔드 ALB 주소 확인
+2. [scripts/ecr-push.ps1](scripts/ecr-push.ps1) 파일 열기
+3. 22-23번째 줄에서 `dev`와 `prod` 환경의 ALB 주소 수정
+4. 변경사항 저장
+
+### 3.4. kubectl 설정 - eks를 매번 새로 만들어서 매번 새로 생성될 때마다 해야 함
 
 ```bash
 # EKS 클러스터 연결
@@ -64,16 +83,11 @@ kubectl apply -f k8s/argocd-app-prod.yaml
 스크립트에 AWS 계정 정보가 기본값으로 설정되어 있습니다.
 
 ```bash
-# 스크립트 실행 권한 부여 (최초 1회)
+# Git bash 사용 시
 chmod +x scripts/ecr-push.sh
 
-# Dev 환경 배포
 ./scripts/ecr-push.sh -e dev
-# → nginx.conf 사용 (프로덕션 설정)
-
-# Prod 환경 배포
 ./scripts/ecr-push.sh -e prod
-# → nginx.conf 사용 (프로덕션 설정)
 
 # Windows PowerShell 사용 시
 .\scripts\ecr-push.ps1 -Environment dev

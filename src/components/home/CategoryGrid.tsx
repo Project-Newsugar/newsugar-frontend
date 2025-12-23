@@ -6,6 +6,7 @@ interface CategoryGridProps {
   onCategoryClick: (categoryKey: NewsCategoryKey) => void;
   favorites: CategoryId[];
   onToggleFavorite: (categoryId: CategoryId) => void;
+  variant?: 'default' | 'compact';
 }
 
 export default function CategoryGrid({
@@ -13,23 +14,34 @@ export default function CategoryGrid({
   onCategoryClick,
   favorites,
   onToggleFavorite,
+  variant = 'default',
 }: CategoryGridProps) {
+  const isCompact = variant === 'compact';
+
   return (
     <div>
       <h2 className="text-2xl font-bold text-gray-900 mb-6">카테고리</h2>
-      <div className="grid grid-cols-3 gap-4">
+      <div className={isCompact ? "flex flex-wrap gap-2" : "grid grid-cols-3 gap-4"}>
         {categories.map((category) => (
           <button
             key={category.id}
             onClick={() => onCategoryClick(category.key)}
-            className="px-8 py-4 rounded-full border bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-600 transition-all text-lg font-medium flex items-center justify-center gap-2 relative"
+            className={
+              isCompact
+                ? "px-4 py-2 rounded-full border bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-600 transition-all text-sm font-medium flex items-center gap-1.5"
+                : "px-8 py-4 rounded-full border bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-600 transition-all text-lg font-medium flex items-center justify-center gap-2 relative"
+            }
           >
             <span
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleFavorite(category.id);
               }}
-              className="cursor-pointer text-xl hover:scale-110 transition-transform text-yellow-400"
+              className={
+                isCompact
+                  ? "cursor-pointer text-base hover:scale-110 transition-transform text-yellow-400"
+                  : "cursor-pointer text-xl hover:scale-110 transition-transform text-yellow-400"
+              }
             >
               {favorites.includes(category.id) ? <FaStar /> : <FaRegStar />}
             </span>

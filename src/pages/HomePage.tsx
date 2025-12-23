@@ -15,11 +15,12 @@ import {
 } from "../hooks/useQuizQuery";
 import QuizFeed from "../components/quiz/QuizFeed";
 import type { SubmitQuizAnswerResponse } from "../types/quiz";
-import { CATEGORIES } from "../constants/CategoryData";
+import { CATEGORIES, type CategoryId } from "../constants/CategoryData";
 import { useUserCategories } from "../hooks/useUserQuery";
 import IndNewsFeed from "../components/news/IndNewsFeed";
 import IndNewsFeedSkeleton from "../components/news/IndNewsFeedSkeleton";
 import { getMainSummary } from "../api/news";
+import { useAddCategory, useDeleteCategory } from "../hooks/useCategoryQuery";
 
 export default function HomePage() {
   // 현재 시간대 계산 함수 (오전 6시 기준으로 하루가 시작됨)
@@ -56,8 +57,12 @@ export default function HomePage() {
   const [quizResults, setQuizResults] = useState<
     SubmitQuizAnswerResponse["data"] | null
   >(null);
-  const { data: userCategories } = useUserCategories(isLoggedIn);
+  const { data: userCategories, refetch: refetchUserCategories } = useUserCategories(isLoggedIn);
   const favorites = userCategories?.categoryIdList ?? [];
+
+  // 즐겨찾기 API 훅
+  const addCategoryMutation = useAddCategory();
+  const deleteCategoryMutation = useDeleteCategory();
 
   // 최신 뉴스 하나를 summary로 사용
   const { data: mainSummary } = useMainSummary();
@@ -215,6 +220,28 @@ export default function HomePage() {
   };
 
   /**
+   * 즐겨찾기 토글 핸들러
+   */
+  const handleToggleFavorite = async (categoryId: CategoryId) => {
+    if (!isLoggedIn) {
+      alert("로그인이 필요한 기능입니다.");
+      return;
+    }
+
+    try {
+      if (favorites.includes(categoryId)) {
+        await deleteCategoryMutation.mutateAsync(categoryId);
+      } else {
+        await addCategoryMutation.mutateAsync(categoryId);
+      }
+      // 즐겨찾기 변경 후 카테고리 목록 다시 불러오기
+      await refetchUserCategories();
+    } catch (error) {
+      console.error("즐겨찾기 토글 실패:", error);
+    }
+  };
+
+  /**
    * 퀴즈 답안 제출 핸들러
    * 정답 여부에 따라 모달을 표시하고 상태를 업데이트
    */
@@ -301,8 +328,8 @@ export default function HomePage() {
         </p>
       </section>
 
-      {/* SEARCH */}
-      <section>
+      <div className="space-y-3">
+        {/* SEARCH */}
         <input
           type="text"
           placeholder="뉴스 검색"
@@ -310,7 +337,28 @@ export default function HomePage() {
                      focus:outline-none focus:border-gray-400
                      shadow-sm transition-colors"
         />
-      </section>
+
+        {/* 즐겨찾기 설정 섹션 */}
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((category) => {
+            const isFavorite = favorites.includes(category.id);
+            return (
+              <button
+                key={category.id}
+                onClick={() => handleToggleFavorite(category.id)}
+                className={`px-4 py-2 rounded-full border transition-all text-sm font-medium ${
+                  isFavorite
+                    ? 'bg-blue-50 text-blue-600 border-blue-200'
+                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                {category.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* TODO : 주요 뉴스 요약 및 퀴즈 연동 필요*/}
       {/* SUMMARY & QUIZ */}
       <NewsSummaryCard
