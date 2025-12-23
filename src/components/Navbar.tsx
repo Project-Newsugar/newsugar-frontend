@@ -101,33 +101,34 @@ export const Navbar = () => {
           </li>
         </ul>
 
-        {/* [기존] */}
-        {/* <Link
-          to="/myPage"
-          className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all object-cover overflow-hidden ${
-            isActive("/myPage")
-              ? "border-blue-600 bg-blue-50"
-              : "border-gray-300 hover:border-blue-600 bg-gray-100"
-          }`}
-          title="마이페이지"
-        >
-          <img src="src/assets/noProfile.png" alt="noProfile" />
-        </Link> */}
-
-        {/* [수정] useAuth 훅을 사용하여 로그인 상태 확인 */}
-        <button
-          onClick={() => {
-            navigate(isLoggedIn ? "/myPage" : "/login");
-          }}
-          className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all object-cover overflow-hidden ${
-            isActive("/myPage")
-              ? "border-blue-600 bg-blue-50"
-              : "border-gray-300 hover:border-blue-600 bg-gray-100"
-          }`}
-          title="마이페이지"
-        >
-          <img src="src/assets/noProfile.png" alt="noProfile" />
-        </button>
+        {isLoggedIn ? (
+          <button
+            onClick={() => navigate("/myPage")}
+            className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all object-cover overflow-hidden ${
+              isActive("/myPage")
+                ? "border-blue-600 bg-blue-50"
+                : "border-gray-300 hover:border-blue-600 bg-gray-100"
+            }`}
+            title="마이페이지"
+          >
+            <img src="src/assets/noProfile.png" alt="noProfile" />
+          </button>
+        ) : (
+          <div className="flex gap-3 items-center">
+            <button
+              onClick={() => navigate("/login")}
+              className="px-4 py-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+            >
+              로그인
+            </button>
+            <button
+              onClick={() => navigate("/signup")}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              회원가입
+            </button>
+          </div>
+        )}
       </nav>
     </header>
   );
