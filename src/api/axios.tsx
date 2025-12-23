@@ -9,10 +9,11 @@ interface CustomInternalAxiosRequestConfig extends InternalAxiosRequestConfig {
 let refreshPromise: Promise<string> | null = null;
 
 export const axiosInstance = axios.create({
-  // ===== 임시 수정: 프록시 사용을 위해 baseURL 제거 =====
-  // 백엔드 CORS 해결 후 원래대로 복구: baseURL: import.meta.env.VITE_SERVER_API_URL,
-  // baseURL: import.meta.env.VITE_SERVER_API_URL,
-  // ===== 임시 수정 끝 =====
+  // 프로덕션 빌드: Docker build ARG로 주입된 환경별 API URL 사용
+  // dev: http://newsugar-backend-dev.default.svc.cluster.local/
+  // prod: https://api.newsugar.com/
+  // 개발 환경(npm run dev): vite.config.ts의 프록시 사용
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
 axiosInstance.interceptors.request.use(

@@ -10,7 +10,7 @@ import { checkHealth } from "./api/health";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 0,
       // retry: 1,
       retry: false, // API 실패 시 재시도 안 함 (Mock 데이터로 빠르게 전환)
     },
