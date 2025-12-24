@@ -39,7 +39,8 @@ export default function HomePage() {
   );
 
   // 선택한 시간대의 퀴즈 조회 (백엔드 스케줄러가 자동으로 생성)
-  const { data: quiz, isLoading: isQuizLoading } = useQuizById(1);
+  const { data: quiz, isLoading: isQuizLoading } =
+    useQuizByTimeSlot(selectedTime);
 
   // 퀴즈 ID 추출
   const quizId = quiz?.data?.id || 0;
