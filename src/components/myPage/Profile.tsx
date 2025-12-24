@@ -1,6 +1,7 @@
 import { MdEdit, MdCheck, MdClose, MdEmail } from "react-icons/md";
 import type { ChangeEvent } from "react";
 import { FaPhoneAlt } from "react-icons/fa";
+import noProfile from "../../assets/noProfile.png";
 
 interface ProfileSectionProps {
   user: {
@@ -82,7 +83,7 @@ const ProfileSection = ({
             <div className="flex gap-6 items-start">
                 <div className="w-24 h-24 flex-shrink-0">
                     <img
-                    src={`src/assets/noProfile.png`}
+                    src={noProfile}
                     alt="프로필 이미지"
                     className="w-full h-full object-cover rounded-md border border-gray-200"
                     />
