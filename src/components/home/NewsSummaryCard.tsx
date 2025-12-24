@@ -1,4 +1,8 @@
 import { useState, useEffect } from "react";
+import LoadingSpinner from "../LoadingSpanner";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 
 interface NewsSummaryCardProps {
   summary: string;
@@ -15,7 +19,9 @@ export default function NewsSummaryCard({
   onTimeChange,
   selectedTime: initialSelectedTime,
 }: NewsSummaryCardProps) {
-  const [selectedTime, setSelectedTime] = useState<string>(initialSelectedTime || "06");
+  const [selectedTime, setSelectedTime] = useState<string>(
+    initialSelectedTime || "06"
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const timeOptions = ["06", "12", "18", "24"];
@@ -58,6 +64,10 @@ export default function NewsSummaryCard({
     onTimeChange?.(time);
   };
 
+  const markdownWithHighlight = summary
+    ? summary.replace(/==(.+?)==/g, '<span class="highlight">$1</span>')
+    : "";
+
   return (
     <div className="relative">
       {/* 시간 미도달 모달 */}
@@ -76,38 +86,46 @@ export default function NewsSummaryCard({
         </div>
       )}
 
-      <div className={`transition-all duration-200 ${isModalOpen ? "blur-sm" : ""}`}>
+      <div
+        className={`transition-all duration-200 ${
+          isModalOpen ? "blur-sm" : ""
+        }`}
+      >
         <h2 className="text-2xl font-bold text-gray-900 mb-4">오늘의 요약</h2>
 
         <div className="bg-white border border-gray-200 rounded p-6 shadow-sm">
-        <div className="flex gap-2 mb-4">
-          {timeOptions.map((time) => (
-            <button
-              key={time}
-              onClick={() => handleTimeClick(time)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                selectedTime === time
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              {time}시
-            </button>
-          ))}
-        </div>
+          <div className="flex gap-2 mb-4">
+            {timeOptions.map((time) => (
+              <button
+                key={time}
+                onClick={() => handleTimeClick(time)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  selectedTime === time
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                {time}시
+              </button>
+            ))}
+          </div>
 
-        <h3 className="text-xl font-bold text-gray-900 mb-4">
-          {selectedTime}시 주요 뉴스
-        </h3>
-
+          <h3 className="text-xl font-bold text-gray-900 mb-4">
+            {selectedTime}시 주요 뉴스
+          </h3>
           {isLoading ? (
             <div className="flex justify-center items-center h-24">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <LoadingSpinner size={40} />
             </div>
           ) : (
             <>
               <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                {summary}
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
+                >
+                  {markdownWithHighlight}
+                </ReactMarkdown>
               </p>
 
               {quizSection && (

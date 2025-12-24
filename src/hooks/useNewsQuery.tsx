@@ -28,7 +28,7 @@ export const useNewsByCategory = (category: string | string[] | null) => {
 };
 
 export const useCategoryNewsSummary = (category: string) => {
-  return useQuery<String>({
+  return useQuery<string>({
     queryKey: ["categorySummary", category],
     queryFn: async () => {
       const summary = await getCategoryNewsSummary(category);

@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getCategoryName } from "../utils/getCategorySlug";
-import type { NewsItem } from '../types/news';
-import IndNewsFeed from '../components/news/IndNewsFeed';
-import { useCategoryNewsSummary, useNewsByCategory } from '../hooks/useNewsQuery';
-import LoadingSpinner from '../components/LoadingSpanner';
-import IndNewsFeedSkeleton from '../components/news/IndNewsFeedSkeleton';
+import type { NewsItem } from "../types/news";
+import IndNewsFeed from "../components/news/IndNewsFeed";
+import {
+  useCategoryNewsSummary,
+  useNewsByCategory,
+} from "../hooks/useNewsQuery";
+import LoadingSpinner from "../components/LoadingSpanner";
+import IndNewsFeedSkeleton from "../components/news/IndNewsFeedSkeleton";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 
 const CategoryPage = () => {
   const { categoryName: categorySlug } = useParams<{ categoryName: string }>();
@@ -23,41 +29,54 @@ const CategoryPage = () => {
     }
   }, [categorySlug]);
 
-
-  const { data: currentNews, isLoading, error } = useNewsByCategory(categorySlug!);
+  const {
+    data: currentNews,
+    isLoading,
+    error,
+  } = useNewsByCategory(categorySlug!);
 
   const {
-  data: summary,
-  refetch: refetchSummary,
-  isFetching: isSummaryFetching
-} = useCategoryNewsSummary(categorySlug!);
+    data: summary,
+    refetch: refetchSummary,
+    isFetching: isSummaryFetching,
+  } = useCategoryNewsSummary(categorySlug!);
 
-// 최초 fetch
-useEffect(() => {
-  refetchSummary();
-}, [refetchSummary, categorySlug]);
+  // 최초 fetch
+  useEffect(() => {
+    refetchSummary();
+  }, [refetchSummary, categorySlug]);
 
-// 정각마다 자동 refetch
-useEffect(() => {
-  const scheduleNextRefetch = () => {
-    const now = new Date();
-    const nextHour = new Date();
-    nextHour.setHours(now.getHours() + 1, 0, 0, 0);
-    const timeout = nextHour.getTime() - now.getTime();
+  // 정각마다 자동 refetch
+  useEffect(() => {
+    const scheduleNextRefetch = () => {
+      const now = new Date();
+      const nextHour = new Date();
+      nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+      const timeout = nextHour.getTime() - now.getTime();
 
-    const timer = setTimeout(() => {
-      refetchSummary();
-      scheduleNextRefetch();
-    }, timeout);
+      const timer = setTimeout(() => {
+        refetchSummary();
+        scheduleNextRefetch();
+      }, timeout);
 
-    return () => clearTimeout(timer);
-  };
+      return () => clearTimeout(timer);
+    };
 
-  const cleanup = scheduleNextRefetch();
-  return cleanup;
-}, [refetchSummary]);
+    const cleanup = scheduleNextRefetch();
+    return cleanup;
+  }, [refetchSummary]);
 
-const displayedSummary = useMemo(() => summary || "요약이 준비되는 중입니다...", [summary]);
+  const displayedSummary = useMemo(
+    () => summary || "요약이 준비되는 중입니다...",
+    [summary]
+  );
+
+  const markdownWithHighlight = displayedSummary
+    ? displayedSummary.replace(
+        /==(.+?)==/g,
+        '<span class="highlight">$1</span>'
+      )
+    : "";
 
   return (
     <div>
@@ -72,18 +91,28 @@ const displayedSummary = useMemo(() => summary || "요약이 준비되는 중입
                 {selectedCategory} 뉴스 요약
               </h4>
               <div className="flex items-center text-sm text-gray-500 gap-2">
-                <span>{new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}</span>
+                <span>
+                  {new Date().toLocaleDateString("ko-KR", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                  })}
+                </span>
                 <span>·</span>
                 <span>요약</span>
               </div>
             </div>
-            <div className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
+
+            <div className="text-gray-700 leading-relaxed break-keep">
               {isSummaryFetching ? (
-                <div className="flex justify-center items-center h-24">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
+                <LoadingSpinner size={40} />
               ) : (
-                <p>{displayedSummary}</p>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
+                >
+                  {markdownWithHighlight}
+                </ReactMarkdown>
               )}
             </div>
           </div>
