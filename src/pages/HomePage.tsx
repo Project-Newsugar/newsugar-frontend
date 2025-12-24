@@ -9,7 +9,6 @@ import { useAuth } from "../hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { getMyProfile } from "../api/auth";
 import {
-  useQuizById,
   useQuizByTimeSlot,
   useQuizResult,
   useSubmitQuizAnswer,
@@ -20,9 +19,7 @@ import { CATEGORIES, type CategoryId } from "../constants/CategoryData";
 import { useUserCategories } from "../hooks/useUserQuery";
 import IndNewsFeed from "../components/news/IndNewsFeed";
 import IndNewsFeedSkeleton from "../components/news/IndNewsFeedSkeleton";
-import { getMainSummary } from "../api/news";
 import { useAddCategory, useDeleteCategory } from "../hooks/useCategoryQuery";
-import ConfettiEffect from "../components/effects/ConfettiEffect";
 
 export default function HomePage() {
   // 현재 시간대 계산 함수 (오전 6시 기준으로 하루가 시작됨)
@@ -41,7 +38,8 @@ export default function HomePage() {
   );
 
   // 선택한 시간대의 퀴즈 조회 (백엔드 스케줄러가 자동으로 생성)
-  const { data: quiz, isLoading: isQuizLoading } = useQuizById(1);
+  const { data: quiz, isLoading: isQuizLoading } =
+    useQuizByTimeSlot(selectedTime);
 
   // 퀴즈 ID 추출
   const quizId = quiz?.data?.id || 0;
@@ -61,9 +59,6 @@ export default function HomePage() {
   const { data: userCategories, refetch: refetchUserCategories } =
     useUserCategories(isLoggedIn);
   const favorites = userCategories?.categoryIdList ?? [];
-
-  // Confetti 테스트용 상태
-  const [showConfetti, setShowConfetti] = useState(false);
 
   // 즐겨찾기 API 훅
   const addCategoryMutation = useAddCategory();
