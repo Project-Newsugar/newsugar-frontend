@@ -2,11 +2,17 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { CATEGORIES } from "../constants/CategoryData";
 import { getCategorySlug } from "../utils/getCategorySlug";
 import { useAuth } from "../hooks/useAuth";
+import noProfile from "../assets/noProfile.png";
+import { useUserProfile } from "../hooks/useUserQuery";
+import { ProfilePreviewPopup } from "./ProfilePreviewPopup";
+import { useState } from "react";
 
 export const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
+  const { data: userProfile } = useUserProfile(isLoggedIn);
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
   const currentCategory = location.pathname.split("/")[2];
@@ -102,17 +108,33 @@ export const Navbar = () => {
         </ul>
 
         {isLoggedIn ? (
-          <button
-            onClick={() => navigate("/myPage")}
-            className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all object-cover overflow-hidden ${
-              isActive("/myPage")
-                ? "border-blue-600 bg-blue-50"
-                : "border-gray-300 hover:border-blue-600 bg-gray-100"
-            }`}
-            title="마이페이지"
+          <div
+            className="relative"
+            onMouseEnter={() => setShowProfilePopup(true)}
+            onMouseLeave={() => setShowProfilePopup(false)}
           >
-            <img src="src/assets/noProfile.png" alt="noProfile" />
-          </button>
+            <button
+              onClick={() => navigate("/myPage")}
+              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all object-cover overflow-hidden ${
+                isActive("/myPage")
+                  ? "border-blue-600 bg-blue-50"
+                  : "border-gray-300 hover:border-blue-600 bg-gray-100"
+              }`}
+              title="마이페이지"
+            >
+              <img src={noProfile} alt="noProfile" />
+            </button>
+
+            <ProfilePreviewPopup
+              user={userProfile ? {
+                name: userProfile.name,
+                nickname: userProfile.nickname,
+                email: userProfile.email,
+                phone: userProfile.phone,
+              } : null}
+              isVisible={showProfilePopup}
+            />
+          </div>
         ) : (
           <div className="flex gap-3 items-center">
             <button

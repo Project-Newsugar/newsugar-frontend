@@ -86,7 +86,7 @@ export default function HelpPage() {
                   카테고리별 뉴스
                 </h3>
                 <p className="text-gray-600 leading-relaxed">
-                  정치, 경제, 사회, 문화, IT, 스포츠 등 6가지 카테고리로 분류된
+                  정치, 경제, 사회, 문화, 해외, 과학/기술, 엔터테인먼트, 오피니언 등 8가지 카테고리로 분류된
                   뉴스를 제공합니다. 관심 있는 카테고리를 즐겨찾기에
                   추가해보세요.
                 </p>
@@ -305,7 +305,7 @@ export default function HelpPage() {
               </span>
             </summary>
             <p className="mt-3 text-gray-600 leading-relaxed">
-              현재는 정치, 경제, 사회, 문화, IT, 스포츠 6개의 카테고리를
+              현재는 정치, 경제, 사회, 문화, 해외, 과학/기술, 엔터테인먼트, 오피니언 8개의 카테고리를
               제공합니다. 향후 사용자 의견을 반영하여 추가 카테고리를 제공할
               계획입니다.
             </p>
