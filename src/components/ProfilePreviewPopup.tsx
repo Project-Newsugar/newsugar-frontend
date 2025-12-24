@@ -12,15 +12,22 @@ interface ProfilePreviewPopupProps {
   isVisible: boolean;
 }
 
-export const ProfilePreviewPopup = ({ user, isVisible }: ProfilePreviewPopupProps) => {
+export const ProfilePreviewPopup = ({
+  user,
+  isVisible,
+}: ProfilePreviewPopupProps) => {
   return (
     <div
       className={`absolute top-full left-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200
                  transition-all duration-200 transform w-64 z-50
-                 ${isVisible ? 'opacity-100 visible translate-y-1' : 'opacity-0 invisible -translate-y-1'}`}
+                 ${
+                   isVisible
+                     ? "opacity-100 visible translate-y-1"
+                     : "opacity-0 invisible -translate-y-1"
+                 }`}
     >
-      {/* 말풍선 꼬리 */}
-      <div className="absolute -top-2 left-4 w-4 h-4 bg-white border-l border-t border-gray-200 transform rotate-45"></div>
+      {/* 말풍선 꼬리 - 버튼 중앙(20px)을 가리킴 */}
+      <div className="absolute -top-2 left-2.5 w-4 h-4 bg-white border-l border-t border-gray-200 transform rotate-45"></div>
 
       {/* 팝업 내용 */}
       <div className="relative bg-white rounded-xl p-4">
@@ -37,8 +44,12 @@ export const ProfilePreviewPopup = ({ user, isVisible }: ProfilePreviewPopupProp
 
             {/* 텍스트 영역 */}
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-bold text-gray-900 truncate">{user.name}</h3>
-              <p className="text-gray-600 text-xs mt-0.5 truncate">@{user.nickname}</p>
+              <h3 className="text-sm font-bold text-gray-900 truncate">
+                {user.name}
+              </h3>
+              <p className="text-gray-600 text-xs mt-0.5 truncate">
+                @{user.nickname}
+              </p>
               <p className="flex items-center gap-1 text-gray-500 text-xs mt-1.5 truncate">
                 <MdEmail className="text-[10px] flex-shrink-0" />
                 <span className="truncate">{user.email}</span>
