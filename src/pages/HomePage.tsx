@@ -20,9 +20,7 @@ import { CATEGORIES, type CategoryId } from "../constants/CategoryData";
 import { useUserCategories } from "../hooks/useUserQuery";
 import IndNewsFeed from "../components/news/IndNewsFeed";
 import IndNewsFeedSkeleton from "../components/news/IndNewsFeedSkeleton";
-import { getMainSummary } from "../api/news";
 import { useAddCategory, useDeleteCategory } from "../hooks/useCategoryQuery";
-import ConfettiEffect from "../components/effects/ConfettiEffect";
 
 export default function HomePage() {
   // 현재 시간대 계산 함수 (오전 6시 기준으로 하루가 시작됨)
@@ -61,9 +59,6 @@ export default function HomePage() {
   const { data: userCategories, refetch: refetchUserCategories } =
     useUserCategories(isLoggedIn);
   const favorites = userCategories?.categoryIdList ?? [];
-
-  // Confetti 테스트용 상태
-  const [showConfetti, setShowConfetti] = useState(false);
 
   // 즐겨찾기 API 훅
   const addCategoryMutation = useAddCategory();
