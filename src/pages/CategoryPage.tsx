@@ -78,7 +78,13 @@ const displayedSummary = useMemo(() => summary || "요약이 준비되는 중입
               </div>
             </div>
             <div className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
-              {isSummaryFetching ? <LoadingSpinner size={40} /> : <p>{displayedSummary}</p>}
+              {isSummaryFetching ? (
+                <div className="flex justify-center items-center h-24">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <p>{displayedSummary}</p>
+              )}
             </div>
           </div>
         </section>

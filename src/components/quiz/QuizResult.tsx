@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import ConfettiEffect from "../effects/ConfettiEffect";
 
 interface QuizResultProps {
   correctAnswer: string;
@@ -13,7 +14,7 @@ export default function QuizResult({
   userAnswer,
   isCorrect,
   explanation,
-  isRevealed
+  isRevealed,
 }: QuizResultProps) {
   const navigate = useNavigate();
 
@@ -22,45 +23,52 @@ export default function QuizResult({
   };
 
   return (
-    <div className="space-y-6">
-      {/* 정답/오답 결과 */}
-      <div className={`p-5 rounded-lg border ${
-        isCorrect
-          ? 'bg-green-50 border-green-200'
-          : 'bg-red-50 border-red-200'
-      }`}>
-        <p className={`mb-2 font-medium ${
-          isCorrect ? 'text-green-900' : 'text-red-900'
-        }`}>
-          {isCorrect ? '✓ 정답입니다!' : '✗ 틀렸습니다'}
-        </p>
+    <>
+      {/* Confetti 효과 - 정답일 때만 */}
+      <ConfettiEffect isActive={isCorrect} duration={5000} />
 
-        {isRevealed && (
-          <div className="space-y-2">
-            {userAnswer !== undefined && (
-              <p className="text-sm text-gray-700">
-                내 답안: {userAnswer + 1}번
-              </p>
-            )}
-            <p className="text-sm text-gray-700">
-              정답: {correctAnswer}번
-            </p>
-            {explanation && (
-              <div className="mt-3 pt-3 border-t border-gray-200">
-                <p className="text-sm font-medium text-gray-800 mb-1">해설</p>
-                <p className="text-sm text-gray-700">{explanation}</p>
-              </div>
-            )}
-          </div>
-        )}
+      <div className="space-y-6">
+        {/* 정답/오답 결과 */}
+        <div
+          className={`p-5 rounded-lg border ${
+            isCorrect
+              ? "bg-green-50 border-green-200"
+              : "bg-red-50 border-red-200"
+          }`}
+        >
+          <p
+            className={`mb-2 font-medium ${
+              isCorrect ? "text-green-900" : "text-red-900"
+            }`}
+          >
+            {isCorrect ? "✓ 정답입니다!" : "✗ 틀렸습니다"}
+          </p>
+
+          {isRevealed && (
+            <div className="space-y-2">
+              {userAnswer !== undefined && (
+                <p className="text-sm text-gray-700">
+                  내 답안: {userAnswer + 1}번
+                </p>
+              )}
+              <p className="text-sm text-gray-700">정답: {correctAnswer}번</p>
+              {explanation && (
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <p className="text-sm font-medium text-gray-800 mb-1">해설</p>
+                  <p className="text-sm text-gray-700">{explanation}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={handleNavigateToMyPage}
+          className="w-full py-3 px-6 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+        >
+          현재 총점수는? 마이페이지로 이동
+        </button>
       </div>
-
-      <button
-        onClick={handleNavigateToMyPage}
-        className="w-full py-3 px-6 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
-      >
-        현재 총점수는? 마이페이지로 이동
-      </button>
-    </div>
+    </>
   );
 }

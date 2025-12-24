@@ -21,6 +21,7 @@ import IndNewsFeed from "../components/news/IndNewsFeed";
 import IndNewsFeedSkeleton from "../components/news/IndNewsFeedSkeleton";
 import { getMainSummary } from "../api/news";
 import { useAddCategory, useDeleteCategory } from "../hooks/useCategoryQuery";
+import ConfettiEffect from "../components/effects/ConfettiEffect";
 
 export default function HomePage() {
   // 현재 시간대 계산 함수 (오전 6시 기준으로 하루가 시작됨)
@@ -57,8 +58,12 @@ export default function HomePage() {
   const [quizResults, setQuizResults] = useState<
     SubmitQuizAnswerResponse["data"] | null
   >(null);
-  const { data: userCategories, refetch: refetchUserCategories } = useUserCategories(isLoggedIn);
+  const { data: userCategories, refetch: refetchUserCategories } =
+    useUserCategories(isLoggedIn);
   const favorites = userCategories?.categoryIdList ?? [];
+
+  // Confetti 테스트용 상태
+  const [showConfetti, setShowConfetti] = useState(false);
 
   // 즐겨찾기 API 훅
   const addCategoryMutation = useAddCategory();
@@ -302,154 +307,223 @@ export default function HomePage() {
 
   const favoriteNews = useMemo(() => newsListData ?? [], [newsListData]);
 
+  // Wave Effect 컴포넌트
+  const WaveEffect = () => {
+    return (
+      <div
+        className="absolute top-0 left-0 right-0 overflow-hidden pointer-events-none"
+        style={{ height: "270px", zIndex: 0 }}
+      >
+        <svg
+          className="absolute top-0 h-full"
+          viewBox="0 0 1440 320"
+          preserveAspectRatio="none"
+          style={{
+            transform: "scaleY(-1)",
+            width: "calc(100% + 50px)",
+            left: "-25px",
+          }}
+        >
+          <path
+            fill="rgba(59, 130, 246, 0.08)"
+            d="M0,160L48,149.3C96,139,192,117,288,122.7C384,128,480,160,576,165.3C672,171,768,149,864,128C960,107,1056,85,1152,90.7C1248,96,1344,128,1392,144L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+            className="animate-wave"
+          />
+          <path
+            fill="rgba(147, 197, 253, 0.08)"
+            d="M0,224L48,213.3C96,203,192,181,288,186.7C384,192,480,224,576,229.3C672,235,768,213,864,192C960,171,1056,149,1152,154.7C1248,160,1344,192,1392,208L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+            className="animate-wave-slow"
+          />
+        </svg>
+        <style>{`
+          @keyframes wave {
+            0% { transform: translateX(0) translateY(0); }
+            50% { transform: translateX(-25px) translateY(-5px); }
+            100% { transform: translateX(0) translateY(0); }
+          }
+          @keyframes wave-slow {
+            0% { transform: translateX(0) translateY(0); }
+            50% { transform: translateX(-15px) translateY(5px); }
+            100% { transform: translateX(0) translateY(0); }
+          }
+          .animate-wave {
+            animation: wave 10s ease-in-out infinite;
+          }
+          .animate-wave-slow {
+            animation: wave-slow 15s ease-in-out infinite;
+          }
+        `}</style>
+      </div>
+    );
+  };
+
   // 즐겨찾기가 2개 이상일 때 뉴스를 랜덤으로 섞기
   return (
-    <div className="max-w-6xl mx-auto px-6 py-14 space-y-16">
-      {/* 퀴즈 결과 모달 */}
-      <Modal
-        isOpen={modalState.isOpen}
-        onClose={handleCloseModal}
-        title={modalState.type === "correct" ? "✓ 정답입니다!" : "✗ 틀렸습니다"}
-        content={
-          modalState.type === "correct"
-            ? "축하합니다! 정답을 맞히셨습니다."
-            : "틀렸습니다. 다음 퀴즈를 노려보세요"
-        }
-        type="alert"
-      />
+    <>
+      <WaveEffect />
+      {/* Confetti 효과 테스트 */}
+      {/* <ConfettiEffect isActive={showConfetti} duration={5000} /> */}
 
-      {/* HERO SECTION */}
-      <section className="text-center space-y-3">
-        <h1 className="text-6xl font-bold text-gray-900">
-          오늘의 뉴스, 간결하게
-        </h1>
-        <p className="text-gray-600 text-lg">
-          AI가 선별하고 요약한 주요 뉴스를 확인하세요
-        </p>
-      </section>
-
-      <div className="space-y-3">
-        {/* SEARCH */}
-        <input
-          type="text"
-          placeholder="뉴스 검색"
-          className="w-full px-5 py-3 border border-gray-200 rounded-xl
-                     focus:outline-none focus:border-gray-400
-                     shadow-sm transition-colors"
+      <div
+        className="max-w-6xl mx-auto px-6 py-14 space-y-16 relative"
+        style={{ zIndex: 1 }}
+      >
+        {/* 퀴즈 결과 모달 */}
+        <Modal
+          isOpen={modalState.isOpen}
+          onClose={handleCloseModal}
+          title={
+            modalState.type === "correct" ? "✓ 정답입니다!" : "✗ 틀렸습니다"
+          }
+          content={
+            modalState.type === "correct"
+              ? "축하합니다! 정답을 맞히셨습니다."
+              : "틀렸습니다. 다음 퀴즈를 노려보세요"
+          }
+          type="alert"
         />
 
-        {/* 즐겨찾기 설정 섹션 */}
-        <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((category) => {
-            const isFavorite = favorites.includes(category.id);
-            return (
-              <button
-                key={category.id}
-                onClick={() => handleToggleFavorite(category.id)}
-                className={`px-4 py-2 rounded-full border transition-all text-sm font-medium ${
-                  isFavorite
-                    ? 'bg-blue-50 text-blue-600 border-blue-200'
-                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                {category.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        {/* HERO SECTION */}
+        <section className="text-center space-y-3 relative">
+          <h1 className="text-6xl font-bold text-gray-900 relative z-10">
+            오늘의 뉴스, 간결하게
+          </h1>
+          <p className="text-gray-600 text-lg relative z-10">
+            AI가 선별하고 요약한 주요 뉴스를 확인하세요
+          </p>
 
-      {/* TODO : 주요 뉴스 요약 및 퀴즈 연동 필요*/}
-      {/* SUMMARY & QUIZ */}
-      <NewsSummaryCard
-        summary={mainSummary ?? ""}
-        isLoading={isLoadingFavoriteNews} // TODO : Loading 변수 수정 필요
-        onTimeChange={handleTimeChange}
-        selectedTime={selectedTime}
-        quizSection={
-          <>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">퀴즈</h3>
-            {isQuizLoading ? (
-              <div className="flex justify-center items-center h-24">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              </div>
-            ) : quiz?.data ? (
-              <QuizFeed
-                quiz={quiz.data}
-                quizResult={quizResults}
-                submitAnswer={submitAnswer}
-                isSolved={isSolved}
-                setIsSolved={setIsSolved}
-                setQuizResults={setQuizResults}
-                userProfile={userProfile?.id ? userProfile : undefined}
-                isPastTimeSlot={isPastTimeSlot}
-                isLoggedIn={isLoggedIn}
-              />
-            ) : (
-              <p className="text-center text-gray-500">
-                {selectedTime}시 퀴즈가 아직 생성되지 않았습니다.
-              </p>
-            )}
-          </>
-        }
-      />
+          {/* Confetti 테스트 버튼
+          <button
+            onClick={() => setShowConfetti(true)}
+            className="px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+          >
+            🎉 Confetti 효과 테스트
+          </button> */}
+        </section>
 
-      {/* AD BANNER */}
-      {/* <div className="-mt-12 mb-2">
-        <AdBanner />
-      </div> */}
+        <div className="space-y-3">
+          {/* SEARCH */}
+          <input
+            type="text"
+            placeholder="뉴스 검색"
+            className="w-full px-5 py-3 border border-gray-200 rounded-xl
+                     focus:outline-none focus:border-gray-400
+                     shadow-sm transition-colors"
+          />
 
-      {/* 뉴스 섹션 */}
-      <section>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          {favorites.length > 0 ? "즐겨찾기 뉴스" : "추천 뉴스"}
-        </h2>
-
-        {/* 즐겨찾기 카테고리 버튼 */}
-        {favorites.length > 0 && (
-          <div className="mb-6 flex flex-wrap gap-2">
-            {favorites.map((categoryId) => {
-              const category = CATEGORIES.find(
-                (c) => c.id === Number(categoryId)
-              );
-              if (!category) return null;
-
+          {/* 즐겨찾기 설정 섹션 */}
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map((category) => {
+              const isFavorite = favorites.includes(category.id);
               return (
                 <button
                   key={category.id}
-                  onClick={() => handleCategoryClick(category.key)}
-                  className="px-4 py-2 rounded-full border bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all font-medium flex items-center gap-1.5"
+                  onClick={() => handleToggleFavorite(category.id)}
+                  className={`px-4 py-2 rounded-full border transition-all text-sm font-medium ${
+                    isFavorite
+                      ? "bg-blue-50 text-blue-600 border-blue-200"
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                  }`}
                 >
-                  <FaStar className="text-yellow-400" />
-                  <span>{category.label}</span>
+                  {category.label}
                 </button>
               );
             })}
           </div>
-        )}
-        <div className="space-y-4">
-          {isLoadingFavoriteNews ? (
-            // 로딩 중일 때 스켈레톤 5개 보여주기
+        </div>
+
+        {/* TODO : 주요 뉴스 요약 및 퀴즈 연동 필요*/}
+        {/* SUMMARY & QUIZ */}
+        <NewsSummaryCard
+          summary={mainSummary ?? ""}
+          isLoading={isLoadingFavoriteNews} // TODO : Loading 변수 수정 필요
+          onTimeChange={handleTimeChange}
+          selectedTime={selectedTime}
+          quizSection={
             <>
-              {Array.from({ length: 5 }).map((_, index) => (
-                <IndNewsFeedSkeleton key={index} />
-              ))}
+              <h3 className="text-xl font-bold text-gray-900 mb-4">퀴즈</h3>
+              {isQuizLoading ? (
+                <div className="flex justify-center items-center h-24">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : quiz?.data ? (
+                <QuizFeed
+                  quiz={quiz.data}
+                  quizResult={quizResults}
+                  submitAnswer={submitAnswer}
+                  isSolved={isSolved}
+                  setIsSolved={setIsSolved}
+                  setQuizResults={setQuizResults}
+                  userProfile={userProfile?.id ? userProfile : undefined}
+                  isPastTimeSlot={isPastTimeSlot}
+                  isLoggedIn={isLoggedIn}
+                />
+              ) : (
+                <p className="text-center text-gray-500">
+                  {selectedTime}시 퀴즈가 아직 생성되지 않았습니다.
+                </p>
+              )}
             </>
-          ) : favoriteNews.length > 0 ? (
-            favoriteNews.map((news) => (
-              <IndNewsFeed
-                key={news.id}
-                news={news}
-                category={news.sections[0]}
-              />
-            ))
-          ) : (
-            <div className="bg-white border border-gray-200 rounded p-12 text-center">
-              <p className="text-gray-500">뉴스를 불러오는데 실패했습니다.</p>
+          }
+        />
+
+        {/* AD BANNER */}
+        {/* <div className="-mt-12 mb-2">
+        <AdBanner />
+      </div> */}
+
+        {/* 뉴스 섹션 */}
+        <section>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            {favorites.length > 0 ? "즐겨찾기 뉴스" : "추천 뉴스"}
+          </h2>
+
+          {/* 즐겨찾기 카테고리 버튼 */}
+          {favorites.length > 0 && (
+            <div className="mb-6 flex flex-wrap gap-2">
+              {favorites.map((categoryId) => {
+                const category = CATEGORIES.find(
+                  (c) => c.id === Number(categoryId)
+                );
+                if (!category) return null;
+
+                return (
+                  <button
+                    key={category.id}
+                    onClick={() => handleCategoryClick(category.key)}
+                    className="px-4 py-2 rounded-full border bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all font-medium flex items-center gap-1.5"
+                  >
+                    <FaStar className="text-yellow-400" />
+                    <span>{category.label}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
-        </div>
-      </section>
-    </div>
+          <div className="space-y-4">
+            {isLoadingFavoriteNews ? (
+              // 로딩 중일 때 스켈레톤 5개 보여주기
+              <>
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <IndNewsFeedSkeleton key={index} />
+                ))}
+              </>
+            ) : favoriteNews.length > 0 ? (
+              favoriteNews.map((news) => (
+                <IndNewsFeed
+                  key={news.id}
+                  news={news}
+                  category={news.sections[0]}
+                />
+              ))
+            ) : (
+              <div className="bg-white border border-gray-200 rounded p-12 text-center">
+                <p className="text-gray-500">뉴스를 불러오는데 실패했습니다.</p>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+    </>
   );
 }
