@@ -9,7 +9,6 @@ import { useAuth } from "../hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { getMyProfile } from "../api/auth";
 import {
-  useQuizById,
   useQuizByTimeSlot,
   useQuizResult,
   useSubmitQuizAnswer,
@@ -21,6 +20,7 @@ import { useUserCategories } from "../hooks/useUserQuery";
 import IndNewsFeed from "../components/news/IndNewsFeed";
 import IndNewsFeedSkeleton from "../components/news/IndNewsFeedSkeleton";
 import { useAddCategory, useDeleteCategory } from "../hooks/useCategoryQuery";
+import CategoryGrid from "../components/home/CategoryGrid";
 
 export default function HomePage() {
   // 현재 시간대 계산 함수 (오전 6시 기준으로 하루가 시작됨)
@@ -39,7 +39,8 @@ export default function HomePage() {
   );
 
   // 선택한 시간대의 퀴즈 조회 (백엔드 스케줄러가 자동으로 생성)
-  const { data: quiz, isLoading: isQuizLoading } = useQuizById(1);
+  const { data: quiz, isLoading: isQuizLoading } =
+    useQuizByTimeSlot(selectedTime);
 
   // 퀴즈 ID 추출
   const quizId = quiz?.data?.id || 0;
@@ -58,7 +59,7 @@ export default function HomePage() {
   >(null);
   const { data: userCategories, refetch: refetchUserCategories } =
     useUserCategories(isLoggedIn);
-  const favorites = userCategories?.categoryIdList ?? [];
+  const favorites = (userCategories?.categoryIdList ?? []) as CategoryId[];
 
   // 즐겨찾기 API 훅
   const addCategoryMutation = useAddCategory();
@@ -85,6 +86,7 @@ export default function HomePage() {
     isOpen: boolean;
     type: "correct" | "incorrect" | null;
   }>({ isOpen: false, type: null });
+  const [loginRequiredModalOpen, setLoginRequiredModalOpen] = useState(false);
   const navigate = useNavigate();
 
   // 사용자 정보 조회 (로그인한 경우에만)
@@ -224,7 +226,7 @@ export default function HomePage() {
    */
   const handleToggleFavorite = async (categoryId: CategoryId) => {
     if (!isLoggedIn) {
-      alert("로그인이 필요한 기능입니다.");
+      setLoginRequiredModalOpen(true);
       return;
     }
 
@@ -242,16 +244,16 @@ export default function HomePage() {
   };
 
   /**
-   * 퀴즈 답안 제출 핸들러
+   * 퀴즈 답안 제출 핸들러 (현재 미사용 - QuizFeed에서 직접 처리)
    * 정답 여부에 따라 모달을 표시하고 상태를 업데이트
    */
   const handleSubmit = async (answer: string, resetForm: () => void) => {
     if (!quiz?.data?.questions) return;
 
-    // 사용자 입력은 1부터 시작하므로 0-based 인덱스로 변환
-    const answerIndex = parseInt(answer) - 1;
+    // 사용자 입력은 1-base (1, 2, 3, 4)
+    const answerNumber = parseInt(answer);
     const newAnswers = [...userAnswers];
-    newAnswers[currentQuestionIndex] = answerIndex;
+    newAnswers[currentQuestionIndex] = answerNumber;
     setUserAnswers(newAnswers);
 
     // 마지막 문제가 아니면 다음 문제로
@@ -267,7 +269,7 @@ export default function HomePage() {
         id: quiz.data.id,
         answerData: {
           userId: userProfile?.id || 1, // 로그인한 사용자 ID 사용, 없으면 1
-          answers: newAnswers,
+          answers: newAnswers, // 1-base 배열 전송
         },
       });
 
@@ -378,6 +380,18 @@ export default function HomePage() {
           type="alert"
         />
 
+        {/* 로그인 유도 모달 */}
+        <Modal
+          isOpen={loginRequiredModalOpen}
+          onClose={() => setLoginRequiredModalOpen(false)}
+          title="로그인 필요"
+          content="카테고리 즐겨찾기는 로그인이 필요한 기능입니다"
+          type="alert"
+          showActionButton={true}
+          actionButtonText="로그인"
+          onActionButtonClick={() => navigate("/login")}
+        />
+
         {/* HERO SECTION */}
         <section className="text-center space-y-3 relative">
           <h1 className="text-6xl font-bold text-gray-900 relative z-10">
@@ -396,35 +410,25 @@ export default function HomePage() {
           </button> */}
         </section>
 
-        <div className="space-y-3">
-          {/* SEARCH */}
-          <input
-            type="text"
-            placeholder="뉴스 검색"
-            className="w-full px-5 py-3 border border-gray-200 rounded-xl
-                     focus:outline-none focus:border-gray-400
-                     shadow-sm transition-colors"
-          />
+        {/* SEARCH */}
+        <input
+          type="text"
+          placeholder="뉴스 검색"
+          className="w-full px-5 py-3 border border-gray-200 rounded-xl
+                   focus:outline-none focus:border-gray-400
+                   shadow-sm transition-colors mb-3"
+        />
 
-          {/* 즐겨찾기 설정 섹션 */}
-          <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map((category) => {
-              const isFavorite = favorites.includes(category.id);
-              return (
-                <button
-                  key={category.id}
-                  onClick={() => handleToggleFavorite(category.id)}
-                  className={`px-4 py-2 rounded-full border transition-all text-sm font-medium ${
-                    isFavorite
-                      ? "bg-blue-50 text-blue-600 border-blue-200"
-                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  {category.label}
-                </button>
-              );
-            })}
-          </div>
+        {/* 즐겨찾기 설정 섹션 */}
+        <div>
+          <CategoryGrid
+            categories={CATEGORIES}
+            onCategoryClick={handleCategoryClick}
+            favorites={favorites}
+            onToggleFavorite={handleToggleFavorite}
+            variant="compact"
+          />
+          <p className="text-xs text-gray-400 mt-2">별 모양을 누르면 즐겨찾기가 됩니다</p>
         </div>
 
         {/* TODO : 주요 뉴스 요약 및 퀴즈 연동 필요*/}

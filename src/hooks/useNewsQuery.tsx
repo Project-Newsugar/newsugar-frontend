@@ -47,7 +47,7 @@ export const useMainSummary = () => {
       const summary = await getMainSummary();
       return summary;
     },
-    refetchOnWindowFocus: false,
+    staleTime: 0,
     enabled: true,
   });
 };

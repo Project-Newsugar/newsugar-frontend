@@ -5,9 +5,9 @@ import QuizForm from "./QuizForm";
 import QuizResult from "./QuizResult";
 import QuizStatic from "./QuizStatic";
 import Modal from "../Modal";
-import type { QuizData, SubmitQuizAnswerResponse } from '../../types/quiz';
-import type { GetUserInfoResponseData } from '../../types/user';
-import { useQuizAnswers } from '../../hooks/useQuizQuery';
+import type { QuizData, SubmitQuizAnswerResponse } from "../../types/quiz";
+import type { GetUserInfoResponseData } from "../../types/user";
+import { useQuizAnswers } from "../../hooks/useQuizQuery";
 
 interface QuizFeedProps {
   quiz: QuizData | undefined;
@@ -15,7 +15,9 @@ interface QuizFeedProps {
   submitAnswer: any; // react-query mutation
   isSolved: boolean;
   setIsSolved: React.Dispatch<React.SetStateAction<boolean>>;
-  setQuizResults: React.Dispatch<React.SetStateAction<SubmitQuizAnswerResponse["data"] | null>>;
+  setQuizResults: React.Dispatch<
+    React.SetStateAction<SubmitQuizAnswerResponse["data"] | null>
+  >;
   userProfile: GetUserInfoResponseData | undefined;
   isPastTimeSlot: boolean;
   isLoggedIn: boolean;
@@ -34,11 +36,14 @@ export default function QuizFeed({
 }: QuizFeedProps) {
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [justSubmitted, setJustSubmitted] = useState(false);
   const navigate = useNavigate();
 
   // 정답 조회 (퀴즈를 풀었거나 과거 시간대일 때만)
   const shouldFetchAnswers = isSolved || isPastTimeSlot;
-  const { data: answersData } = useQuizAnswers(shouldFetchAnswers && quiz ? quiz.id : 0);
+  const { data: answersData } = useQuizAnswers(
+    shouldFetchAnswers && quiz ? quiz.id : 0
+  );
 
   if (!quiz) return <p>퀴즈를 불러오는 중...</p>;
 
@@ -55,8 +60,7 @@ export default function QuizFeed({
       return;
     }
 
-    const answerNumber = parseInt(answer); // 1, 2, 3, 4 등 그대로 사용
-    const answerIndex = answerNumber - 1; // UI 표시용 인덱스 (0-based)
+    const answerNumber = parseInt(answer); // 1, 2, 3, 4 사용자 입력 (1-base)
 
     // 답안 제출
     try {
@@ -64,13 +68,14 @@ export default function QuizFeed({
         id: quiz.id,
         answerData: {
           userId: userProfile?.id || 1,
-          answers: [answerNumber], // 1번 선택 시 1을 그대로 전송
+          answers: [answerNumber], // 1-base 그대로 전송
         },
       });
 
       setQuizResults(result.data);
       setIsSolved(true);
-      setUserAnswers([answerIndex]); // UI 표시용으로는 인덱스 저장
+      setUserAnswers([answerNumber]); // 1-base 그대로 저장
+      setJustSubmitted(true); // 방금 제출했음을 표시
     } catch (error) {
       console.error("답안 제출 실패", error);
       alert("답안 제출 실패");
@@ -87,14 +92,19 @@ export default function QuizFeed({
         {!isSolved && !isPastTimeSlot && (
           <>
             <QuizQuestion question={currentQuestion.text} />
-            <QuizForm onSubmit={handleSubmit} options={currentQuestion.options} />
+            <QuizForm
+              onSubmit={handleSubmit}
+              options={currentQuestion.options}
+            />
           </>
         )}
 
         {/* 과거 시간대 - 정답 공개 */}
         {isPastTimeSlot && (
           <QuizStatic
-            correctAnswer={answerQuestion ? answerQuestion.correctIndex.toString() : ""}
+            correctAnswer={
+              answerQuestion ? answerQuestion.correctIndex.toString() : ""
+            }
             explanation={answerQuestion?.explanation}
             isRevealed={isRevealed}
           />
@@ -103,11 +113,16 @@ export default function QuizFeed({
         {/* 퀴즈 완료 시 결과 */}
         {isSolved && quizResult && (
           <QuizResult
-            correctAnswer={answerQuestion ? answerQuestion.correctIndex.toString() : ""}
+            correctAnswer={
+              answerQuestion ? answerQuestion.correctIndex.toString() : ""
+            }
             userAnswer={userAnswers[0]}
-            isCorrect={quizResult.results[quizResult.results.length - 1] === true}
+            isCorrect={
+              quizResult.results[quizResult.results.length - 1] === true
+            }
             explanation={answerQuestion?.explanation}
             isRevealed={isRevealed}
+            justSubmitted={justSubmitted}
           />
         )}
       </div>
