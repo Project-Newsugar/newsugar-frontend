@@ -380,6 +380,7 @@ const MyPage = () => {
           onToggleFavorite={handleToggleFavorite}
           variant="compact"
         />
+        <p className="text-xs text-gray-400 mt-2">별 모양을 누르면 즐겨찾기가 됩니다</p>
       </section>
 
       {/* 4. 최근 활동 섹션 */}

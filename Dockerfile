@@ -3,15 +3,19 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# 기존 연결 방식
 # Build ARG: 빌드 시점에 API URL을 외부에서 주입받음
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
+# 기존 연결 방식
 
 # 의존성 설치
 COPY package*.json ./
 RUN npm ci
 
 # 소스 복사 및 빌드
+# API URL은 더 이상 빌드 시점에 주입하지 않음
+# Nginx reverse proxy를 통해 런타임에 백엔드에 연결
 COPY . .
 RUN npm run build
 

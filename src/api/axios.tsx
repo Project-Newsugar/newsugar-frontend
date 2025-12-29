@@ -9,11 +9,10 @@ interface CustomInternalAxiosRequestConfig extends InternalAxiosRequestConfig {
 let refreshPromise: Promise<string> | null = null;
 
 export const axiosInstance = axios.create({
-  // 프로덕션 빌드: Docker build ARG로 주입된 환경별 API URL 사용
-  // dev: http://newsugar-backend-dev.default.svc.cluster.local/
-  // prod: https://api.newsugar.com/
+  // Nginx reverse proxy를 통해 백엔드에 접근
   // 개발 환경(npm run dev): vite.config.ts의 프록시 사용
-  baseURL: import.meta.env.VITE_API_URL,
+  // 프로덕션 환경: nginx.conf의 /api location을 통해 백엔드 Service로 프록시
+  baseURL: "",
 });
 
 axiosInstance.interceptors.request.use(
@@ -73,7 +72,7 @@ axiosInstance.interceptors.response.use(
           }
           console.log("토큰 재발급 시도...");
 
-          const { data } = await axiosInstance.post("api/v1/users/refresh", {
+          const { data } = await axiosInstance.post("/api/v1/users/refresh", {
             refreshToken: refreshToken,
           });
 
@@ -82,13 +81,17 @@ axiosInstance.interceptors.response.use(
           const newRefreshToken = data.data.refreshToken;
 
           // 새 토큰 저장
-          const { setItem: setAccessToken } = getLocalStorage(LOCAL_STORAGE_KEY.accessToken);
-          const { setItem: setRefreshToken } = getLocalStorage(LOCAL_STORAGE_KEY.refreshToken);
-          
+          const { setItem: setAccessToken } = getLocalStorage(
+            LOCAL_STORAGE_KEY.accessToken
+          );
+          const { setItem: setRefreshToken } = getLocalStorage(
+            LOCAL_STORAGE_KEY.refreshToken
+          );
+
           setAccessToken(newAccessToken);
           // 리프레시 토큰도 갱신되면 같이 저장 (Rotation)
           if (newRefreshToken) {
-             setRefreshToken(newRefreshToken);
+            setRefreshToken(newRefreshToken);
           }
 
           return newAccessToken;

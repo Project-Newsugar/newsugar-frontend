@@ -13,12 +13,18 @@ import { LOCAL_STORAGE_KEY } from "../constants/keys";
 import { useSetAtom } from "jotai";
 import { isLoggedInAtom } from "../store/atoms"; // 전역 상태
 import { useAuth } from "../hooks/useAuth";
+// ===== 1224 유저 정보 문제 때문에 수정 (확인은 X) - 시작 =====
+import { useQueryClient } from "@tanstack/react-query";
+// ===== 1224 유저 정보 문제 때문에 수정 (확인은 X) - 끝 =====
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
   const setIsLoggedIn = useSetAtom(isLoggedInAtom); // 로그인 상태 업데이트용
   const [serverError, setServerError] = useState<string | null>(null);
+  // ===== 1224 유저 정보 문제 때문에 수정 (확인은 X) - 시작 =====
+  const queryClient = useQueryClient(); // React Query 캐시 초기화용
+  // ===== 1224 유저 정보 문제 때문에 수정 (확인은 X) - 끝 =====
 
   
   // useForm 훅 + Zod 스키마 연동
@@ -69,6 +75,13 @@ const LoginPage: React.FC = () => {
 
       // 2. 성공 여부 체크
       if (response.success) {
+        // ===== 1224 유저 정보 문제 때문에 수정 (확인은 X) - 시작 =====
+        // 문제: 이전 유저의 React Query 캐시가 남아있어서 다른 유저 정보가 보일 수 있음
+        // 해결: 로그인 시 모든 캐시를 초기화하여 이전 유저 데이터 완전 제거
+        queryClient.clear();
+        console.log("🧹 로그인 시 이전 유저 캐시 초기화 완료");
+        // ===== 1224 유저 정보 문제 때문에 수정 (확인은 X) - 끝 =====
+
         // 3. 토큰을 로컬스토리지에 저장
         const { setItem: setAccessToken } = getLocalStorage(
           LOCAL_STORAGE_KEY.accessToken
