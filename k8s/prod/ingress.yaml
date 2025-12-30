@@ -15,11 +15,30 @@ metadata:
 
     # 프록시 버퍼 사이즈 설정
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
+    # ========== 백엔드 API 연동을 위한 CORS 설정 (시작) ==========
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    # ========== 백엔드 API 연동을 위한 CORS 설정 (끝) ==========
 spec:
   ingressClassName: nginx
   rules:
   - http:
       paths:
+      # ========== 백엔드 API 경로 설정 (시작) ==========
+      # 백엔드 팀이 수동으로 추가한 경로를 Git으로 관리
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: newsugar-backend-service-prod
+            port:
+              number: 80
+      # ========== 백엔드 API 경로 설정 (끝) ==========
+
+      # 프론트엔드 경로 (나머지 모든 경로)
       - path: /
         pathType: Prefix
         backend:

@@ -7,7 +7,7 @@ metadata:
     app: newsugar-frontend
     env: prod
 spec:
-  replicas: 2
+  replicas: 1  # 노드 리소스 부족으로 1개로 제한
   selector:
     matchLabels:
       app: newsugar-frontend
@@ -28,8 +28,8 @@ spec:
             - containerPort: 80
           resources:
             requests:
-              cpu: "200m"
-              memory: "256Mi"
+              cpu: "100m"
+              memory: "128Mi"
             limits:
-              cpu: "500m"
-              memory: "512Mi"
+              cpu: "300m"
+              memory: "256Mi"
