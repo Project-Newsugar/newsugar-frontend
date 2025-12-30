@@ -8,6 +8,11 @@ metadata:
     env: prod
 spec:
   replicas: 1  # 노드 리소스 부족으로 1개로 제한
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1  # 오래된 Pod를 먼저 삭제
+      maxSurge: 0        # 추가 Pod를 생성하지 않음
   selector:
     matchLabels:
       app: newsugar-frontend
