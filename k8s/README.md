@@ -37,7 +37,7 @@ aws ecr create-repository \
   --region ap-northeast-2
 ```
 
-### 3.3 백엔드 API URL 설정
+### 3.3 백엔드 API URL 설정 (이건 지금 이제 안 해도 됨)
 
 [scripts/ecr-push.ps1](scripts/ecr-push.ps1) 파일에서 환경별 백엔드 ALB 주소를 설정합니다.
 
