@@ -6,7 +6,7 @@ metadata:
   labels:
     app: newsugar-frontend
     env: prod
-    argocd.argoproj.io/instance: newsugar-frontend-prod  # ArgoCD 소유권 명시
+    argocd.argoproj.io/instance: newsugar-backend-prod # ArgoCD 소유권 명시
   annotations:
     # Nginx Ingress Controller 사용
     kubernetes.io/ingress.class: nginx
@@ -26,24 +26,24 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - http:
-      paths:
-      # ========== 백엔드 API 경로 설정 (시작) ==========
-      # 백엔드 팀이 수동으로 추가한 경로를 Git으로 관리
-      - path: /api
-        pathType: Prefix
-        backend:
-          service:
-            name: newsugar-backend-service-prod
-            port:
-              number: 80
-      # ========== 백엔드 API 경로 설정 (끝) ==========
+    - http:
+        paths:
+          # ========== 백엔드 API 경로 설정 (시작) ==========
+          # 백엔드 팀이 수동으로 추가한 경로를 Git으로 관리
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: newsugar-backend-service-prod
+                port:
+                  number: 80
+          # ========== 백엔드 API 경로 설정 (끝) ==========
 
-      # 프론트엔드 경로 (나머지 모든 경로)
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: newsugar-frontend-service-prod
-            port:
-              number: 80
+          # 프론트엔드 경로 (나머지 모든 경로)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: newsugar-frontend-service-prod
+                port:
+                  number: 80
