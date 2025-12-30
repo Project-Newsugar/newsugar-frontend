@@ -6,8 +6,10 @@ metadata:
   labels:
     app: newsugar-frontend
     env: prod
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: newsugar-frontend
     env: prod
