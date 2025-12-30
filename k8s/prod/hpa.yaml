@@ -3,12 +3,14 @@ kind: HorizontalPodAutoscaler
 metadata:
   name: newsugar-frontend-hpa-prod
   namespace: default
+  labels:
+    argocd.argoproj.io/instance: newsugar-frontend-prod
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: newsugar-frontend-prod
-  minReplicas: 2
+  minReplicas: 1  # 노드 리소스 부족으로 1개로 제한
   maxReplicas: 10
   metrics:
     - type: Resource
