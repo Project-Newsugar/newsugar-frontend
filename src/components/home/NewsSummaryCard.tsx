@@ -3,9 +3,9 @@ import LoadingSpinner from "../LoadingSpanner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import { useMainSummary } from "../../hooks/useNewsQuery";
 
 interface NewsSummaryCardProps {
-  summary: string;
   isLoading?: boolean;
   quizSection?: React.ReactNode;
   onTimeChange?: (time: string) => void;
@@ -13,7 +13,6 @@ interface NewsSummaryCardProps {
 }
 
 export default function NewsSummaryCard({
-  summary,
   isLoading = false,
   quizSection,
   onTimeChange,
@@ -63,6 +62,11 @@ export default function NewsSummaryCard({
     setSelectedTime(time);
     onTimeChange?.(time);
   };
+
+  const selectedHour = Number(selectedTime);
+
+  // 최신 뉴스 하나를 summary로 사용
+  const { data: summary } = useMainSummary(selectedHour);
 
   const markdownWithHighlight = summary
     ? summary.replace(/==(.+?)==/g, '<span class="highlight">$1</span>')

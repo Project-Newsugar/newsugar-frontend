@@ -40,14 +40,10 @@ export const useCategoryNewsSummary = (category: string) => {
   });
 };
 
-export const useMainSummary = () => {
-  return useQuery<string>({
-    queryKey: ["mainSummary"],
-    queryFn: async () => {
-      const summary = await getMainSummary();
-      return summary;
-    },
-    staleTime: 0,
-    enabled: true,
+export const useMainSummary = (hour: number) => {
+  return useQuery({
+    queryKey: ["mainSummary", hour],
+    queryFn: () => getMainSummary(hour),
+    enabled: !!hour,
   });
 };

@@ -39,12 +39,18 @@ export const getCategoryNewsSummary = async (
   }
 };
 
-export const getMainSummary = async () => {
+export const getMainSummary = async (hour: number) => {
   try {
-    const { data } = await axiosInstance.get(`/api/v1/news/today-main-summary`);
+    const { data } = await axiosInstance.get(
+      `/api/v1/news/today-main-summary-by-time`,
+      {
+        params: { hour },
+      }
+    );
     console.log(data);
     return data.data;
   } catch (error) {
     console.error("주요 뉴스 요약 조회 실패: ", error);
+    throw error;
   }
 };
