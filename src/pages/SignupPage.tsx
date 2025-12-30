@@ -7,15 +7,19 @@ import { isAxiosError } from "axios";
 import { registerUser } from "../api/auth";
 import type { SignupRequest } from "../types/user";
 import { useAuth } from '../hooks/useAuth';
+import Modal from '../components/Modal';
 // 타입을 명시적으로 가져옴
 
 const SignupPage: React.FC = () => {
 
   const { checkAuth } = useAuth();
   if (checkAuth()) {
-    return <Navigate to="/" replace />; 
+    return <Navigate to="/" replace />;
   }
   const [serverError, setServerError] = useState<string | null>(null); // 서버 에러 메시지 상태
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false); // 회원가입 성공 모달
+  const [successUserName, setSuccessUserName] = useState(""); // 성공한 사용자 이름
+  const navigate = useNavigate();
   const { values, errors, touched, getInputProps, handleChange } = useForm<SignupForm>({
     // 1. 초기값에 nickname 추가
     initialValue: {
@@ -92,8 +96,8 @@ const SignupPage: React.FC = () => {
 
       // 3. 성공/실패 분기
       if (response.success) {
-        alert(`환영합니다, ${response.data.name}님! 회원가입이 완료되었습니다.`);
-        window.location.href = "/login";
+        setSuccessUserName(response.data.name);
+        setIsSuccessModalOpen(true);
       } else {
         throw new Error(response.message || "회원가입에 실패했습니다.");
       }
@@ -123,13 +127,40 @@ const SignupPage: React.FC = () => {
     );
 
   return (
-    <div className="w-full">
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Newsugar 회원가입</h1>
-        <p className="text-slate-500 text-sm mt-2">
-          오늘의 뉴스를 가장 쉽고 빠르게 만나보세요.
-        </p>
-      </div>
+    <>
+      <Modal
+        isOpen={isSuccessModalOpen}
+        onClose={() => {
+          setIsSuccessModalOpen(false);
+          navigate("/login");
+        }}
+        title="🎉 회원가입 완료!"
+        content={
+          <div className="text-center">
+            <p className="text-lg mb-2">
+              환영합니다, <span className="font-bold text-blue-600">{successUserName}</span>님!
+            </p>
+            <p className="text-gray-600">
+              회원가입이 성공적으로 완료되었습니다.
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              로그인 페이지로 이동하여 서비스를 시작하세요.
+            </p>
+          </div>
+        }
+        type="alert"
+        showActionButton={true}
+        actionButtonText="로그인하러 가기"
+        onActionButtonClick={() => navigate("/login")}
+      />
+
+      <div className="w-full">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-slate-900">Newsugar 회원가입</h1>
+          <p className="text-slate-500 text-sm mt-2">
+            오늘의 뉴스를 가장 쉽고 빠르게 만나보세요.
+          </p>
+        </div>
 
       <form className="space-y-5" onSubmit={handleSubmit}>
         
@@ -246,6 +277,7 @@ const SignupPage: React.FC = () => {
         </div>
       </form>
     </div>
+    </>
   );
 };
 
