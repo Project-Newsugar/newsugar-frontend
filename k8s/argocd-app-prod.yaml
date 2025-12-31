@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: "https://github.com/Project-Newsugar/newsugar-frontend.git"
-    targetRevision: develop # develop 브랜치의 최신 k8s/prod 매니페스트 사용
+    targetRevision: develop  # develop 브랜치의 최신 k8s/prod 매니페스트 사용
     path: k8s/prod
   destination:
     server: "https://kubernetes.default.svc"

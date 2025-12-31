@@ -65,9 +65,6 @@ export default function HomePage() {
   const addCategoryMutation = useAddCategory();
   const deleteCategoryMutation = useDeleteCategory();
 
-  // 최신 뉴스 하나를 summary로 사용
-  const { data: mainSummary } = useMainSummary();
-
   const favoriteCategoryKeys = useMemo(() => {
     if (favorites.length === 0) return null;
 
@@ -428,13 +425,13 @@ export default function HomePage() {
             onToggleFavorite={handleToggleFavorite}
             variant="compact"
           />
-          <p className="text-xs text-gray-400 mt-2">별 모양을 누르면 즐겨찾기가 됩니다</p>
+          <p className="text-xs text-gray-400 mt-2">
+            별 모양을 누르면 즐겨찾기가 됩니다
+          </p>
         </div>
 
-        {/* TODO : 주요 뉴스 요약 및 퀴즈 연동 필요*/}
         {/* SUMMARY & QUIZ */}
         <NewsSummaryCard
-          summary={mainSummary ?? ""}
           isLoading={isLoadingFavoriteNews} // TODO : Loading 변수 수정 필요
           onTimeChange={handleTimeChange}
           selectedTime={selectedTime}
