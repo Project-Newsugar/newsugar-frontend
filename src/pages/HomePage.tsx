@@ -84,6 +84,7 @@ export default function HomePage() {
     type: "correct" | "incorrect" | null;
   }>({ isOpen: false, type: null });
   const [loginRequiredModalOpen, setLoginRequiredModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
   // 사용자 정보 조회 (로그인한 경우에만)
@@ -299,6 +300,17 @@ export default function HomePage() {
     setModalState({ isOpen: false, type: null });
   };
 
+  /**
+   * 검색 핸들러
+   * 검색어를 입력하고 Enter를 누르면 검색 페이지로 이동
+   */
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
   const favoriteNews = useMemo(() => newsListData ?? [], [newsListData]);
 
   // Wave Effect 컴포넌트
@@ -408,13 +420,17 @@ export default function HomePage() {
         </section>
 
         {/* SEARCH */}
-        <input
-          type="text"
-          placeholder="뉴스 검색"
-          className="w-full px-5 py-3 border border-gray-200 rounded-xl
-                   focus:outline-none focus:border-gray-400
-                   shadow-sm transition-colors mb-3"
-        />
+        <form onSubmit={handleSearch}>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="뉴스 검색"
+            className="w-full px-5 py-3 border border-gray-200 rounded-xl
+                     focus:outline-none focus:border-gray-400
+                     shadow-sm transition-colors mb-3"
+          />
+        </form>
 
         {/* 즐겨찾기 설정 섹션 */}
         <div>
