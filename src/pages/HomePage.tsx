@@ -371,7 +371,7 @@ export default function HomePage() {
       {/* <ConfettiEffect isActive={showConfetti} duration={5000} /> */}
 
       <div
-        className="max-w-6xl mx-auto px-6 py-14 space-y-16 relative"
+        className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-14 space-y-8 sm:space-y-12 lg:space-y-16 relative"
         style={{ zIndex: 1 }}
       >
         {/* 퀴즈 결과 모달 */}
@@ -402,11 +402,11 @@ export default function HomePage() {
         />
 
         {/* HERO SECTION */}
-        <section className="text-center space-y-3 relative">
-          <h1 className="text-6xl font-bold text-gray-900 relative z-10">
+        <section className="text-center space-y-2 sm:space-y-3 relative">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 relative z-10">
             오늘의 뉴스, 간결하게
           </h1>
-          <p className="text-gray-600 text-lg relative z-10">
+          <p className="text-gray-600 text-sm sm:text-base lg:text-lg relative z-10">
             AI가 선별하고 요약한 주요 뉴스를 확인하세요
           </p>
 
@@ -426,7 +426,7 @@ export default function HomePage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="뉴스 검색"
-            className="w-full px-5 py-3 border border-gray-200 rounded-xl
+            className="w-full px-4 sm:px-5 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl
                      focus:outline-none focus:border-gray-400
                      shadow-sm transition-colors"
           />
@@ -486,13 +486,13 @@ export default function HomePage() {
 
         {/* 뉴스 섹션 */}
         <section>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
             {favorites.length > 0 ? "즐겨찾기 뉴스" : "추천 뉴스"}
           </h2>
 
           {/* 즐겨찾기 카테고리 버튼 */}
           {favorites.length > 0 && (
-            <div className="mb-6 flex flex-wrap gap-2">
+            <div className="mb-4 sm:mb-6 flex flex-wrap gap-2">
               {favorites.map((categoryId) => {
                 const category = CATEGORIES.find(
                   (c) => c.id === Number(categoryId)
@@ -503,9 +503,9 @@ export default function HomePage() {
                   <button
                     key={category.id}
                     onClick={() => handleCategoryClick(category.key)}
-                    className="px-4 py-2 rounded-full border bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all font-medium flex items-center gap-1.5"
+                    className="px-3 sm:px-4 py-2 text-sm sm:text-base rounded-full border bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all font-medium flex items-center gap-1.5"
                   >
-                    <FaStar className="text-yellow-400" />
+                    <FaStar className="text-yellow-400 text-sm sm:text-base" />
                     <span>{category.label}</span>
                   </button>
                 );
