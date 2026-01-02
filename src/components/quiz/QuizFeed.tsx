@@ -39,10 +39,13 @@ export default function QuizFeed({
   const [justSubmitted, setJustSubmitted] = useState(false);
   const navigate = useNavigate();
 
-  // 정답 조회 (퀴즈를 풀었거나 과거 시간대일 때만)
-  const shouldFetchAnswers = isSolved || isPastTimeSlot;
+  // 정답 조회 (로그인 유저만 API 호출)
+  // 로그인 유저: 퀴즈를 풀었거나 과거 시간대일 때 해설 포함된 정답 조회
+  // 비로그인 유저: quiz 데이터의 correctIndex만 사용 (API 호출 안 함)
+  const shouldFetchAnswers = isLoggedIn && (isSolved || isPastTimeSlot);
   const { data: answersData } = useQuizAnswers(
-    shouldFetchAnswers && quiz ? quiz.id : 0
+    shouldFetchAnswers && quiz ? quiz.id : 0,
+    shouldFetchAnswers
   );
 
   if (!quiz) return <p>퀴즈를 불러오는 중...</p>;
@@ -99,19 +102,56 @@ export default function QuizFeed({
           </>
         )}
 
-        {/* 과거 시간대 - 정답 공개 */}
-        {isPastTimeSlot && (
-          <QuizStatic
-            correctAnswer={
-              answerQuestion ? answerQuestion.correctIndex.toString() : ""
-            }
-            explanation={answerQuestion?.explanation}
-            isRevealed={isRevealed}
-          />
+        {/* 과거 시간대 - 비로그인 사용자: 문제와 정답 선택지 표시 (해설은 로그인 필요) */}
+        {isPastTimeSlot && !isLoggedIn && (
+          <>
+            <QuizQuestion question={currentQuestion.text} />
+            <QuizForm
+              onSubmit={() => {}}
+              options={currentQuestion.options}
+              readOnly={true}
+              preSelectedAnswer={currentQuestion.correctIndex}
+            />
+            <div className="mt-4 p-4 rounded-lg bg-gray-50 border border-gray-200">
+              <p className="text-sm text-gray-600 text-center">
+                해설은 로그인 후 확인할 수 있습니다
+              </p>
+            </div>
+          </>
         )}
 
-        {/* 퀴즈 완료 시 결과 */}
-        {isSolved && quizResult && (
+        {/* 과거 시간대 - 로그인 사용자: 문제, 정답 선택지, 해설 표시 */}
+        {isPastTimeSlot && isLoggedIn && (
+          <>
+            <QuizQuestion question={currentQuestion.text} />
+            <QuizForm
+              onSubmit={() => {}}
+              options={currentQuestion.options}
+              readOnly={true}
+              preSelectedAnswer={currentQuestion.correctIndex}
+            />
+            {/* 정답 데이터가 있을 때만 QuizStatic 표시 */}
+            {answerQuestion ? (
+              <QuizStatic
+                correctAnswer={answerQuestion.correctIndex.toString()}
+                explanation={answerQuestion?.explanation}
+                isRevealed={isRevealed}
+                showMyPageButton={true}
+              />
+            ) : (
+              // 정답 데이터가 없을 때는 마이페이지 버튼만 표시
+              <button
+                onClick={() => navigate("/mypage")}
+                className="w-full py-3 px-6 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+              >
+                현재 총점수는? 마이페이지로 이동
+              </button>
+            )}
+          </>
+        )}
+
+        {/* 퀴즈 완료 시 결과 (과거 시간대가 아닐 때만 표시) */}
+        {isSolved && quizResult && !isPastTimeSlot && (
           <QuizResult
             correctAnswer={
               answerQuestion ? answerQuestion.correctIndex.toString() : ""

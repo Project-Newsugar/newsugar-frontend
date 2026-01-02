@@ -5,6 +5,8 @@ interface QuizFormProps {
   isSubmitting?: boolean;
   isLoggedIn?: boolean;
   options: string[];
+  readOnly?: boolean;
+  preSelectedAnswer?: number;
 }
 
 export default function QuizForm({
@@ -12,8 +14,12 @@ export default function QuizForm({
   isSubmitting = false,
   isLoggedIn = true,
   options,
+  readOnly = false,
+  preSelectedAnswer,
 }: QuizFormProps) {
-  const [selectedAnswer, setSelectedAnswer] = useState("");
+  const [selectedAnswer, setSelectedAnswer] = useState(
+    preSelectedAnswer ? String(preSelectedAnswer) : ""
+  );
 
   const resetForm = () => {
     setSelectedAnswer("");
@@ -21,7 +27,9 @@ export default function QuizForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(selectedAnswer, resetForm);
+    if (!readOnly) {
+      onSubmit(selectedAnswer, resetForm);
+    }
   };
 
   return (
@@ -47,8 +55,8 @@ export default function QuizForm({
                 name="answer"
                 value={String(index + 1)}
                 checked={selectedAnswer === String(index + 1)}
-                onChange={(e) => setSelectedAnswer(e.target.value)}
-                disabled={isSubmitting || !isLoggedIn}
+                onChange={(e) => !readOnly && setSelectedAnswer(e.target.value)}
+                disabled={isSubmitting || !isLoggedIn || readOnly}
                 className="w-4 h-4 text-[#5277F1] focus:ring-[#5277F1]"
                 required
               />
@@ -58,20 +66,22 @@ export default function QuizForm({
         </div>
       </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting || !isLoggedIn || !selectedAnswer}
-        className={`w-full text-white py-3 px-6 rounded-lg transition-all hover:opacity-90
-                 ${!isSubmitting && isLoggedIn && selectedAnswer
-                   ? "bg-blue-500"
-                   : "bg-gray-300 cursor-not-allowed"}`}
-      >
-        {!isLoggedIn
-          ? "로그인 시 이용할 수 있습니다"
-          : isSubmitting
-          ? "제출 중..."
-          : "정답 확인"}
-      </button>
+      {!readOnly && (
+        <button
+          type="submit"
+          disabled={isSubmitting || !isLoggedIn || !selectedAnswer}
+          className={`w-full text-white py-3 px-6 rounded-lg transition-all hover:opacity-90
+                   ${!isSubmitting && isLoggedIn && selectedAnswer
+                     ? "bg-blue-500"
+                     : "bg-gray-300 cursor-not-allowed"}`}
+        >
+          {!isLoggedIn
+            ? "로그인 시 이용할 수 있습니다"
+            : isSubmitting
+            ? "제출 중..."
+            : "정답 확인"}
+        </button>
+      )}
     </form>
   );
 }
