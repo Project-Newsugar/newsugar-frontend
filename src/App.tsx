@@ -1,11 +1,12 @@
 import { RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useEffect } from "react";
 import "./App.css";
 import router from "./Router";
 import { BadgeSprite } from "./components/badge";
 import { checkHealth } from "./api/health";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 // ===== 1224 유저 정보 문제 때문에 수정 (확인은 X) - 시작 =====
 // 문제: staleTime이 0이면 모든 쿼리가 즉시 stale 상태가 되어 매번 새로 fetch
@@ -18,7 +19,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5분 (기존: 0)
-      refetchOnMount: 'always', // 페이지 이동 시 항상 새로고침 (기존: true)
+      refetchOnMount: "always", // 페이지 이동 시 항상 새로고침 (기존: true)
       // retry: 1,
       retry: false, // API 실패 시 재시도 안 함 (Mock 데이터로 빠르게 전환)
     },
@@ -39,14 +40,20 @@ function App() {
       });
   }, []);
 
+  console.log(
+    "ENV CHECK:",
+    import.meta.env,
+    import.meta.env.VITE_GOOGLE_CLIENT_ID
+  );
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <BadgeSprite />
-      <RouterProvider router={router} />
-      {import.meta.env.DEV &&
-        <ReactQueryDevtools initialIsOpen={false} />
-      }
-    </QueryClientProvider>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <QueryClientProvider client={queryClient}>
+        <BadgeSprite />
+        <RouterProvider router={router} />
+        {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+      </QueryClientProvider>
+    </GoogleOAuthProvider>
   );
 }
 

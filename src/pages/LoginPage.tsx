@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import clsx from "clsx";
 import { GoogleLogo } from "../assets";
@@ -15,6 +15,7 @@ import { isLoggedInAtom } from "../store/atoms"; // 전역 상태
 import { useAuth } from "../hooks/useAuth";
 // ===== 1224 유저 정보 문제 때문에 수정 (확인은 X) - 시작 =====
 import { useQueryClient } from "@tanstack/react-query";
+import { useGoogleLogin } from "../hooks/useGoogleLogin";
 // ===== 1224 유저 정보 문제 때문에 수정 (확인은 X) - 끝 =====
 
 const LoginPage: React.FC = () => {
@@ -26,35 +27,38 @@ const LoginPage: React.FC = () => {
   const queryClient = useQueryClient(); // React Query 캐시 초기화용
   // ===== 1224 유저 정보 문제 때문에 수정 (확인은 X) - 끝 =====
 
-  
   // useForm 훅 + Zod 스키마 연동
-  const formConfig = useMemo(() => ({
-    initialValue: {
-      email: '',
-      password: '',
-    },
-    validate: (values: LoginForm) => {
-      const result = loginSchema.safeParse(values);
-      if (result.success) {
-        return { email: '', password: '' };
-      }
+  const formConfig = useMemo(
+    () => ({
+      initialValue: {
+        email: "",
+        password: "",
+      },
+      validate: (values: LoginForm) => {
+        const result = loginSchema.safeParse(values);
+        if (result.success) {
+          return { email: "", password: "" };
+        }
 
-      const newErrors: Record<keyof LoginForm, string> = {
-        email: '',
-        password: '',
-      };
+        const newErrors: Record<keyof LoginForm, string> = {
+          email: "",
+          password: "",
+        };
 
-      result.error.issues.forEach((issue) => {
-        const key = issue.path[0] as keyof LoginForm;
-        newErrors[key] = issue.message;
-      });
+        result.error.issues.forEach((issue) => {
+          const key = issue.path[0] as keyof LoginForm;
+          newErrors[key] = issue.message;
+        });
 
-      return newErrors;
-    },
-  }), []);
+        return newErrors;
+      },
+    }),
+    []
+  );
 
-  const { values, errors, touched, getInputProps } = useForm<LoginForm>(formConfig);
-  
+  const { values, errors, touched, getInputProps } =
+    useForm<LoginForm>(formConfig);
+
   // 이미 로그인된 사용자는 홈으로 리다이렉트
   if (isLoggedIn) {
     return <Navigate to="/" replace />;
@@ -124,12 +128,7 @@ const LoginPage: React.FC = () => {
   };
 
   // 구글 로그인 핸들러 (백엔드 리다이렉트 URL 연결)
-  const handleGoogleLogin = () => {
-    // .env 파일에 정의된 백엔드 주소 + 구글 로그인 경로
-    window.location.href = `${
-      import.meta.env.VITE_SERVER_API_URL
-    }/v1/oauth2/google/login`;
-  };
+  const googleLogin = useGoogleLogin();
 
   // 스타일 헬퍼 (반복 제거)
   const inputClass = (hasError: boolean) =>
@@ -205,7 +204,7 @@ const LoginPage: React.FC = () => {
       {/* 구글 로그인 */}
       <button
         type="button"
-        onClick={handleGoogleLogin}
+        onClick={() => googleLogin}
         className="w-full flex items-center justify-center gap-3 bg-white border border-slate-300 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
       >
         <GoogleLogo className="w-5 h-5" />
