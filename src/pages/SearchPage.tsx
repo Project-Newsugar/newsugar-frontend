@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getNewsByCategory } from "../api/news";
+import { searchNews } from "../api/news";
 import IndNewsFeed from "../components/news/IndNewsFeed";
 import IndNewsFeedSkeleton from "../components/news/IndNewsFeedSkeleton";
 import type { NewsItem } from "../types/news";
@@ -17,25 +17,15 @@ export default function SearchPage() {
     setSearchInput(query);
   }, [query]);
 
-  // 전체 뉴스 조회 (검색어로 필터링)
-  const { data: newsData, isLoading } = useQuery({
-    queryKey: ["news", "search"],
+  // 백엔드 검색 API 호출
+  const { data: searchResults = [], isLoading } = useQuery({
+    queryKey: ["news", "search", query],
     queryFn: async () => {
-      // 전체 뉴스를 가져옴 (카테고리 null, 페이지 사이즈 100)
-      return await getNewsByCategory(null, 1, 100);
+      if (!query) return [];
+      return await searchNews(query, 1, 100);
     },
+    enabled: !!query,
   });
-
-  // 검색 결과 필터링 (클라이언트 사이드)
-  const searchResults = newsData?.filter((news: NewsItem) => {
-    if (!query) return true;
-    const searchTerm = query.toLowerCase();
-    return (
-      news.title.toLowerCase().includes(searchTerm) ||
-      news.summary.toLowerCase().includes(searchTerm) ||
-      news.publisher.toLowerCase().includes(searchTerm)
-    );
-  }) || [];
 
   // 검색 제출 핸들러
   const handleSearch = (e: React.FormEvent) => {

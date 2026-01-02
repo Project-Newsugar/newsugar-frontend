@@ -54,3 +54,19 @@ export const getMainSummary = async (hour: number) => {
     throw error;
   }
 };
+
+export const searchNews = async (
+  keyword: string,
+  page: number = 1,
+  page_size: number = 10
+): Promise<NewsItem[]> => {
+  try {
+    const { data } = await axiosInstance.get("/api/v1/news/search", {
+      params: { keyword, page, page_size },
+    });
+    return data.data.data as NewsItem[];
+  } catch (error) {
+    console.error("뉴스 검색 실패:", error);
+    throw error;
+  }
+};
