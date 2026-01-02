@@ -26,7 +26,8 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - http:
+    - host: newsugar.cloud
+      http:
         paths:
           # ========== 백엔드 API 경로 설정 (시작) ==========
           # 백엔드 팀이 수동으로 추가한 경로를 Git으로 관리
