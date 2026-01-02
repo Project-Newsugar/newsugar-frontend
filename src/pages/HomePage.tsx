@@ -420,7 +420,7 @@ export default function HomePage() {
         </section>
 
         {/* SEARCH */}
-        <form onSubmit={handleSearch}>
+        <form onSubmit={handleSearch} className="mb-4">
           <input
             type="text"
             value={searchQuery}
@@ -428,7 +428,7 @@ export default function HomePage() {
             placeholder="뉴스 검색"
             className="w-full px-5 py-3 border border-gray-200 rounded-xl
                      focus:outline-none focus:border-gray-400
-                     shadow-sm transition-colors mb-3"
+                     shadow-sm transition-colors"
           />
         </form>
 
