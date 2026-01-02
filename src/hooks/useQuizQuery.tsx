@@ -433,11 +433,11 @@ export const useRecentQuizActivity = () => {
 };
 
 // 12. 퀴즈 정답 조회 (퀴즈 풀고 난 후 정답 확인용)
-export const useQuizAnswers = (id: number) => {
+export const useQuizAnswers = (id: number, shouldFetch: boolean) => {
   return useQuery({
     queryKey: ["quiz", "answers", id],
     queryFn: () => getQuizAnswers(id),
-    enabled: !!id,
+    enabled: !!id && shouldFetch, // shouldFetch가 true일 때만 활성화
     staleTime: 0,
   });
 };
