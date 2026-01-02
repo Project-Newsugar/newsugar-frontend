@@ -59,5 +59,11 @@ export interface GetUserInfoResponseData {
 export interface UserCategories {
   id: number;
   userId: number;
-  categoryIdList : number[];
+  categoryIdList: number[];
+}
+
+export interface UserLoginResponse {
+  userId: number;
+  accessToken: string;
+  refreshToken: string;
 }

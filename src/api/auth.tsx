@@ -8,6 +8,7 @@ import type {
   UpdateUserRequest,
   UpdateUserResponseData,
   UserCategories,
+  UserLoginResponse,
 } from "../types/user";
 import type { ApiResponse } from "../types/common";
 
@@ -59,9 +60,9 @@ export const getUserCategories = async () => {
 };
 
 export const googleLogin = async (accessToken: string) => {
-  const { data } = await axiosInstance.post<ApiResponse<string>>(
+  const { data } = await axiosInstance.post<ApiResponse<UserLoginResponse>>(
     "/api/v1/users/google/login",
-    accessToken
+    { accessToken }
   );
   console.log("구글 로그인: ", data);
   return data;
