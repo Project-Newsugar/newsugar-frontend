@@ -95,15 +95,15 @@ export default function NewsSummaryCard({
           isModalOpen ? "blur-sm" : ""
         }`}
       >
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">오늘의 요약</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">오늘의 요약</h2>
 
-        <div className="bg-white border border-gray-200 rounded p-6 shadow-sm">
-          <div className="flex gap-2 mb-4">
+        <div className="bg-white border border-gray-200 rounded p-4 sm:p-6 shadow-sm">
+          <div className="flex gap-2 mb-4 overflow-x-auto">
             {timeOptions.map((time) => (
               <button
                 key={time}
                 onClick={() => handleTimeClick(time)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                className={`px-4 py-2 min-h-[44px] rounded-md text-sm sm:text-base font-medium transition-all whitespace-nowrap ${
                   selectedTime === time
                     ? "bg-blue-500 text-white"
                     : "bg-gray-50 text-gray-600 hover:bg-gray-100"
@@ -114,7 +114,7 @@ export default function NewsSummaryCard({
             ))}
           </div>
 
-          <h3 className="text-xl font-bold text-gray-900 mb-4">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">
             {selectedTime}시 주요 뉴스
           </h3>
           {isLoading ? (
@@ -123,17 +123,17 @@ export default function NewsSummaryCard({
             </div>
           ) : (
             <>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+              <div className="text-gray-700 text-sm sm:text-base leading-relaxed whitespace-pre-line">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeRaw]}
                 >
                   {markdownWithHighlight}
                 </ReactMarkdown>
-              </p>
+              </div>
 
               {quizSection && (
-                <div className="mt-8 pt-8 border-t border-gray-200">
+                <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200">
                   {quizSection}
                 </div>
               )}
