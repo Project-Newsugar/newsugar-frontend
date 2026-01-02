@@ -204,7 +204,7 @@ const LoginPage: React.FC = () => {
       {/* 구글 로그인 */}
       <button
         type="button"
-        onClick={() => googleLogin}
+        onClick={() => googleLogin()}
         className="w-full flex items-center justify-center gap-3 bg-white border border-slate-300 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
       >
         <GoogleLogo className="w-5 h-5" />

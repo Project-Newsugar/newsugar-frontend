@@ -9,7 +9,6 @@ export const useGoogleLogin = () => {
       const accessToken = tokenResponse.access_token;
 
       const res = await googleLogin(accessToken);
-
       console.log("구글 로그인 성공:", res.data);
     },
 
