@@ -9,6 +9,10 @@ ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 # 기존 연결 방식
 
+# Google OAuth Client ID
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+
 # 의존성 설치
 COPY package*.json ./
 RUN npm ci

@@ -57,6 +57,7 @@ jobs:
           echo "Building Docker image..."
           docker build \
             --build-arg NGINX_CONF=nginx.conf \
+            --build-arg VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }} \
             -t ${{ steps.ecr-registry.outputs.image_uri }} \
             .
 
