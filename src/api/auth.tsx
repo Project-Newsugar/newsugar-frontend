@@ -1,7 +1,16 @@
 import { axiosInstance } from "./axios";
 import type { LoginForm } from "../schema/login.schema";
-import type { GetUserInfoResponseData, LoginResponseData, SignupRequest, SignupResponseData, UpdateUserRequest, UpdateUserResponseData, UserCategories } from '../types/user';
-import type { ApiResponse } from '../types/common';
+import type {
+  GetUserInfoResponseData,
+  LoginResponseData,
+  SignupRequest,
+  SignupResponseData,
+  UpdateUserRequest,
+  UpdateUserResponseData,
+  UserCategories,
+  UserLoginResponse,
+} from "../types/user";
+import type { ApiResponse } from "../types/common";
 
 export const registerUser = async (userData: SignupRequest) => {
   const { data } = await axiosInstance.post<ApiResponse<SignupResponseData>>(
@@ -43,7 +52,18 @@ export const updateUserProfile = async (userData: UpdateUserRequest) => {
 };
 
 export const getUserCategories = async () => {
-  const { data } = await axiosInstance.get<ApiResponse<UserCategories>>("/api/v1/users/my-category");
+  const { data } = await axiosInstance.get<ApiResponse<UserCategories>>(
+    "/api/v1/users/my-category"
+  );
   console.log("getUserCategories data:", data);
   return data.data;
-}
+};
+
+export const googleLogin = async (accessToken: string) => {
+  const { data } = await axiosInstance.post<ApiResponse<UserLoginResponse>>(
+    "/api/v1/users/google/login",
+    { accessToken }
+  );
+  console.log("구글 로그인: ", data);
+  return data;
+};
