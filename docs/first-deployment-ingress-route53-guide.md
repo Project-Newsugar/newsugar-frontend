@@ -45,6 +45,41 @@ kubectl get ingress newsugar-frontend-ingress-prod -n default
 
 출력된 ADDRESS로 접속하면 됩니다.
 
+### 5. IP 주소 찾기
+
+LoadBalancer의 실제 IP 주소를 확인하려면:
+
+```bash
+nslookup k8s-ingressn-ingressn-3b0fd3996c-8f3e69b781742977.elb.ap-northeast-2.amazonaws.com
+```
+
+## Route 53 DNS 설정
+
+### 🚀 간단한 방법: Simple routing 사용
+
+Multivalue answer가 복잡하다면 Simple routing 추천:
+
+#### Simple routing 방식:
+
+**첫 번째 레코드:**
+- Record name: (비워두기)
+- Record type: A
+- Value: 52.79.177.127
+- TTL: 60
+- Routing policy: Simple routing ← 이걸로 선택
+
+**두 번째 레코드:**
+- Record name: (비워두기)
+- Record type: A
+- Value: 43.202.21.217
+- TTL: 60
+- Routing policy: Simple routing
+
+#### Simple routing의 장점:
+- ✅ Record ID 불필요
+- ✅ 설정 더 간단
+- ✅ 같은 효과 (DNS가 두 IP를 번갈아 반환)
+
 ## 참고
 
 - Ingress Controller는 클러스터당 한 번만 설치하면 됩니다.
