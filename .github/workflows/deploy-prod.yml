@@ -1,0 +1,97 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main # main 브랜치에 푸시될 때 실행
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REPOSITORY: newsugar-frontend
+  IMAGE_TAG: prod
+  EKS_CLUSTER_NAME: newsugar-prod-eks
+  DEPLOYMENT_NAME: newsugar-frontend-prod
+
+jobs:
+  deploy:
+    name: Build and Deploy to EKS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Get ECR registry
+        id: ecr-registry
+        run: |
+          echo "registry=${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_OUTPUT
+          echo "image_uri=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
+
+      - name: Clean up old Docker images locally
+        run: |
+          echo "Removing old local Docker images..."
+          docker rmi ${{ steps.ecr-registry.outputs.image_uri }} 2>/dev/null || true
+          docker builder prune -f
+
+      - name: Delete old image from ECR
+        run: |
+          echo "Deleting old image from ECR..."
+          aws ecr batch-delete-image \
+            --repository-name ${{ env.ECR_REPOSITORY }} \
+            --image-ids imageTag=${{ env.IMAGE_TAG }} \
+            --region ${{ env.AWS_REGION }} 2>/dev/null || echo "No existing image to delete"
+
+      - name: Build Docker image
+        run: |
+          echo "Building Docker image..."
+          docker build \
+            --build-arg NGINX_CONF=nginx.conf \
+            --build-arg VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }} \
+            -t ${{ steps.ecr-registry.outputs.image_uri }} \
+            .
+
+      - name: Push image to Amazon ECR
+        run: |
+          echo "Pushing image to ECR..."
+          docker push ${{ steps.ecr-registry.outputs.image_uri }}
+
+      - name: Configure kubectl
+        run: |
+          echo "Configuring kubectl..."
+          aws eks update-kubeconfig \
+            --region ${{ env.AWS_REGION }} \
+            --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Restart Kubernetes deployment
+        run: |
+          echo "Restarting deployment..."
+          kubectl rollout restart deployment/${{ env.DEPLOYMENT_NAME }} -n default
+
+          echo "Waiting for rollout to complete..."
+          kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }} -n default --timeout=5m
+
+      - name: Verify deployment
+        run: |
+          echo "Verifying deployment..."
+          kubectl get pods -l app=newsugar-frontend,env=prod -n default
+          kubectl get svc newsugar-frontend-service-prod -n default
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "=========================================="
+          echo "✅ Deployment completed successfully!"
+          echo "Image: ${{ steps.ecr-registry.outputs.image_uri }}"
+          echo "Deployment: ${{ env.DEPLOYMENT_NAME }}"
+          echo "=========================================="

@@ -1,1 +1,13 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 @import "tailwindcss";
+
+body {
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui,
+    sans-serif;
+}
+
+.highlight {
+  background-color: #fde68a; /* 노랑 */
+  padding: 0 4px;
+  border-radius: 4px;
+}

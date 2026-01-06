@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: newsugar-frontend-service-dev
+  namespace: default
+  labels:
+    app: newsugar-frontend
+    env: dev
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+spec:
+  type: LoadBalancer
+  selector:
+    app: newsugar-frontend
+    env: dev
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
