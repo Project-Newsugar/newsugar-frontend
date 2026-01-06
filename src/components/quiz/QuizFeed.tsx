@@ -150,18 +150,27 @@ export default function QuizFeed({
 
         {/* 퀴즈 완료 시 결과 (과거 시간대가 아닐 때만 표시) */}
         {isSolved && quizResult && !isPastTimeSlot && (
-          <QuizResult
-            correctAnswer={
-              answerQuestion ? answerQuestion.correctIndex.toString() : ""
-            }
-            userAnswer={userAnswers[0]}
-            isCorrect={
-              quizResult.results[quizResult.results.length - 1] === true
-            }
-            explanation={answerQuestion?.explanation}
-            isRevealed={isRevealed}
-            justSubmitted={justSubmitted}
-          />
+          <>
+            <QuizQuestion question={currentQuestion.text} />
+            <QuizForm
+              onSubmit={() => {}}
+              options={currentQuestion.options}
+              readOnly={true}
+              preSelectedAnswer={currentQuestion.correctIndex}
+            />
+            <QuizResult
+              correctAnswer={
+                answerQuestion ? answerQuestion.correctIndex.toString() : ""
+              }
+              userAnswer={userAnswers[0]}
+              isCorrect={
+                quizResult.results[quizResult.results.length - 1] === true
+              }
+              explanation={answerQuestion?.explanation}
+              isRevealed={isRevealed}
+              justSubmitted={justSubmitted}
+            />
+          </>
         )}
       </div>
 
