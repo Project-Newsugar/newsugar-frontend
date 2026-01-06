@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: newsugar-frontend-prod-tokyo
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://github.com/Project-Newsugar/newsugar-frontend.git"
+    targetRevision: main # develop 브랜치의 최신 k8s/prod-tokyo 매니페스트 사용
+    path: k8s/prod-tokyo
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
