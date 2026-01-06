@@ -119,13 +119,8 @@ export default function HomePage() {
     return isSameDate && isAfterQuizStart;
   };
 
-  // 퀴즈 변경 시 상태 초기화 (시간대 변경 시)
-  useEffect(() => {
-    setIsSolved(false);
-    setCurrentQuestionIndex(0);
-    setUserAnswers([]);
-    setQuizResults(null);
-  }, [quizId, selectedTime]);
+  // 퀴즈 변경 시 상태는 DB 기반 useEffect(140-176번 줄)에서 처리됨
+  // 시간대 변경 시 불필요한 초기화를 하지 않아야 이미 푼 퀴즈 상태가 유지됨
 
   // 로그인 상태 변경 시 퀴즈 상태 초기화 (로그아웃 시)
   useEffect(() => {
@@ -200,14 +195,10 @@ export default function HomePage() {
   /**
    * 시간대 변경 핸들러
    * 선택한 시간대의 퀴즈를 불러옴
+   * 상태 초기화는 DB 기반 useEffect에서 자동으로 처리됨
    */
   const handleTimeChange = (time: string) => {
     setSelectedTime(time);
-    // 시간대 변경 시 상태 초기화
-    setIsSolved(false);
-    setCurrentQuestionIndex(0);
-    setUserAnswers([]);
-    setQuizResults(null);
   };
 
   /**
