@@ -48,6 +48,9 @@ export default function QuizFeed({
     shouldFetchAnswers
   );
 
+  // 과거 시간대에서 퀴즈를 풀지 않았거나 비로그인 상태인지 확인
+  const shouldBlurQuiz = isPastTimeSlot && (!isLoggedIn || !isSolved);
+
   if (!quiz) return <p>퀴즈를 불러오는 중...</p>;
 
   // 첫 번째 문제만 사용
@@ -102,9 +105,9 @@ export default function QuizFeed({
           </>
         )}
 
-        {/* 과거 시간대 - 비로그인 사용자: 문제와 정답 선택지 표시 (해설은 로그인 필요) */}
-        {isPastTimeSlot && !isLoggedIn && (
-          <>
+        {/* 과거 시간대 - 퀴즈를 풀지 않았거나 비로그인 사용자: 블러 처리 */}
+        {shouldBlurQuiz && (
+          <div className="blur-sm pointer-events-none select-none">
             <QuizQuestion question={currentQuestion.text} />
             <QuizForm
               onSubmit={() => {}}
@@ -112,16 +115,11 @@ export default function QuizFeed({
               readOnly={true}
               preSelectedAnswer={currentQuestion.correctIndex}
             />
-            <div className="mt-4 p-4 rounded-lg bg-gray-50 border border-gray-200">
-              <p className="text-sm text-gray-600 text-center">
-                해설은 로그인 후 확인할 수 있습니다
-              </p>
-            </div>
-          </>
+          </div>
         )}
 
-        {/* 과거 시간대 - 로그인 사용자: 문제, 정답 선택지, 해설 표시 */}
-        {isPastTimeSlot && isLoggedIn && (
+        {/* 과거 시간대 - 로그인 사용자이면서 퀴즈를 푼 경우: 문제, 정답 선택지, 해설 표시 */}
+        {isPastTimeSlot && isLoggedIn && isSolved && (
           <>
             <QuizQuestion question={currentQuestion.text} />
             <QuizForm
