@@ -37,155 +37,63 @@ aws ecr create-repository \
   --region ap-northeast-2
 ```
 
-### 3.3 백엔드 API URL 설정 (이건 지금 이제 안 해도 됨)
+## 4. 신규 EKS 클러스터 배포 (처음부터 전체 배포)
 
-[scripts/ecr-push.ps1](scripts/ecr-push.ps1) 파일에서 환경별 백엔드 ALB 주소를 설정합니다.
+새로운 EKS 클러스터를 생성했을 때는 다음 순서대로 배포합니다.
 
-```powershell
-# 환경별 API URL 설정
-$ApiUrl = switch ($Environment) {
-    "dev" { "http://your-backend-alb-address-dev/" }
-    "prod" { "http://your-backend-alb-address-prod/" }
-}
-```
-
-**설정 방법:**
-
-1. 백엔드 ALB 주소 확인
-2. [scripts/ecr-push.ps1](scripts/ecr-push.ps1) 파일 열기
-3. 22-23번째 줄에서 `dev`와 `prod` 환경의 ALB 주소 수정
-4. 변경사항 저장
-
-### 3.4. kubectl 설정 - eks를 매번 새로 만들어서 매번 새로 생성될 때마다 해야 함
+### Step 0: EKS 클러스터 연결
 
 ```bash
-# EKS 클러스터 연결
+# EKS 클러스터에 kubectl 연결
 aws eks update-kubeconfig --region ap-northeast-2 --name newsugar-prod-eks
 
 # 연결 확인
 kubectl get nodes
 ```
 
-### 3.4. ArgoCD Application 등록 - 3.3 과 동일한 이유로 해야 함
+### Step 1: Nginx Ingress Controller 설치
 
 ```bash
-# Dev 환경
-kubectl apply -f k8s/argocd-app-dev.yaml
+# Nginx Ingress Controller 설치 (공식 manifest)
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.1/deploy/static/provider/aws/deploy.yaml
+```
 
-# Prod 환경
+### Step 2: Service를 internet-facing으로 변경
+
+```bash
+# Service를 internet-facing LoadBalancer로 변경
+kubectl apply -f k8s/infra/ingress-nginx-controller.yaml
+```
+
+### Step 3: 도커 이미지 빌드 및 ECR 푸시
+
+GitHub Actions를 통해 이미지를 생성합니다.
+
+```bash
+# 변경사항이 있는 경우 커밋 후 푸시
+git add .
+git commit -m "feat: initial deployment"
+git push origin develop
+
+# 변경사항이 없는 경우 빈 커밋으로 트리거
+git commit --allow-empty -m "trigger: initial image build for new EKS cluster"
+git push origin develop
+```
+
+### Step 4: ArgoCD Application 등록
+
+```bash
+# Prod 환경 ArgoCD Application 등록
 kubectl apply -f k8s/argocd-app-prod.yaml
 ```
 
-## 4. 배포 실행
-
-### 4.1. ECR 이미지 빌드 & 푸시
-
-스크립트에 AWS 계정 정보가 기본값으로 설정되어 있습니다.
-
-```bash
-# Git bash 사용 시
-chmod +x scripts/ecr-push.sh
-
-./scripts/ecr-push.sh -e dev
-./scripts/ecr-push.sh -e prod
-
-# Windows PowerShell 사용 시
-.\scripts\ecr-push.ps1 -Environment dev
-.\scripts\ecr-push.ps1 -Environment prod
-
-# Local 환경 배포
-.\scripts\test-local.ps1
-# → nginx.local.conf 사용
-```
-
-### 4.2. Prod 환경 배포 (완전 가이드)
-
-**Step 1: ECR에 Prod 이미지 푸시**
-
-```powershell
-.\scripts\ecr-push.ps1 -Environment prod
-```
-
-**Step 2: ArgoCD Application 설정 수정 (브랜치 변경 필요 시)**
-
-[k8s/argocd-app-prod.yaml](k8s/argocd-app-prod.yaml) 파일 수정:
-
-```yaml
-# 배포할 브랜치 변경
-targetRevision: main # 또는 feature/ecr-push, develop 등
-```
-
-**Step 3: ArgoCD Application 적용**
-
-```bash
-kubectl apply -f k8s/argocd-app-prod.yaml
-```
-
-**Step 4: ArgoCD 자동 동기화**
-
-ArgoCD가 자동으로 Git 레포지토리의 변경사항을 감지하여 배포합니다:
-
-- `syncPolicy.automated` 설정으로 자동 동기화
-- `k8s/prod/` 폴더의 매니페스트를 읽고 EKS에 적용
-- `imagePullPolicy: Always`로 최신 이미지 자동 적용
-
-**Step 5: 배포 확인**
-
-```bash
-# ArgoCD Application 상태 확인
-kubectl get applications -n argocd
-
-# Pod 상태 확인
-kubectl get pods -l env=prod
-
-# Service 상태 확인
-kubectl get svc -l env=prod
-
-# LoadBalancer External IP 확인
-kubectl get svc newsugar-frontend-service-prod -n default -o wide
-```
-
-### 4.3. Dev 환경 배포 (간단 버전)
-
-```bash
-# 1. ECR에 Dev 이미지 푸시
-.\scripts\ecr-push.ps1 -Environment dev
-
-# 2. ArgoCD가 자동으로 배포 (별도 작업 불필요)
-
-# 3. 확인
-kubectl get pods -l env=dev
-kubectl get svc newsugar-frontend-service-dev
-```
-
-### 4.4. ArgoCD 자동 배포 동작 원리
-
-ECR에 이미지를 푸시하면 **ArgoCD가 자동으로 감지하여 EKS에 배포**합니다.
-
-- ArgoCD는 GitHub 레포지토리의 `k8s/dev` 또는 `k8s/prod` 폴더를 모니터링
-- `syncPolicy.automated`가 설정되어 있어 변경 감지 시 자동 배포
-- `imagePullPolicy: Always`로 설정되어 최신 이미지 자동 적용
-
-### 4.5. 수동 배포 (ArgoCD 없이)
-
-ArgoCD를 사용하지 않는 경우:
-
-```bash
-# Dev 환경
-kubectl apply -f k8s/dev/
-
-# Prod 환경
-kubectl apply -f k8s/prod/
-```
+ArgoCD가 자동으로 나머지 리소스(Deployment, Service, HPA 등)를 배포합니다.
 
 ## 5. 배포 확인
 
 ### 5.1. Pod 상태 확인
 
 ```bash
-# Dev 환경
-kubectl get pods -l app=newsugar-frontend,env=dev
-
 # Prod 환경
 kubectl get pods -l app=newsugar-frontend,env=prod
 
@@ -196,9 +104,6 @@ kubectl describe pod <pod-name>
 ### 5.2. Service 확인 (LoadBalancer URL)
 
 ```bash
-# Dev 환경
-kubectl get svc newsugar-frontend-service-dev
-
 # Prod 환경
 kubectl get svc newsugar-frontend-service-prod
 
@@ -209,23 +114,36 @@ kubectl get svc -o wide
 ### 5.3. HPA (Auto Scaling) 확인
 
 ```bash
-# Dev 환경
-kubectl get hpa newsugar-frontend-hpa-dev
-
 # Prod 환경
 kubectl get hpa newsugar-frontend-hpa-prod
 ```
 
-### 5.4. ArgoCD 상태 확인
+### 5.4. ArgoCD 상태 확인 및 접속
 
 ```bash
-# Application 목록
+# Application 목록 확인
 kubectl get applications -n argocd
 
-# 특정 앱 상태
-kubectl describe application newsugar-frontend-dev -n argocd
+# 특정 앱 상태 확인
 kubectl describe application newsugar-frontend-prod -n argocd
 ```
+
+#### ArgoCD UI 접속 방법
+
+```bash
+# ArgoCD 초기 admin 패스워드 확인 (Windows PowerShell)
+kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | ForEach-Object { [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($_)) }
+
+# ArgoCD UI 포트포워딩
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+# 브라우저에서 접속
+# URL: https://localhost:8080
+# Username: admin
+# Password: 위에서 확인한 패스워드
+```
+
+> **참고**: 포트포워딩은 터미널을 열어둔 상태에서만 유지됩니다. 접속을 종료하려면 `Ctrl+C`를 누르세요.
 
 ## 6. 로그 및 디버깅
 
@@ -266,9 +184,6 @@ kubectl describe pod <pod-name>
 같은 태그로 푸시했는데 변경이 반영되지 않는 경우:
 
 ```bash
-# Dev 환경
-kubectl rollout restart deployment/newsugar-frontend-dev
-
 # Prod 환경
 kubectl rollout restart deployment/newsugar-frontend-prod
 ```
@@ -325,7 +240,7 @@ kubectl describe pod <pod-name>
 ### 9.2. LoadBalancer가 Pending 상태인 경우
 
 ```bash
-kubectl describe svc newsugar-frontend-service-dev
+kubectl describe svc newsugar-frontend-service-prod
 
 # AWS Load Balancer Controller 설치 필요할 수 있음
 ```
@@ -337,36 +252,24 @@ kubectl describe svc newsugar-frontend-service-dev
 kubectl get applications -n argocd
 
 # 수동 동기화
-kubectl patch application newsugar-frontend-dev -n argocd \
+kubectl patch application newsugar-frontend-prod -n argocd \
   --type merge -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"normal"}}}'
 ```
 
-## 10. 보안 및 모범 사례
+## 10. 수동 배포 (ArgoCD 없이)
 
-### 10.1. 이미지 스캔
+ArgoCD를 사용하지 않는 경우:
 
 ```bash
-# ECR 이미지 취약점 스캔
-aws ecr start-image-scan \
-  --repository-name newsugar-frontend \
-  --image-id imageTag=prod \
-  --region ap-northeast-2
+# Prod 환경
+kubectl apply -f k8s/prod/
 ```
-
-### 10.2. Resource Limits 설정
-
-- 항상 `requests`와 `limits` 설정
-- Prod 환경은 충분한 리소스 할당
-
-### 10.3. Health Check 설정
-
-- Prod 환경은 `livenessProbe`, `readinessProbe` 필수
-- 적절한 `initialDelaySeconds` 설정 (Nginx는 빠르게 시작)
 
 ## 11. 참고 사항
 
+- **ArgoCD 자동 배포**: `syncPolicy.automated` 설정으로 Git 변경사항 자동 감지 및 배포
+- **이미지 자동 업데이트**: `imagePullPolicy: Always`로 최신 이미지 자동 적용
 - **이미지 태그 전략**: `dev`, `prod` 고정 태그 사용 (현재)
   - 향후 버전 관리를 위해 `v1.0.0`, `v1.0.1` 형태 권장
-- **DR (재해 복구)**: 도쿄 리전 확장 시 `k8s/dr/` 폴더 추가 고려
 - **모니터링**: Prometheus + Grafana 연동 권장 (별도 문서 참조)
 - **비용 최적화**: Dev 환경은 필요시에만 실행 고려

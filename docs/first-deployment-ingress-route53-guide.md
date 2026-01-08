@@ -57,11 +57,13 @@ nslookup k8s-ingressn-ingressn-3b0fd3996c-8f3e69b781742977.elb.ap-northeast-2.am
 
 ### 🚀 간단한 방법: Simple routing 사용
 
+**현재는 Value의 ingress dns 값만 변경하면 됨!**
 Multivalue answer가 복잡하다면 Simple routing 추천:
 
 #### Simple routing 방식:
 
 **첫 번째 레코드:**
+
 - Record name: (비워두기)
 - Record type: A
 - Value: 52.79.177.127
@@ -69,6 +71,7 @@ Multivalue answer가 복잡하다면 Simple routing 추천:
 - Routing policy: Simple routing ← 이걸로 선택
 
 **두 번째 레코드:**
+
 - Record name: (비워두기)
 - Record type: A
 - Value: 43.202.21.217
@@ -76,6 +79,7 @@ Multivalue answer가 복잡하다면 Simple routing 추천:
 - Routing policy: Simple routing
 
 #### Simple routing의 장점:
+
 - ✅ Record ID 불필요
 - ✅ 설정 더 간단
 - ✅ 같은 효과 (DNS가 두 IP를 번갈아 반환)

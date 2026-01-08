@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import QuizQuestion from "./QuizQuestion";
 import QuizForm from "./QuizForm";
@@ -38,6 +38,11 @@ export default function QuizFeed({
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [justSubmitted, setJustSubmitted] = useState(false);
   const navigate = useNavigate();
+
+  // 퀴즈 ID가 변경되면 justSubmitted 상태 초기화
+  useEffect(() => {
+    setJustSubmitted(false);
+  }, [quiz?.id]);
 
   // 정답 조회 (로그인 유저만 API 호출)
   // 로그인 유저: 퀴즈를 풀었거나 과거 시간대일 때 해설 포함된 정답 조회

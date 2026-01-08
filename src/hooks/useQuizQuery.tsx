@@ -352,7 +352,10 @@ export const useSubmitQuizAnswer = () => {
       id: number;
       answerData: SubmitQuizAnswerRequest;
     }) => submitQuizAnswer(id, answerData),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      // 제출한 퀴즈의 결과 캐시를 무효화하여 최신 데이터를 가져옴
+      queryClient.invalidateQueries({ queryKey: ["quiz", "result", variables.id] });
+      // 전체 퀴즈 관련 캐시도 무효화
       queryClient.invalidateQueries({ queryKey: ["quiz"] });
     },
   });

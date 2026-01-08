@@ -134,7 +134,28 @@ export default function HomePage() {
 
   // DB 기반 퀴즈 완료 여부 확인 (API 응답이 있을 때)
   useEffect(() => {
-    if (!quizResultData?.data || !quiz?.data) return;
+    // 퀴즈가 없으면 초기 상태로 설정
+    if (!quiz?.data) {
+      console.log("❌ 퀴즈 데이터 없음 - 초기 상태로 설정");
+      setIsSolved(false);
+      setQuizResults(null);
+      setUserAnswers([]);
+      setCurrentQuestionIndex(0);
+      return;
+    }
+
+    // 현재 퀴즈 ID 저장
+    const currentQuizId = quiz.data.id;
+
+    // 로그인하지 않았거나 퀴즈 결과 데이터가 없으면 미완료 상태
+    if (!isLoggedIn || !quizResultData?.data) {
+      console.log("❌ 로그인 안됨 또는 퀴즈 결과 없음 - 미완료 상태로 설정");
+      setIsSolved(false);
+      setQuizResults(null);
+      setUserAnswers([]);
+      setCurrentQuestionIndex(0);
+      return;
+    }
 
     const isCompleted = isQuizCompletedToday(
       quizResultData.timestamp,
@@ -142,7 +163,8 @@ export default function HomePage() {
     );
 
     console.log("🔍 Quiz completion check:", {
-      quizId: quiz.data.id,
+      selectedTime,
+      quizId: currentQuizId,
       isCompleted,
       timestamp: quizResultData.timestamp,
       startAt: quiz.data.startAt,
@@ -168,7 +190,7 @@ export default function HomePage() {
       setUserAnswers([]);
       setCurrentQuestionIndex(0);
     }
-  }, [quizResultData, quiz?.data]);
+  }, [quizResultData, quiz?.data, isLoggedIn, selectedTime, quizId]);
 
   // 선택한 시간대가 과거인지 확인
   const isPastTimeSlot = useMemo(() => {

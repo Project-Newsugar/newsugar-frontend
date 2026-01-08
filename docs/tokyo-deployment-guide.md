@@ -126,11 +126,47 @@ ip-172-16-11-223.ap-northeast-1.compute.internal   Ready    <none>   10m   v1.34
 
 ---
 
-## 6. 애플리케이션 배포
+## 6. Nginx Ingress Controller 설치 (최초 1회만)
+
+### 6-1. 공식 Nginx Ingress Controller 설치
+```powershell
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.1/deploy/static/provider/aws/deploy.yaml
+```
+
+### 6-2. Service를 internet-facing으로 변경
+```powershell
+kubectl apply -f k8s/infra/ingress-nginx-controller.yaml
+```
+
+**이 파일의 주요 설정:**
+- AWS NLB(Network Load Balancer) 사용
+- `internet-facing` 스킴으로 외부 접근 허용
+- HTTP(80), HTTPS(443) 포트 오픈
+
+### 6-3. Ingress Controller 확인
+```powershell
+# 파드 상태 확인
+kubectl get pods -n ingress-nginx
+
+# 서비스 확인 (LoadBalancer 생성 대기)
+kubectl get svc -n ingress-nginx
+```
+
+**기대 결과:**
+```
+NAME                                 TYPE           EXTERNAL-IP                                                                    PORT(S)
+ingress-nginx-controller             LoadBalancer   a1234567890abcdef1234567890abcdef-1234567890.ap-northeast-1.elb.amazonaws.com   80:xxxxx/TCP,443:xxxxx/TCP
+```
+
+> **참고:** EXTERNAL-IP가 `<pending>`에서 실제 도메인으로 변경되기까지 1-2분 소요됩니다.
+
+---
+
+## 7. 애플리케이션 배포
 
 ### 방법 A: ArgoCD 사용 (권장)
 
-#### 6-1. ArgoCD 설치 확인
+#### 7-1. ArgoCD 설치 확인
 ```powershell
 kubectl get pods -n argocd
 ```
@@ -144,17 +180,17 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 kubectl get pods -n argocd -w
 ```
 
-#### 6-2. ArgoCD Application 등록
+#### 7-2. ArgoCD Application 등록
 ```powershell
 kubectl apply -f k8s/argocd-app-prod-tokyo.yaml
 ```
 
-#### 6-3. ArgoCD Application 상태 확인
+#### 7-3. ArgoCD Application 상태 확인
 ```powershell
 kubectl get application newsugar-frontend-prod-tokyo -n argocd
 ```
 
-#### 6-4. 동기화 (필요 시)
+#### 7-4. 동기화 (필요 시)
 ```powershell
 # ArgoCD CLI 사용
 argocd app sync newsugar-frontend-prod-tokyo
@@ -179,9 +215,9 @@ kubectl apply -f k8s/prod-tokyo/hpa.yaml
 
 ---
 
-## 7. 배포 확인
+## 8. 배포 확인
 
-### 7-1. 파드 상태 확인
+### 8-1. 파드 상태 확인
 ```powershell
 # 기본 확인
 kubectl get pods -n default
@@ -200,12 +236,12 @@ newsugar-frontend-prod-7bd58c6b86-xxxxx   0/1     CrashLoopBackOff   N          
 ```
 > **참고:** 백엔드가 배포되지 않았다면 CrashLoopBackOff는 정상입니다.
 
-### 7-2. 전체 리소스 확인
+### 8-2. 전체 리소스 확인
 ```powershell
 kubectl get all -n default
 ```
 
-### 7-3. 파드 로그 확인
+### 8-3. 파드 로그 확인
 ```powershell
 kubectl logs <pod-name> -n default
 ```
@@ -215,7 +251,7 @@ kubectl logs <pod-name> -n default
 nginx: [emerg] host not found in upstream "newsugar-backend-service-prod"
 ```
 
-### 7-4. 리전 확인
+### 8-4. 리전 확인
 ```powershell
 # 파드가 실행 중인 노드의 리전 확인
 kubectl get pod <pod-name> -n default -o jsonpath='{.spec.nodeName}' && echo ""
@@ -230,7 +266,7 @@ Zone: ap-northeast-1a
 
 ---
 
-## 8. 서울 클러스터로 복귀
+## 9. 서울 클러스터로 복귀
 
 ```powershell
 # 서울 EKS로 전환
@@ -306,16 +342,20 @@ aws eks update-kubeconfig --region ap-northeast-1 --name newsugar-dr-eks
 # 4. 노드 확인
 kubectl get nodes
 
-# 5. 배포 (ArgoCD)
+# 5. Nginx Ingress Controller 설치 (최초 1회만)
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.1/deploy/static/provider/aws/deploy.yaml
+kubectl apply -f k8s/infra/ingress-nginx-controller.yaml
+
+# 6. 배포 (ArgoCD)
 kubectl apply -f k8s/argocd-app-prod-tokyo.yaml
 
 # 또는 배포 (kubectl 직접)
 kubectl apply -f k8s/prod-tokyo/
 
-# 6. 확인
+# 7. 확인
 kubectl get pods -n default -o wide
 
-# 7. 서울 복귀
+# 8. 서울 복귀
 aws eks update-kubeconfig --region ap-northeast-2 --name newsugar-prod-eks
 ```
 
